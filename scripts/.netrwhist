@@ -1,9 +1,0 @@
-let g:netrw_dirhistmax  =10
-let g:netrw_dirhist_cnt =7
-let g:netrw_dirhist_1='/home/hattb/source'
-let g:netrw_dirhist_2='/home/hattb/source/gg'
-let g:netrw_dirhist_3='/home/hattb/source/gg/trunk'
-let g:netrw_dirhist_4='/home/hattb/source/gg/trunk/app'
-let g:netrw_dirhist_5='/home/hattb/source/gg/trunk/app/views'
-let g:netrw_dirhist_6='/home/hattb/source/gg/trunk/app/views/pages'
-let g:netrw_dirhist_7='/home/hattb/source/gg/trunk/app/assets/stylesheets'
