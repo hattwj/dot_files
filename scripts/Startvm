@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# Start Ubuntu server
+#VBoxManage startvm "Ubuntu11.10_x86"
+
+# Start Winxp Instance for RDP server
+VBoxManage startvm "winxp_x86"

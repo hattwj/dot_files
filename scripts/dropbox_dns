@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+# Create file if it doesn't exist
+BFILE="/home/hattb/Dropbox/epistle/machine_`hostname`.txt"
+touch $BFILE
+
+# Send information
+echo -e `date`+"\n"+`/sbin/ifconfig` > $BFILE

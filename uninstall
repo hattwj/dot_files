@@ -1,0 +1,47 @@
+#!/bin/bash
+
+#get cur dir
+OLD_DIR=$(pwd)
+# Find directory that this script is in 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+LOG_FILE="$SCRIPT_DIR/install.log"
+
+# what bash files will this computer use?
+pf1=".bashrc_"`uname`
+pf2=".bashrc_"`uname`'_'`hostname`
+
+#check install log
+if [ ! -f "$LOG_FILE" ] && [[ "$1x" != "-fx" ]]; then
+    echo "Missing Install log ( -f to force uninstall ):  $LOG_FILE"
+    exit
+fi
+
+#check backup dir
+if [ ! -d "$SCRIPT_DIR/backups" ]; then
+    echo "Missing Dir:    $SCRIPT_DIR/backups"
+    exit
+fi
+
+echo "Restoring backups: $SCRIPT_DIR/backups"
+cp -R "$SCRIPT_DIR/backups/" "$HOME/$dir/"    
+
+
+declare -a file_arr=('.bash_profile' '.bashrc' '.inputrc' '.psqlrc' '.vimrc' "$pf1" "$pf2")
+for file in "${file_arr[@]}"
+do
+    if [ ! -L "$HOME/$file" ]; then
+        echo "Missing Link: $file"
+        continue
+    fi
+
+    echo "Removing Link: $HOME/$file"  
+    rm "$HOME/$file"
+
+done
+
+echo "Removing: $LOG_FILE"
+rm "$LOG_FILE"
+
+echo Done with uninstall
+
+cd $OLD_DIR

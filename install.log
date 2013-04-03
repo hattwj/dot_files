@@ -1,0 +1,14 @@
+Linking Dir: /home/hattb/dot_files/.vim --> /home/hattb/.vim
+Saving File: /home/hattb/.bash_profile --> /home/hattb/dot_files/backups
+Linking File: /home/hattb/dot_files/ --> /home/hattb/.bash_profile
+Saving File: /home/hattb/.bashrc --> /home/hattb/dot_files/backups
+Linking File: /home/hattb/dot_files/ --> /home/hattb/.bashrc
+Saving File: /home/hattb/.inputrc --> /home/hattb/dot_files/backups
+Linking File: /home/hattb/dot_files/ --> /home/hattb/.inputrc
+Saving File: /home/hattb/.psqlrc --> /home/hattb/dot_files/backups
+Linking File: /home/hattb/dot_files/ --> /home/hattb/.psqlrc
+Saving File: /home/hattb/.vimrc --> /home/hattb/dot_files/backups
+Linking File: /home/hattb/dot_files/ --> /home/hattb/.vimrc
+Saving File: /home/hattb/.bashrc_Linux --> /home/hattb/dot_files/backups
+Linking File: /home/hattb/dot_files/ --> /home/hattb/.bashrc_Linux
+Missing .bashrc_Linux_hattb-mint

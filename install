@@ -1,0 +1,86 @@
+#!/bin/bash -
+
+# Echo parameter and log it to file
+function echolog()
+{
+	echo $1
+	echo $1 >> $LOG_FILE	
+}
+
+#get cur dir
+OLD_DIR="$(pwd)"
+
+# Find directory that this script is in 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Create log file name
+LOG_FILE="$SCRIPT_DIR/install.log"
+
+# what bash files will this computer use?
+pf1=".bashrc_"`uname`
+pf2=".bashrc_"`uname`'_'`hostname`
+
+# create backup dir
+if [ ! -d "$SCRIPT_DIR/backups" ]; then
+    echo "Creating Dir:    $SCRIPT_DIR/backups"
+    mkdir "$SCRIPT_DIR/backups"
+fi
+
+# Check and remove old log file (if exists)
+if [ -f "$SCRIPT_DIR/install.log"  ]; then
+    echo "Removing logfile: $LOG_FILE"
+    rm "$LOG_FILE"
+fi
+
+# create backups and generate symlinks
+declare -a dir_arr=('.vim')
+for dir in "${dir_arr[@]}"
+do
+    # Save directory if it is not a symlink
+    if [ ! -L "$HOME/$dir" ] && [ -d "$HOME/$dir" ]; then
+        echolog "Saving Dir:    $HOME/$dir --> $SCRIPT_DIR/backups"
+        cp -R "$HOME/$dir" "$SCRIPT_DIR/backups"
+    fi
+
+    # Delete directory/symlink
+    if [ -d "$SCRIPT_DIR/$dir" ] && [ -d "$HOME/$dir" ]; then
+        echolog "Deleting Dir:    $HOME/$dir"
+        rm -rf "$HOME/$dir"
+    fi
+
+    # Create link to new directory
+    if [ -d "$SCRIPT_DIR/$dir" ]; then
+        echolog "Linking Dir:    $SCRIPT_DIR/$dir  -->  $HOME/$dir" 
+        ln -s $SCRIPT_DIR/$dir "$HOME/$dir"
+    fi
+done
+
+declare -a file_arr=('.bash_profile' '.bashrc' '.inputrc' '.psqlrc' '.vimrc' "$pf1" "$pf2")
+for file in "${file_arr[@]}"
+do
+    # See if file exists in dot_files
+    if [ ! -f "$SCRIPT_DIR/$file" ]; then
+        echolog "Missing $file"
+        continue
+    fi
+
+    # Save file if not a link
+    if  [ -f "$HOME/$file" ] || [ ! -L "$HOME/$file" ] ; then
+        echolog "Saving File:   $HOME/$file --> $SCRIPT_DIR/backups"
+        cp "$HOME/$file" "$SCRIPT_DIR/backups"
+    fi
+
+
+    # Delete original file
+    if  [ -f "$HOME/$file" ] || [ -L "$HOME/$file" ] ; then
+        echolog "Deleting File:   $HOME/$file"
+        rm "$HOME/$file"
+    fi
+
+    # Link new file
+    echolog "Linking File:    $SCRIPT_DIR/$filei --> $HOME/$file"  
+    ln -s "$SCRIPT_DIR/$file" "$HOME/$file"
+
+done
+
+cd $OLD_DIR

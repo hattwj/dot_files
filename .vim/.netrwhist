@@ -1,0 +1,5 @@
+let g:netrw_dirhistmax  =10
+let g:netrw_dirhist_cnt =3
+let g:netrw_dirhist_1='/home/hattb/LocalWorkspace/source/fmsb'
+let g:netrw_dirhist_2='/home/hattb/LocalWorkspace/source/packages/ogs/config'
+let g:netrw_dirhist_3='/home/hattb/.ssh'

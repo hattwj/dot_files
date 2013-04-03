@@ -1,0 +1,60 @@
+#!/usr/bin/env ruby
+require 'optparse'
+require 'pp'
+
+class String
+  # colorization
+  def colorize(color_code)
+    "\e[#{color_code}m#{self}\e[0m"
+  end
+
+  def red
+    colorize(31)
+  end
+end
+# This hash will hold all of the options
+# parsed from the command-line by
+# OptionParser.
+options = {}
+
+optparse = OptionParser.new do|opts|
+  
+  # Regex
+  opts.on('-R replace',String,'sed regex string'){ |replace|
+        options['replace'] = replace
+  }
+
+  # This displays the help screen, all programs are
+  # assumed to have this option.
+  opts.on( '-h', '--help', 'Display this screen' ) do
+    puts opts
+    exit
+  end
+end
+
+# Parse the command-line. Remember there are two forms
+# of the parse method. The 'parse' method simply parses
+# ARGV, while the 'parse!' method parses ARGV and removes
+# any options found there, as well as any parameters for
+# the options. What's left is the list of files to resize.
+optparse.parse!
+
+options['pattern'] = ARGV[0]
+
+options['path'] = ARGV[1] || './'
+
+puts `ack -l #{options['pattern']} #{options['path']}`.to_s.red
+puts  "ack --print0 -l #{options['pattern']} #{options['path']} | xargs -0 sed -i 's/#{options['pattern']}/#{options['replace']}/g'"
+
+
+#!/bin/bash -
+#CUR_DIR='./'
+#
+#SEARCH_PATH=${2:-$CUR_DIR}
+#QUERY=$1
+#
+##if [ 1 eq 1 ]
+#   echo $QUERY $SEARCH_PATH
+##else
+#   #ack --print0 -l $QUERY | xargs -0 sed -i '$1'
+##fi

@@ -1,0 +1,10 @@
+alias grep='grep --color=auto'
+alias ls='ls -G'
+alias ll='ls -alF'
+alias mvim='/Applications/MacVim.app/contents/MacOS/MacVim'
+alias gvim='mvim'
+
+# Prompt should look like: juser@somewhere$
+export PS1='[\u@\h:`pwd`]$ '
+
+export PATH=/usr/local/bin:$PATH
