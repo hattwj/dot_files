@@ -34,8 +34,10 @@ set autoread
 " Set 7 lines to the cursors - when moving vertical..
 "set so=7
 
-" show the name of the current file being worked on at the bottom of the screen
+" show the name of the current file being worked on at the BOTTOM of the screen
 set ls=2
+" show the name of the current file being worked on at the TOP of the screen
+set showtabline=2
 set wildmenu                    "Turn on WiLd menu (info bar on bottom of screen)
 set wildmode=list:longest,full  "Format for wildmenu
 
