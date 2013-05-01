@@ -1,2 +1,6 @@
 .svn
 *.log
+.vim/.netrwhist
+.netrwhist
+*.swp
+backups

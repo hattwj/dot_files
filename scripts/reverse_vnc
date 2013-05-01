@@ -3,4 +3,4 @@
 # Connect to ip address and forward access to the vnc server
 # By default this command will try to reverse connect to the client
 # on port 5500
-/Applications/Vine\ Server.app/OSXvnc-server -connectHost  127.0.0.1
+/Applications/Vine\ Server.app/OSXvnc-server -connectHost  24.20.194.142
