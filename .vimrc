@@ -4,13 +4,15 @@
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => VIM user interface
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-if has("mac")
-	
+if has("mac")	
 	if has("gui_running")
 	    " Background Transparency
 	    set transparency=16
 	endif
 endif
+
+" have netrw file browser in tree mode
+let g:netrw_liststyle= 3 
 
 " Use 256 colors for colorscheme
 set t_Co=256
