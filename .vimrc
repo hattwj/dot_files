@@ -43,7 +43,7 @@ set wildmode=list:longest,full  "Format for wildmenu
 
 set ruler "Always show current position
 
-set cmdheight=2 "The commandbar height
+set cmdheight=1 "The commandbar height
 
 "set hid "Change buffer - without saving
 
