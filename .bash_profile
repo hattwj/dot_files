@@ -11,3 +11,5 @@ if [ -f $pf1 ] ; then
     source $pf1
 fi
 
+
+[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
