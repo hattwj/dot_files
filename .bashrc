@@ -4,9 +4,12 @@
 export PAGER=less
 export LESS="-iMSx4 -FX"
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+pf1="$DIR/.bashrc_"`uname`
+pf2="$DIR/.bashrc_"`uname`'_'`hostname`
 
-pf1="$HOME/.bashrc_"`uname`
-pf2="$HOME/.bashrc_"`uname`'_'`hostname`
+# custom tweaks not meant to be included in version control
+pf3="$DIR/.bash_custom"
 
 # Make sure we include .inputrc
 [[ -f "~/.inputrc" ]] && export INPUTRC="~/.inputrc"

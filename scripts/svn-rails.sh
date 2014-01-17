@@ -5,6 +5,9 @@ svn --force remove tmp/*
 svn --force remove db/*.sqlite3
 svn --force remove config/*.yml
 svn --force remove public/assets/*
+svn --force remove *.swp
+svn --force remove *.swo
+svn --force remove *.swn
 
 svn update log/
 svn update tmp/
@@ -20,5 +23,8 @@ svn propset svn:ignore '*.yml' config/
 svn propset svn:ignore '*.log' log/
 svn propset svn:ignore '*.sqlite3' db/
 svn propset svn:ignore '*' public/assets/
+svn propset svn:ignore '*.swp'
+svn propset svn:ignore '*.swo'
+svn propset svn:ignore '*.swn'
 
 echo svn commit -m "Initial commit: svn-rails script"

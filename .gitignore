@@ -9,3 +9,4 @@ backups
 .SyncID
 .SyncArchive
 .SyncIgnore
+.bash_custom

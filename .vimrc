@@ -13,6 +13,8 @@ endif
 
 " have netrw file browser in tree mode
 let g:netrw_liststyle= 3 
+" Netrw previews take up 99% of screen 
+let g:netrw_winsize=1
 
 " Use 256 colors for colorscheme
 set t_Co=256
@@ -27,6 +29,10 @@ set number
 " Disable linewrapping
 set nowrap
 
+" Only syntax highlight the first 200 characters of a line
+" Prevent Slowdown from long lines
+set synmaxcol=200
+
 " Set the textwidth to be 80 chars
 "set textwidth=80
 
@@ -37,15 +43,15 @@ set autoread
 "set so=7
 
 " show the name of the current file being worked on at the BOTTOM of the screen
-set ls=2
+set ls=1
 " show the name of the current file being worked on at the TOP of the screen
-set showtabline=2
+set showtabline=1
 set wildmenu                    "Turn on WiLd menu (info bar on bottom of screen)
 set wildmode=list:longest,full  "Format for wildmenu
 
 set ruler "Always show current position
 
-set cmdheight=2 "The commandbar height
+set cmdheight=1 "The commandbar height
 
 "set hid "Change buffer - without saving
 
