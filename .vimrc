@@ -86,8 +86,11 @@ vmap <C-e> $
 imap <C-a> <esc>0i
 nmap <C-e> 0
 
+" Map A to select all text
+nmap A ggVG
+
 " CTRL-C to copy (visual mode)
-vmap <C-c> y
+vmap <C-c> "+y
 
 " CTRL-X to cut (visual mode)
 vmap <C-x> xi
