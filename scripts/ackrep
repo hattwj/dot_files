@@ -30,7 +30,7 @@ end
 
 # Parse the command-line.
 optparse.parse!
-path = ARGV[1] || './'
+path = ARGV[1] || '.'
 
 # remove quotes if present
 pattern = ARGV[0].to_s

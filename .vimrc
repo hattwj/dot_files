@@ -1,23 +1,41 @@
-" Find OS
-" let os = substitute(system('uname'), "\n", "", "")
-
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => VIM user interface
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-if has("mac")	
+if has("mac")
+    " This is mac vim
 	if has("gui_running")
 	    " Background Transparency
 	    set transparency=16
 	endif
+elseif !has("gui_running")
+    " This is console Vim.
 endif
 
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => netrw interface
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
 " have netrw file browser in tree mode
-let g:netrw_liststyle= 3 
-" Netrw previews take up 99% of screen 
-let g:netrw_winsize=1
+let g:netrw_liststyle= 3
+" Open new files in a new tab when pressing <Enter>
+let g:netrw_browse_split = 4
+let g:netrw_altv = 1
+" Netrw previews should be around 30 lines 
+let g:netrw_winsize=50
+
+"""
+" Main interface
+"""
+
+" Display the name of the current file
+set laststatus=2
+set statusline=%f "tail of the filename
 
 " Use 256 colors for colorscheme
 set t_Co=256
+":colorscheme vibrantink
+":colorscheme vividchalk
+":colorscheme wombat
 :colorscheme calmar256-dark
 
 " Enable syntax highlighting
@@ -86,10 +104,13 @@ vmap <C-e> $
 imap <C-a> <esc>0i
 nmap <C-e> 0
 
-" Map A to select all text
+" Map Shift-A to select all text
 nmap A ggVG
 
 " CTRL-C to copy (visual mode)
+" vmap <C-c> "+y
+"<Ctrl-C> -- copy (goto visual mode and copy)
+imap <C-C> <C-O>vgG
 vmap <C-c> "+y
 
 " CTRL-X to cut (visual mode)
@@ -111,7 +132,7 @@ vnoremap <C-S> <C-C>:update<CR>
 inoremap <C-S> <C-O>:update<CR>
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" => Navigation / Arrow Key Mappings
+" => Cursor Navigation / Arrow Key Mappings
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Enable full mouse support (even in a terminal)
 set mouse=a
