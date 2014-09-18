@@ -1,3 +1,21 @@
+
+execute pathogen#infect()
+
+filetype plugin indent on
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" tmux hack to allow ctrl-arrow passthrough in vim
+" http://superuser.com/questions/401926/how-to-get-shiftarrows-and-ctrlarrows-working-in-vim-in-tmux
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+if &term =~ '^screen'
+    " tmux will send xterm-style keys when its xterm-keys option is on
+    execute "set <xUp>=\e[1;*A"
+    execute "set <xDown>=\e[1;*B"
+    execute "set <xRight>=\e[1;*C"
+    execute "set <xLeft>=\e[1;*D"
+endif
+
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => VIM user interface
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -15,11 +33,15 @@ endif
 " => netrw interface
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-" have netrw file browser in tree mode
-let g:netrw_liststyle= 3
-" Open new files in a new tab when pressing <Enter>
-let g:netrw_browse_split = 4
-let g:netrw_altv = 1
+" have netrw file browser in tree mode (Buggy)
+" let g:netrw_liststyle= 3
+" default mode
+let g:netrw_liststyle= 1
+
+" Open new files in a new tab when pressing <Enter> (Buggy)
+let g:netrw_browse_split = 3
+" let g:netrw_altv = 1
+
 " Netrw previews should be around 30 lines 
 let g:netrw_winsize=50
 
@@ -183,7 +205,6 @@ endif
 " Use <leader-key>ig to activate tab guides
 let g:indent_guides_start_level = 2
 let g:indent_guides_guide_size = 1
-
 
 "set lbr
 "set tw=500
