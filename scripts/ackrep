@@ -53,5 +53,5 @@ end
 
 # Print command that will carry out changes
 puts "Run the following command to recursively replace values matching: '#{pattern.red}'"
-puts  "ack -Q --print0 -l '#{pattern}' #{path} | xargs -0 sed -i 's/#{pattern}/some_val/g'"
+puts  "ack -Q --print0 -l '#{pattern}' #{path} | xargs -0 sed -i 's/#{pattern}/#{pattern}/g'"
 
