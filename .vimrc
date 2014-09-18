@@ -114,6 +114,12 @@ set showmatch "Show matching brackets when text indicator is over them
 
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Sudo Settings
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Allow saving of files as sudo when I forgot to start vim using sudo.
+cmap w!! w !sudo tee > /dev/null %
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Copy Paste Settings
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
