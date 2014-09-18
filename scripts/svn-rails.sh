@@ -1,13 +1,18 @@
 #! /bin/bash --
+
+mkdir ./public/assets
+
 svn add ./*
-svn --force remove log/*
-svn --force remove tmp/*
-svn --force remove db/*.sqlite3
-svn --force remove config/*.yml
-svn --force remove public/assets/*
-svn --force remove *.swp
-svn --force remove *.swo
-svn --force remove *.swn
+svn delete --keep-local log/*
+svn delete --keep-local tmp/*
+svn delete --keep-local db/*.sqlite3
+svn delete --keep-local db/seeds/*.sql
+svn delete --keep-local config/*.yml
+svn delete --keep-local public/assets/*
+svn delete --keep-local *.swp
+svn delete --keep-local *.swo
+svn delete --keep-local *.swn
+svn delete --keep-local *.sql
 
 svn update log/
 svn update tmp/
@@ -20,11 +25,36 @@ svn update public/assets
 
 svn propset svn:ignore '*' tmp/
 svn propset svn:ignore '*.yml' config/
-svn propset svn:ignore '*.log' log/
-svn propset svn:ignore '*.sqlite3' db/
-svn propset svn:ignore '*' public/assets/
-svn propset svn:ignore '*.swp'
-svn propset svn:ignore '*.swo'
-svn propset svn:ignore '*.swn'
+svn propset svn:ignore '*' log/
 
-echo svn commit -m "Initial commit: svn-rails script"
+[ -d ./db/data ] && svn propset --recursive svn:ignore \
+    '*.csv
+    *.xml
+    *.xls
+    *.xlsx
+    *.swp
+    *.sql
+    *.sqlite3
+    *.yml
+    log
+    match
+    output' \
+    ./db/data
+
+svn propset svn:ignore \
+    '*.csv
+    *.xml
+    *.xls
+    *.xlsx
+    *.swp
+    *.sql
+    *.sqlite3
+    *.yml' \
+    ./db
+
+svn propset svn:ignore '*' public/assets/
+svn propset --recursive svn:ignore '*.swp' \ 
+    '*.swo' \
+    '*.swn' \
+    ./
+
