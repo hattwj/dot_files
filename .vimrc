@@ -49,9 +49,7 @@ let g:netrw_winsize=50
 " Main interface
 """
 
-" Display the name of the current file
-set laststatus=2
-set statusline=%f "tail of the filename
+
 
 " Use 256 colors for colorscheme
 set t_Co=256
@@ -236,6 +234,10 @@ nnoremap \s ea<C-X><C-S>
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Vim tab guides
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+" Display the Full name of the current file
+set statusline+=%F " filename
+set laststatus=2
 
 " No sound on errors
 "set noerrorbells
