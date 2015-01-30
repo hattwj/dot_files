@@ -239,60 +239,8 @@ nnoremap \s ea<C-X><C-S>
 set statusline+=%F " filename
 set laststatus=2
 
-" No sound on errors
-"set noerrorbells
-"set novisualbell
-"set t_vb=
-"set tm=500
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Fuzzy searching plugin
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+set runtimepath^=~/.vim/bundle/ctrlp.vim
 
-"" line numbering
-"set number
-"
-"" map CTRL-E to end-of-line (insert and normal mode)
-"imap <C-e> <esc>$i<right>
-"nmap <C-e> $
-"vmap <C-e> $
-"" map CTRL-A to beginning-of-line (insert and normal mode)
-"imap <C-a> <esc>0i
-"nmap <C-e> 0
-"" CTRL-C to copy (visual mode)
-"vmap <C-c> y
-"" CTRL-X to cut (visual mode)
-"vmap <C-x> xi
-"
-"" CTRL-V to paste (insert mode)
-"imap <C-v> <esc>Pi
-"
-"" Use CTRL-S for saving, also in Insert mode
-"noremap <C-S> :update<CR>
-"vnoremap <C-S> <C-C>:update<CR>
-"inoremap <C-S> <C-O>:update<CR>
-""Map Control arrow L/R to prev next tabs
-"map <C-Left> :tabp<enter>
-"map <C-Right> :tabn<enter>
-"" Allow the arrow keys to wrap around lines
-"set whichwrap+=<,>,h,l,[,]
-"
-"" SOLARIS ONLY STUFF
-"" Specifically enable syntax highlighting
-"syntax enable
-"" Fix backspaces in Solaris
-"set bs=2
-"
-"" Disable linewrapping
-"set nowrap
-"
-"" Increase Command History Size
-"set history=7000
-"
-"" Highlight search matches
-"set hlsearch
-" Disable highlight when pressing escape
-"noremap <Space> :let @/ = "" <CR> 
-"
-" Map pageup and page down keys
-"map <PageUp> <C-U>
-"map <PageDown> <C-D>
-"imap <PageUp> <C-O><C-U>
-"imap <PageDown> <C-O><C-D>
-"set nostartofline
