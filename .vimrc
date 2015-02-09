@@ -242,5 +242,13 @@ set laststatus=2
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Fuzzy searching plugin
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" add to runtime
 set runtimepath^=~/.vim/bundle/ctrlp.vim
-
+" filters
+let g:ctrlp_custom_ignore = '\v[\/]\.(git|hg|svn)$'
+let g:ctrlp_custom_ignore = '\vpublic[\/](surveys)$'
+" open new files in a new tab
+let g:ctrlp_prompt_mappings = {
+  \ 'AcceptSelection("e")': [],
+  \ 'AcceptSelection("t")': ['<cr>', '<c-m>'],
+  \ }
