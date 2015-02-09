@@ -244,8 +244,9 @@ set laststatus=2
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " add to runtime
 set runtimepath^=~/.vim/bundle/ctrlp.vim
-" filters
-let g:ctrlp_custom_ignore = '\v[\/]\.(git|hg|svn)$'
+" Automatically use git for file ignores
+let g:ctrlp_user_command = ['.git/', 'git --git-dir=%s/.git ls-files -oc --exclude-standard']
+" Also ignore this if present
 let g:ctrlp_custom_ignore = '\vpublic[\/](surveys)$'
 " open new files in a new tab
 let g:ctrlp_prompt_mappings = {
