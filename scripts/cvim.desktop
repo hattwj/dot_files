@@ -1,0 +1,12 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Vim (Console)
+Comment=Edit text files in a console using Vim
+Exec=/usr/local/bin/cvim %U
+Terminal=false
+Type=Application
+Icon=/usr/src/vim/runtime/vim48x48.xpm
+Categories=Application;Utility;TextEditor;
+MimeType=text/plain;x-scheme-handler/vim;
+StartupNotify=true
+StartupWMClass=CVIM

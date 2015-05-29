@@ -117,5 +117,5 @@ if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
 fi
 
 DIR="$( cd "$( dirname "`readlink -f ${BASH_SOURCE[0]}`" )" && pwd -P )"
-PATH="/var/lib/gems/1.8/bin/:$PATH:$DIR/scripts"
+PATH="$PATH:$DIR/scripts"
 

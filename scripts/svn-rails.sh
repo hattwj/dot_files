@@ -1,8 +1,7 @@
 #! /bin/bash --
 
-mkdir ./public/assets
+mkdir -p ./public/assets
 
-svn add ./*
 svn delete --keep-local log/*
 svn delete --keep-local tmp/*
 svn delete --keep-local db/*.sqlite3
@@ -23,38 +22,47 @@ svn update public/assets
 # ignore test/dummy/tmp if it exists - rails engines
 [ -d "test/dummy/tmp" ] && svn --force remove test/dummy/tmp/* && svn propset svn:ignore '*' test/dummy/tmp
 
-svn propset svn:ignore '*' tmp/
-svn propset svn:ignore '*.yml' config/
 svn propset svn:ignore '*' log/
+svn propset svn:ignore '*' tmp/
+[ -d "public/assets" ] && svn propset svn:ignore '*' public/assets/
+[ -d "public/surveys/application/config" ] && svn propset svn:ignore 'config.php' public/surveys/application/config
 
-[ -d ./db/data ] && svn propset --recursive svn:ignore \
-    '*.csv
-    *.xml
-    *.xls
-    *.xlsx
-    *.swp
-    *.sql
-    *.sqlite3
-    *.yml
-    log
-    match
-    output' \
-    ./db/data
+svn propset --recursive svn:ignore '*.yml
+*.swp
+*.swo
+*.swn' \
+config/
 
-svn propset svn:ignore \
-    '*.csv
-    *.xml
-    *.xls
-    *.xlsx
-    *.swp
-    *.sql
-    *.sqlite3
-    *.yml' \
-    ./db
+svn propset --recursive svn:ignore '*.yml
+*.swp
+*.swo
+*.swn' \
+app/
 
-svn propset svn:ignore '*' public/assets/
-svn propset --recursive svn:ignore '*.swp' \ 
-    '*.swo' \
-    '*.swn' \
-    ./
+svn propset svn:ignore '*.csv
+*.xml
+*.xls
+*.xlsx
+*.swp
+*.swo
+*.swn
+*.sql
+*.sqlite3
+*.yml' \
+./db
+
+[ -d ./db/data ] && svn propset --recursive svn:ignore '*.csv
+*.xml
+*.xls
+*.xlsx
+*.swp
+*.swo
+*.swn
+*.sql
+*.sqlite3
+*.yml
+log
+match
+output' \
+./db/data
 

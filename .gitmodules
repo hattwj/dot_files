@@ -19,3 +19,6 @@
 [submodule ".vim/bundle/ctrlp_vim"]
 	path = .vim/bundle/ctrlp_vim
 	url = https://github.com/kien/ctrlp.vim
+[submodule ".vim/bundle/vim-vinegar"]
+	path = .vim/bundle/vim-vinegar
+	url = git://github.com/tpope/vim-vinegar.git
