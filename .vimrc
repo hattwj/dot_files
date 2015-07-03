@@ -1,3 +1,5 @@
+scriptencoding utf-8
+set encoding=utf-8
 
 execute pathogen#infect()
 
@@ -171,7 +173,7 @@ map <C-Right> :tabn<enter>
 set whichwrap+=<,>,h,l,[,]
 
 " Increase Command History Size
-set history=17000
+set history=10000
 
 " Highlight search matches
 set hlsearch
