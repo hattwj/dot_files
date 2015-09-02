@@ -5,10 +5,38 @@ export PAGER=less
 export LESS="-iMSx4 -FX"
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+## 
+# Plan:
+# Remove period (.) from all files in dot_files
+# Add scripts directory to PATH
+# Create env file for paths and constants
+# Add ack to path
+# Rework bash file naming conventions
+## Eg.
+# lsb_release -si       # OS name
+# lsb_release -sr       # OS version
+# uname -m              # CPU Architecture
+# ./bashrc_aliases
+# ./bashrc_$OSName
+# ./bashrc_$OSName_$OSVer
+# ./bashrc_$OSName_$ARCH
+# ./bashrc_$hostname_md5
+
+## Hidden hostname?
+# Hard to manage
+# Easy to hack
+# Not worth it
+# hostname_md5=`lsb_release -si`-`hostname`-`uname -m` | md5sum | awk '{print $1}'
+# Touch file if it does not exist
+
+
 pf1="$DIR/.bashrc_"`uname`
 pf2="$DIR/.bashrc_"`uname`'_'`hostname`
 
 # custom tweaks not meant to be included in version control
+# Create file if missing
+# pf3="$DIR/tmp/bash_custom"
 pf3="$DIR/.bash_custom"
 
 # Make sure we include .inputrc
