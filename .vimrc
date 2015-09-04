@@ -258,7 +258,11 @@ let g:ctrlp_prompt_mappings = {
   \ }
 
 
+" Transparent background colors
 hi Normal ctermbg=none
 highlight NonText ctermbg=none
 
+" 80 character line - black
+set cc=80
+hi ColorColumn ctermbg=black guibg=black
 
