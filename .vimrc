@@ -31,6 +31,7 @@ elseif !has("gui_running")
     " This is console Vim.
 endif
 
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => netrw interface
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -255,3 +256,9 @@ let g:ctrlp_prompt_mappings = {
   \ 'AcceptSelection("e")': [],
   \ 'AcceptSelection("t")': ['<cr>', '<c-m>'],
   \ }
+
+
+hi Normal ctermbg=none
+highlight NonText ctermbg=none
+
+
