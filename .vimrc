@@ -199,6 +199,7 @@ set tabstop=4
 set smarttab
 set smartindent
 set autoindent
+autocmd Filetype ruby setlocal ts=2 sts=2 sw=2
 
 " Set noexpandtab for makefiles, do not expand tabs to spaces for make files
 " Makefiles will choke if they contain a line that starts with a tab
