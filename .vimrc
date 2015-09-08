@@ -230,7 +230,7 @@ imap <S-Tab> <C-o><<
 " OMNI COMPLETE
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""i
 " use CTRL-XO to enable
-set omnifunc=csscomplete#CompleteCSS
+"set omnifunc=csscomplete#CompleteCSS
 " use super-tab to enable
 let g:SuperTabDefaultCompletionType = "<C-X><C-O>"
 " Let supertab decide which contect to use
