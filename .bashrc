@@ -37,7 +37,7 @@ pf2="$DIR/.bashrc_"`uname`'_'`hostname`
 # custom tweaks not meant to be included in version control
 # Create file if missing
 # pf3="$DIR/tmp/bash_custom"
-pf3="$DIR/.bash_custom"
+pf3="~/.bash_custom"
 
 # Make sure we include .inputrc
 [[ -f "~/.inputrc" ]] && export INPUTRC="~/.inputrc"
@@ -47,6 +47,9 @@ pf3="$DIR/.bash_custom"
               
 # Load the right bashrc for this machine
 [[ -f $pf2 ]] && source $pf2
+
+# Load custom bash script
+[[ -f $pf3 ]] && source $pf3
 
 # Not entirely sure, but I dont think this is needed
 #PATH=$PATH:$HOME/.rvm/bin # Add RVM to PATH for scripting

@@ -19,6 +19,12 @@ LOG_FILE="$SCRIPT_DIR/install.log"
 # what bash files will this computer use?
 pf1=".bashrc_"`uname`
 pf2=".bashrc_"`uname`'_'`hostname`
+pf3="$HOME/.bash_custom"
+
+if [ ! -f "$pf3" ]; then
+    touch $pf3
+    echo "[created]    $pf3"
+fi
 
 # create backup dir
 if [ ! -d "$SCRIPT_DIR/backups" ]; then
