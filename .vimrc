@@ -117,7 +117,10 @@ set showmatch "Show matching brackets when text indicator is over them
 " Sudo Settings
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Allow saving of files as sudo when I forgot to start vim using sudo.
-cmap w!! w !sudo tee > /dev/null %
+
+
+" Fix airline to truncate on large branches
+let g:airline#extensions#branch#displayed_head_limit = 10
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Copy Paste Settings
