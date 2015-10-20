@@ -1,15 +1,10 @@
-pf0="$HOME/.bashrc"
-pf1="$HOME/.profile"
+pf1="$HOME/.bashrc"
+pf3="$HOME/.bash_custom"
 
 # Load the right bashrc for this OS
-if [ -f $pf0 ] ; then 
-    source $pf0
-fi
+#[[ -f $pf1 ]] && source $pf1
 
-# Load .profile if it exists
-if [ -f $pf1 ] ; then 
-    source $pf1
-fi
-
+# Load custom bash script
+[[ -f $pf3 ]] && source $pf3
 
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*

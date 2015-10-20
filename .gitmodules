@@ -28,3 +28,6 @@
 [submodule ".vim/bundle/vim-ruby"]
 	path = .vim/bundle/vim-ruby
 	url = git://github.com/vim-ruby/vim-ruby.git
+[submodule "sub-modules/powerline-shell"]
+	path = sub-modules/powerline-shell
+	url = https://github.com/milkbikis/powerline-shell
