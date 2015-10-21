@@ -263,6 +263,7 @@ let g:ctrlp_match_window = 'bottom,order:btt,min:5,max:10,results:100'
 let g:ctrlp_regexp = 1                   " Regex matching
 let g:ctrlp_by_filename=0                " 0 for full_path
 let g:ctrlp_reuse_window = 'netrw\|help\|quickfix' " Avoid clobbering these windows when using ctrlP
+let g:ctrlp_prompt_mappings = { 'PrtAdd(".*")': ['<space>'] } " ctrlP use space as a token separator
 " Also ignore this if present
 let g:ctrlp_custom_ignore = '\vpublic[\/](surveys)$'
 " open new files in a new tab
