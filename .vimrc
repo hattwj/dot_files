@@ -258,6 +258,10 @@ set laststatus=2
 set runtimepath^=~/.vim/bundle/ctrlp.vim
 " Automatically use git for file ignores
 let g:ctrlp_user_command = ['.git/', 'git --git-dir=%s/.git ls-files -oc --exclude-standard']
+"let g:ctrlp_match_window = 'results:100' " List at most 100 files
+let g:ctrlp_match_window = 'bottom,order:btt,min:5,max:10,results:100'
+let g:ctrlp_regexp = 1                   " Regex matching
+let g:ctrlp_by_filename=0                " 0 for full_path
 " Also ignore this if present
 let g:ctrlp_custom_ignore = '\vpublic[\/](surveys)$'
 " open new files in a new tab
