@@ -35,7 +35,7 @@ fi
 # Check and remove old log file (if exists)
 if [ -f "$SCRIPT_DIR/install.log"  ]; then
     echo "[deleted] $LOG_FILE"
-    rm "$LOG_FILE"
+    rm -f "$LOG_FILE"
 fi
 
 # create backups and generate symlinks
@@ -79,7 +79,7 @@ do
     # Delete original file
     if  [ -f "$HOME/$file" ] || [ -L "$HOME/$file" ] ; then
         echolog "[deleted]   $HOME/$file"
-        rm "$HOME/$file"
+        rm -f "$HOME/$file"
     fi
 
     # Link new file
