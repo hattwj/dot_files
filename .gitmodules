@@ -31,3 +31,6 @@
 [submodule "sub-modules/powerline-shell"]
 	path = sub-modules/powerline-shell
 	url = https://github.com/milkbikis/powerline-shell
+[submodule ".vim/bundle/vim-go"]
+	path = .vim/bundle/vim-go
+	url = https://github.com/fatih/vim-go.git
