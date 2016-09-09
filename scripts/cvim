@@ -1,20 +1,22 @@
-#! /home/hattb/.rvm/bin/rvm-auto-ruby
+#! /usr/bin/env ruby
+
 require 'uri'
 require 'cgi'
 
 full_path = ARGV[0]
 
-if full_path
-  uri = URI::parse(full_path)
-  vim_params = "--remote-tab-silent"
+exit unless full_path
 
-  if uri.query
-    params = CGI::parse(uri.query)
-    line = params["line"][0]
-  end
+uri = URI::parse(full_path)
 
-  vim_params << " +#{line}" if line
-  vim_params << %Q[ "#{uri.path}"]
-end
+exit unless uri.query
 
-`gnome-terminal -x vim --servername VIM #{vim_params}`
+params = CGI::parse(uri.query)
+file = params['url'].first.sub('file://','')
+exit unless file && File.exist?(file)
+
+line = params["line"][0]
+vim_params = file 
+vim_params << " +#{line.to_i}" if line
+
+`gnome-terminal -x vim #{vim_params}`

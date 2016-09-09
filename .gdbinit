@@ -1,6 +1,5 @@
 define redirect_stdout
-  call rb_eval_string("$_old_stdout, $stdout = $stdout,
-    File.open('/tmp/ruby-debug.' + Process.pid.to_s, 'a'); $stdout.sync = true")
+  call rb_eval_string("$_old_stdout, $stdout = $stdout, File.open('/tmp/ruby-debug.' + Process.pid.to_s, 'a'); $stdout.sync = true")
 end
 
 define evalr
