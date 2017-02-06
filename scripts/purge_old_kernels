@@ -1,0 +1,22 @@
+#!/usr/bin/env ruby
+require 'pp'
+
+#kernels_cmd="$(dpkg --list | grep linux-image | grep `uname -r` -v|cut -d ' ' -f 3|grep image-generic -v);"
+
+kernels = %x{dpkg --list | grep linux-image | grep `uname -r` -v|cut -d ' ' -f 3|grep image-generic -v}.split("\n")
+k_delete = []
+
+puts "Current Kernel:"
+puts `uname -r`
+puts ''
+puts 'Other installed Kernels:'
+pp kernels
+puts ''
+kernels.each do |kern|
+  puts "Pretending to delete: #{kern}"
+  puts "Are you sure? (Y/n)"
+  next unless gets.chomp.match /y|Y/
+  k_delete.push kern
+end
+
+puts "sudo apt purge #{k_delete.join(' ')}"
