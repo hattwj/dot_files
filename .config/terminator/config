@@ -1,0 +1,96 @@
+[global_config]
+  handle_size = 1
+  title_transmit_bg_color = "#006906"
+[keybindings]
+[layouts]
+  [[default]]
+    [[[child0]]]
+      fullscreen = False
+      last_active_term = 4fe2e7f7-620d-4a0b-8ffd-5250a5bea37d
+      last_active_window = True
+      maximised = True
+      order = 0
+      parent = ""
+      position = 3585:24
+      size = 1855, 1056
+      type = Window
+    [[[child1]]]
+      order = 0
+      parent = child0
+      position = 286
+      ratio = 0.271306818182
+      type = VPaned
+    [[[child2]]]
+      order = 0
+      parent = child1
+      position = 927
+      ratio = 0.5
+      type = HPaned
+    [[[child5]]]
+      order = 1
+      parent = child1
+      position = 926
+      ratio = 0.499460916442
+      type = HPaned
+    [[[child7]]]
+      order = 1
+      parent = child5
+      position = 198
+      ratio = 0.258127438231
+      type = VPaned
+    [[[child9]]]
+      order = 1
+      parent = child7
+      position = 338
+      ratio = 0.593859649123
+      type = VPaned
+    [[[terminal10]]]
+      group = Beta
+      order = 0
+      parent = child9
+      profile = default
+      type = Terminal
+      uuid = 592df2a7-1589-445d-8815-646714c4eb41
+    [[[terminal11]]]
+      group = Beta
+      order = 1
+      parent = child9
+      profile = default
+      type = Terminal
+      uuid = 11315fa1-32ea-4e80-8cda-340136d87f10
+    [[[terminal3]]]
+      group = Alpha
+      order = 0
+      parent = child2
+      profile = default
+      type = Terminal
+      uuid = c707b6d3-1eb3-4217-a5c9-2fd4cf7ec0d7
+    [[[terminal4]]]
+      order = 1
+      parent = child2
+      profile = default
+      type = Terminal
+      uuid = 6a196847-8eb2-43ec-aab4-e19deb0f4f75
+    [[[terminal6]]]
+      group = Beta
+      order = 0
+      parent = child5
+      profile = default
+      type = Terminal
+      uuid = 4fe2e7f7-620d-4a0b-8ffd-5250a5bea37d
+    [[[terminal8]]]
+      group = Beta
+      order = 0
+      parent = child7
+      profile = default
+      type = Terminal
+      uuid = 9cfa0fd7-4053-43ac-8edc-6a43846a0ffa
+[plugins]
+[profiles]
+  [[default]]
+    background_darkness = 0.9
+    background_image = None
+    background_type = transparent
+    login_shell = True
+    scrollback_lines = 5000
+    update_records = False
