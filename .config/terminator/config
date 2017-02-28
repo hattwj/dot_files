@@ -1,5 +1,5 @@
 [global_config]
-  handle_size = 1
+  handle_size = 2
   title_transmit_bg_color = "#006906"
 [keybindings]
 [layouts]
