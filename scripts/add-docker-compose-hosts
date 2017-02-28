@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+sudo sed -i -e "/#docker-temp/d" /etc/hosts
+
+ADDR=$(docker-compose ps -q | xargs --no-run-if-empty -I --- docker exec --- hostname -I| sed -e 's/ /-/')
+NAMES=$(docker-compose ps -q|xargs --no-run-if-empty docker inspect -f '{{ .Name }}' | sed -e 's/\///' | sed -e 's/ /-/')
+
+if [ -z "$ADDR" ]; then
+    echo no addresses
+    exit
+fi
+if [ -z "$NAMES" ]; then
+    echo no names
+    exit
+fi
+
+LIST=$(paste <(echo "$ADDR") <(echo "$NAMES") --delimiters '-')
+LIST=$(echo $LIST | sed -e "s/ /\n/g" | sed -e "s/-/ /g" | sed -e "s/$/ #docker-temp/")
+
+sudo bash -c "echo \"$LIST\" >> /etc/hosts"
+

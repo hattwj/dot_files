@@ -205,6 +205,7 @@ set autoindent
 " Filetype extensions
 set nocompatible
 autocmd Filetype ruby setlocal ts=2 sts=2 sw=2
+autocmd Filetype javascript setlocal ts=2 sts=2 sw=2
 filetype on
 filetype plugin indent on
 filetype indent on

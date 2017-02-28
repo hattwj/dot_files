@@ -67,7 +67,8 @@ do
     fi
 done
 
-declare -a file_arr=('.ackrc' '.tmux.conf' '.bash_aliases' '.bash_profile' '.bashrc' '.inputrc' '.psqlrc' '.vimrc' '.gdbinit' "$pf1" "$pf2")
+declare -a file_arr=('.ackrc' '.tmux.conf' '.bash_aliases' '.bash_profile' \
+    '.bashrc' '.inputrc' '.psqlrc' '.vimrc' '.gdbinit' "$pf1" "$pf2")
 for file in "${file_arr[@]}"
 do
     # See if file exists in dot_files
@@ -93,5 +94,11 @@ do
     ln -s "$SCRIPT_DIR/$file" "$HOME/$file"
 
 done
+
+# Parse command line options
+if [[ "$@" == "--extras" ]]
+then
+    $SCRIPT_DIR/install_extras
+fi
 
 cd $OLD_DIR
