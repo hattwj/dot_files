@@ -22,26 +22,7 @@ if [ ! -d "$SCRIPT_DIR/backups" ]; then
     exit
 fi
 
-echo "Restoring backups: $SCRIPT_DIR/backups"
-cp -R "$SCRIPT_DIR/backups/" "$HOME/$dir/"    
-
-
-declare -a file_arr=('.bash_profile' '.bashrc' '.inputrc' '.psqlrc' '.vimrc' "$pf1" "$pf2")
-for file in "${file_arr[@]}"
-do
-    if [ ! -L "$HOME/$file" ]; then
-        echo "Missing Link: $file"
-        continue
-    fi
-
-    echo "Removing Link: $HOME/$file"  
-    rm "$HOME/$file"
-
-done
-
-echo "Removing: $LOG_FILE"
-rm "$LOG_FILE"
-
+# Todo: parse install.log and uninstall that way
 echo Done with uninstall
 
 cd $OLD_DIR

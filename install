@@ -38,8 +38,14 @@ if [ -f "$SCRIPT_DIR/install.log"  ]; then
     rm -f "$LOG_FILE"
 fi
 
+# Create .config directory if it does not exist
+if [ ! -d "$HOME/.config" ]; then
+    echolog "[created]    $HOME/.config"
+    mkdir $HOME/.config
+fi
+
 # create backups and generate symlinks
-declare -a dir_arr=('.vim')
+declare -a dir_arr=('.vim .config/terminator')
 for dir in "${dir_arr[@]}"
 do
     # Save directory if it is not a symlink

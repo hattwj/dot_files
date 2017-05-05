@@ -5,7 +5,8 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 pushd $SCRIPT_DIR
     # Install vim plugins / submodules
-    git submodule init --recursive
-    python ./.vim/bundle/YouCompleteMe/install.py --all
+    git submodule update --init --recursive
+    python ./extras/YouCompleteMe/install.py --all
+    ln -s $(realpath ./extras/YouCompleteMe) ./.vim/bundle/YouCompleteMe
 popd
 
