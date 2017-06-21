@@ -1,0 +1,29 @@
+#!/bin/bash -
+
+RESET="\[\033[0m\]"
+RED="\[\033[0;31m\]"
+C_RED=`echo -e "\e[38;5;1m"`
+C_GREEN=`echo -e "\e[38;5;2m"`
+C_WHITE=`echo -e "\e[38;5;15m"`
+
+C_USER=`echo -e "\e[38;5;120m\u"`
+C_AT="`echo -e "\e[38;5;121m"`@"
+C_HOSTNAME=`echo -e "\e[38;5;122m\h"`
+C_CWD=`echo -e "\e[38;5;152m\w"`
+
+PS_LINE=`printf -- '  %.0s' {1..200}`
+function parse_git_branch {
+  PS_BRANCH=''
+  PS_COLOR=''
+  PS_FILL=${PS_LINE:0:$COLUMNS}
+  ref=$(git symbolic-ref HEAD 2> /dev/null) || return
+  color=$(git diff --exit-code --quiet && (git diff --cached --exit-code --quiet && echo -e $C_WHITE || echo -e $C_GREEN) || echo -e $C_RED)
+  PS_BRANCH="${color}(${ref#refs/heads/}) "
+}
+
+PROMPT_COMMAND=parse_git_branch
+PS_INFO="${C_USER}${C_AT}$C_HOSTNAME$RESET:${C_CWD}"
+#PS_TIME="\[\033[\$((COLUMNS-10))G\] $RED[\t]"
+PS_TIME="\[\033[\$((COLUMNS-10))G\]"
+PS_GIT="\$PS_COLOR\$PS_BRANCH"
+export PS1="\${PS_FILL}\[\033[0G\]${PS_INFO} ${PS_GIT}${PS_TIME}\n${RESET}\$ "
