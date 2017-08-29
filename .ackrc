@@ -1,3 +1,2 @@
 --ignore-file=ext:log
 --ignore-dir=cache   
---ignore-dir=assets  
