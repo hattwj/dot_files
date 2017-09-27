@@ -58,7 +58,10 @@ set t_Co=256
 ":colorscheme vibrantink
 ":colorscheme vividchalk
 ":colorscheme wombat
-:colorscheme calmar256-dark
+":colorscheme calmar256-dark
+":colorscheme monokai
+set background=dark
+:colorscheme PaperColor
 
 " Enable syntax highlighting
 syntax enable
