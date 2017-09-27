@@ -122,8 +122,28 @@ set showmatch "Show matching brackets when text indicator is over them
 " Allow saving of files as sudo when I forgot to start vim using sudo.
 
 
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Vim-Airline settings
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Fix airline to truncate on large branches
 let g:airline#extensions#branch#displayed_head_limit = 10
+let g:airline_powerline_fonts = 1
+let g:airline_theme='molokai'
+""
+" Fallbacks if you don't have a patched font
+" unicode symbols
+"let g:airline_left_sep = '»'
+"let g:airline_left_sep = '▶'
+"let g:airline_right_sep = '«'
+"let g:airline_right_sep = '◀'
+"let g:airline_symbols.linenr = '␊'
+"let g:airline_symbols.linenr = '␤'
+"let g:airline_symbols.linenr = '¶'
+"let g:airline_symbols.branch = '⎇'
+"let g:airline_symbols.paste = 'ρ'
+"let g:airline_symbols.paste = 'Þ'
+"let g:airline_symbols.paste = '∥'
+"let g:airline_symbols.whitespace = 'Ξ'
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Copy Paste Settings
@@ -304,4 +324,3 @@ match ExtraWhitespace /\s\+$/
 autocmd BufWinEnter * match ExtraWhitespace /\s\+$/
 autocmd InsertEnter * match ExtraWhitespace /\s\+\%#\@<!$/
 autocmd InsertLeave * match ExtraWhitespace /\s\+$/
-
