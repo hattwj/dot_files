@@ -16,9 +16,6 @@
 [submodule ".vim/bundle/vim-airline"]
 	path = .vim/bundle/vim-airline
 	url = https://github.com/bling/vim-airline
-[submodule ".vim/bundle/ctrlp_vim"]
-	path = .vim/bundle/ctrlp_vim
-	url = https://github.com/kien/ctrlp.vim
 [submodule ".vim/bundle/vim-vinegar"]
 	path = .vim/bundle/vim-vinegar
 	url = git://github.com/tpope/vim-vinegar.git
@@ -43,3 +40,12 @@
 [submodule "sub-modules/powerline-fonts"]
 	path = sub-modules/powerline-fonts
 	url = https://github.com/powerline/fonts.git
+[submodule ".vim/bundle/vim-javascript"]
+	path = .vim/bundle/vim-javascript
+	url = https://github.com/pangloss/vim-javascript.git
+[submodule ".vim/bundle/vim-jsx"]
+	path = .vim/bundle/vim-jsx
+	url = https://github.com/mxw/vim-jsx.git
+[submodule ".vim/bundle/ctrlp.vim"]
+	path = .vim/bundle/ctrlp.vim
+	url = https://github.com/ctrlpvim/ctrlp.vim.git

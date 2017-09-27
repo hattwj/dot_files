@@ -58,7 +58,10 @@ set t_Co=256
 ":colorscheme vibrantink
 ":colorscheme vividchalk
 ":colorscheme wombat
-:colorscheme calmar256-dark
+":colorscheme calmar256-dark
+":colorscheme monokai
+set background=dark
+:colorscheme PaperColor
 
 " Enable syntax highlighting
 syntax enable
@@ -284,4 +287,21 @@ highlight NonText ctermbg=none
 " 80 character line - black
 set cc=80
 hi ColorColumn ctermbg=black guibg=black
+
+"""
+" Strip trailing whitespaces on the following file types
+fun! <SID>StripTrailingWhitespaces()
+    let l = line(".")
+    let c = col(".")
+    %s/\s\+$//e
+    call cursor(l, c)
+endfun
+" Automatically strip on save
+autocmd FileType c,cpp,java,php,ruby,python autocmd BufWritePre <buffer> :call <SID>StripTrailingWhitespaces()
+" Highlight trailing whitespace
+highlight ExtraWhitespace ctermbg=red guibg=red
+match ExtraWhitespace /\s\+$/
+autocmd BufWinEnter * match ExtraWhitespace /\s\+$/
+autocmd InsertEnter * match ExtraWhitespace /\s\+\%#\@<!$/
+autocmd InsertLeave * match ExtraWhitespace /\s\+$/
 
