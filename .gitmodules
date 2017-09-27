@@ -40,3 +40,6 @@
 [submodule "extras/YouCompleteMe"]
 	path = extras/YouCompleteMe
 	url = https://github.com/Valloric/YouCompleteMe.git
+[submodule "sub-modules/powerline-fonts"]
+	path = sub-modules/powerline-fonts
+	url = https://github.com/powerline/fonts.git
