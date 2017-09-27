@@ -45,7 +45,7 @@ if [ ! -d "$HOME/.config" ]; then
 fi
 
 # create backups and generate symlinks
-declare -a dir_arr=('.vim .config/terminator')
+declare -a dir_arr=('.vim' '.config/terminator')
 for dir in "${dir_arr[@]}"
 do
     # Save directory if it is not a symlink
