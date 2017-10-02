@@ -324,3 +324,10 @@ match ExtraWhitespace /\s\+$/
 autocmd BufWinEnter * match ExtraWhitespace /\s\+$/
 autocmd InsertEnter * match ExtraWhitespace /\s\+\%#\@<!$/
 autocmd InsertLeave * match ExtraWhitespace /\s\+$/
+
+" Vim ALE Linter Config
+
+" Always show linter gutter
+let g:ale_sign_column_always = 1
+" Set this. Airline will handle the rest.
+let g:airline#extensions#ale#enabled = 1
