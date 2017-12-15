@@ -219,8 +219,8 @@ set nostartofline
 " => Text, tab and indent related
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 set expandtab
-set shiftwidth=4
-set tabstop=4
+set shiftwidth=2
+set tabstop=2
 set smarttab
 set smartindent
 set autoindent
@@ -229,12 +229,26 @@ set autoindent
 set nocompatible
 autocmd Filetype ruby setlocal ts=2 sts=2 sw=2
 autocmd Filetype javascript setlocal ts=2 sts=2 sw=2
+autocmd FileType json set noexpandtab tabstop=2 shiftwidth=2 softtabstop=2
 filetype on
 filetype plugin indent on
 filetype indent on
 
+""
+" Make tabs visible
+""
+"Invisible character colors 
+highlight NonText guifg=#4a4a59
+highlight SpecialKey guifg=#4a4a59
+" show tabs as triangle
+set listchars=tab:▸\ ,
+" Default to show-tabs=on
+set list
+" Shortcut to rapidly toggle `set list`
+nmap <leader>l :set list!<CR>
+
 " Set noexpandtab for makefiles, do not expand tabs to spaces for make files
-" Makefiles will choke if they contain a line that starts with a tab
+" Makefiles will choke if they contain a line that starts with a space
 let _curfile = expand("%:t") 
 if _curfile =~ "Makefile" || _curfile =~ "makefile" || _curfile =~ ".*\.mk"
     set noexpandtab
@@ -317,7 +331,7 @@ fun! <SID>StripTrailingWhitespaces()
     call cursor(l, c)
 endfun
 " Automatically strip on save
-autocmd FileType c,cpp,java,php,ruby,python autocmd BufWritePre <buffer> :call <SID>StripTrailingWhitespaces()
+autocmd FileType javascript,json,css,html,c,cpp,java,php,ruby,python autocmd BufWritePre <buffer> :call <SID>StripTrailingWhitespaces()
 " Highlight trailing whitespace
 highlight ExtraWhitespace ctermbg=red guibg=red
 match ExtraWhitespace /\s\+$/
