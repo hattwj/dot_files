@@ -28,3 +28,18 @@ if [ -x /usr/bin/dircolors ]; then
     alias egrep='egrep --color=auto'
 fi
 
+function rspec-grouped-failures()
+{
+  # Call rspec and forward parameters to rspec
+  # get report on failures
+  bundle exec rspec $@| \
+    # remove details of failures
+    sed -e '/Failed\ examples:/,$!d'| \
+    # strip all details except filename
+    sed -r -e 's/:[0-9].+*$/ /'| \
+    sort| \
+    # Generate counts
+    uniq -c | \
+    # Natural sort, order by failure count
+    sort -n
+}
