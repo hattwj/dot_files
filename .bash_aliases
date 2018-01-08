@@ -35,7 +35,9 @@ function rspec-grouped-failures()
   bundle exec rspec $@| \
     # remove details of failures
     sed -e '/Failed\ examples:/,$!d'| \
-    # strip all details except filename
+    # remove anything that does not start with "rspec"
+    sed -r -e '/^rspec/!d'| \
+    # strip all trailing details except filename
     sed -r -e 's/:[0-9].+*$/ /'| \
     sort| \
     # Generate counts
