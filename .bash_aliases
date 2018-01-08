@@ -43,5 +43,7 @@ function rspec-grouped-failures()
     # Generate counts
     uniq -c | \
     # Natural sort, order by failure count
-    sort -n
+    sort -n | \
+    # Calculate total and add it to the end
+    awk '{sum+=$1 ; print $0} END{print "Total:",sum}'
 }
