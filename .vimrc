@@ -290,7 +290,7 @@ set statusline+=%F " filename
 set laststatus=2
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Fuzzy searching plugin
+" Fuzzy filename searching plugin
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " add to runtime
 set runtimepath^=~/.vim/bundle/ctrlp.vim
@@ -313,11 +313,23 @@ let g:ctrlp_prompt_mappings = {
   \ 'PrtAdd(".*")': ['<space>'],
   \ }
 
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" ack.vim Text searching plugin
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+if executable('ag')
+  let g:ackprg = 'ag --vimgrep'
+endif
 
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Terminal Appearance
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+"""
 " Transparent background colors
 hi Normal ctermbg=none
 highlight NonText ctermbg=none
 
+"""
 " 80 character line - black
 set cc=80
 hi ColorColumn ctermbg=black guibg=black
@@ -330,8 +342,12 @@ fun! <SID>StripTrailingWhitespaces()
     %s/\s\+$//e
     call cursor(l, c)
 endfun
-" Automatically strip on save
+
+"""
+" Automatically trailing whitespace on save for these filetypes
 autocmd FileType javascript,json,css,html,c,cpp,java,php,ruby,python autocmd BufWritePre <buffer> :call <SID>StripTrailingWhitespaces()
+
+"""
 " Highlight trailing whitespace
 highlight ExtraWhitespace ctermbg=red guibg=red
 match ExtraWhitespace /\s\+$/
@@ -339,6 +355,7 @@ autocmd BufWinEnter * match ExtraWhitespace /\s\+$/
 autocmd InsertEnter * match ExtraWhitespace /\s\+\%#\@<!$/
 autocmd InsertLeave * match ExtraWhitespace /\s\+$/
 
+"""
 " Vim ALE Linter Config
 
 " Always show linter gutter
