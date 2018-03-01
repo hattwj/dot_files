@@ -731,3 +731,11 @@ snippet iiexp
 	it { is_expected.to ${0} }
 snippet iiexpn
 	it { is_expected.not_to ${0} }
+##########################
+#     Spork snippets     #
+##########################
+	snippet spork
+	▸   system("git ls-files -m|grep -E '.*\.(rb)'")
+	▸     .split
+	▸     .reject { |f| f.match(/_spec|_factory|spec_/) }
+	▸     .each { |f| load f }
