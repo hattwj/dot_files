@@ -356,6 +356,17 @@ autocmd InsertEnter * match ExtraWhitespace /\s\+\%#\@<!$/
 autocmd InsertLeave * match ExtraWhitespace /\s\+$/
 
 """
+" Fix annoying 00~ ~01 characters that surround text that is pasted
+" into the terminal. Related to 'bracketed paste mode'
+" workaround for https://github.com/vim/vim/issues/1start671
+if has("unix")
+  let s:uname = system("echo -n \"$(uname)\"")
+  if !v:shell_error && s:uname == "Linux"
+    set t_BE=
+  endif
+endif
+
+"""
 " Vim ALE Linter Config
 
 " Always show linter gutter
