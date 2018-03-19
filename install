@@ -7,6 +7,8 @@ function echolog()
 	echo $1 >> $LOG_FILE	
 }
 
+git submodule update --init --recursive
+
 #get cur dir
 OLD_DIR="$(pwd)"
 

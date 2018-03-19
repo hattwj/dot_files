@@ -227,9 +227,8 @@ set autoindent
 
 " Filetype extensions
 set nocompatible
-autocmd Filetype ruby setlocal ts=2 sts=2 sw=2
-autocmd Filetype javascript setlocal ts=2 sts=2 sw=2
-autocmd FileType json set noexpandtab tabstop=2 shiftwidth=2 softtabstop=2
+autocmd BufRead,BufNewFile *.rb,*.py,*.js,*.css,*.html,*.erb,*.yml,*.yaml set et ts=2 sts=2 sw=2
+autocmd BufRead,BufNewFile *.json set noet ts=2 sts=2 sw=2
 filetype on
 filetype plugin indent on
 filetype indent on
@@ -250,7 +249,7 @@ nmap <leader>l :set list!<CR>
 " Set noexpandtab for makefiles, do not expand tabs to spaces for make files
 " Makefiles will choke if they contain a line that starts with a space
 let _curfile = expand("%:t") 
-if _curfile =~ "Makefile" || _curfile =~ "makefile" || _curfile =~ ".*\.mk"
+if _curfile =~ "Makefile" || _curfile =~ "makefile" || _curfile =~ ".*\.mk" || _curfile =~ ".*\.json"
     set noexpandtab
 endif
 
