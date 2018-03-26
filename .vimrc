@@ -294,8 +294,12 @@ set laststatus=2
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " add to runtime
 set runtimepath^=~/.vim/bundle/ctrlp.vim
-" Automatically use git for file ignores
-let g:ctrlp_user_command = ['.git/', 'git --git-dir=%s/.git ls-files -oc --exclude-standard']
+" Automatically use git for file ignoresd
+" -- This is slow
+" let g:ctrlp_user_command = ['.git/', 'git --git-dir=%s/.git ls-files -oc --exclude-standard']
+" r = nearest git ancestor
+" " a = current directory
+let g:ctrlp_working_path_mode = 'ra'
 "let g:ctrlp_match_window = 'results:100' " List at most 100 files
 let g:ctrlp_match_window = 'bottom,order:btt,min:5,max:10,results:100'
 let g:ctrlp_regexp = 1                   " Regex matching
