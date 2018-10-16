@@ -295,11 +295,11 @@ set laststatus=2
 set runtimepath^=~/.vim/bundle/ctrlp.vim
 " Automatically use git for file ignoresd
 " -- This is slow
-" let g:ctrlp_user_command = ['.git/', 'git --git-dir=%s/.git ls-files -oc --exclude-standard']
+let g:ctrlp_user_command = ['.git/', 'git --git-dir=%s/.git ls-files -oc --exclude-standard']
 " r = nearest git ancestor
 " " a = current directory
 let g:ctrlp_working_path_mode = 'ra'
-"let g:ctrlp_match_window = 'results:100' " List at most 100 files
+let g:ctrlp_match_window = 'results:100' " List at most 100 files
 let g:ctrlp_match_window = 'bottom,order:btt,min:5,max:10,results:100'
 let g:ctrlp_regexp = 1                   " Regex matching
 let g:ctrlp_by_filename=0                " 0 for full_path
@@ -376,3 +376,7 @@ endif
 let g:ale_sign_column_always = 1
 " Set this. Airline will handle the rest.
 let g:airline#extensions#ale#enabled = 1
+" Require vim restart to run linters that are not installed
+let g:ale_cache_executable_check_failures = 1
+" Set this variable to 1 to fix files when you save them.
+let g:ale_fix_on_save = 1
