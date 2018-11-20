@@ -374,6 +374,9 @@ endif
 
 " Always show linter gutter
 let g:ale_sign_column_always = 1
+" Disable linting on text change, will only lint on save instead
+let g:ale_lint_on_text_changed = "never"
+
 " Set this. Airline will handle the rest.
 let g:airline#extensions#ale#enabled = 1
 " Require vim restart to run linters that are not installed

@@ -70,6 +70,7 @@ do
 done
 
 declare -a file_arr=('.ackrc' '.tmux.conf' '.bash_aliases' '.bash_profile' \
+    '.pryrc' '.irbrc' \
     '.bashrc' '.inputrc' '.psqlrc' '.vimrc' '.gdbinit' "$pf1" "$pf2")
 for file in "${file_arr[@]}"
 do
