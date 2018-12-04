@@ -319,9 +319,17 @@ let g:ctrlp_prompt_mappings = {
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " ack.vim Text searching plugin
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+" Use ag instead of Ack if it is available
 if executable('ag')
   let g:ackprg = 'ag --vimgrep'
 endif
+
+function! Find_git_root()
+  return system('git rev-parse --show-toplevel 2> /dev/null')[:-2]
+endfunction
+" Search from git root if possible
+command! -nargs=1 Ag execute "Ack! <args> " . Find_git_root()
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Terminal Appearance
