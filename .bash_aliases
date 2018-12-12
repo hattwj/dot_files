@@ -3,6 +3,29 @@ alias cls="echo -ne '\033c'"
 alias tmux="TERM=xterm-256color tmux"
 alias git-is-slow-again='git gc;git repack -a -d --depth=250 --window=250;git prune'
 
+##
+# Force git to reset stuck files that are showing as modified
+function git-is-not-resetting-to()
+{
+  [ -z "$1" ] && echo "
+Error: remote/branch argument is required
+For example:  
+  git-is-not-resetting-to origin/master
+
+" && return 0
+  echo "This command will remove all changes in the working copy"
+  read -p "Confirm to continue: (Yy)" -n 1 -r
+  echo    # (optional) move to a new line
+  if [[ $REPLY =~ ^[Yy]$ ]]
+  then
+    pushd $(git rev-parse --show-toplevel)
+      git rm --cached -r .
+      git reset --hard $1
+    popd
+  fi
+
+}
+
 # some more ls aliases
 alias ll='ls -alF'
 alias la='ls -A'
