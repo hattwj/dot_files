@@ -1,9 +1,6 @@
-
-function! s:DetectDosIni()
-    if getline(1) =~ '^#!.*\<ini\>'
-        set filetype=dosini
-    endif
-endfunction
-
-autocmd BufNewFile,BufRead * call s:DetectDosIni()
+" .INI file for MSDOS
+au BufNewFile,BufRead *.ini               setf dosini
+au BufNewFile,BufRead */etc/yum.conf      setf dosini
+au BufNewFile,BufRead */.aws/config       setf dosini
+au BufNewFile,BufRead */.aws/credentials  setf dosini
 
