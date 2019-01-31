@@ -52,3 +52,6 @@
 [submodule ".vim/bundle/ale"]
 	path = .vim/bundle/ale
 	url = https://github.com/w0rp/ale.git
+[submodule ".vim/bundle/vim-dockerfile"]
+	path = .vim/bundle/vim-dockerfile
+	url = https://github.com/ekalinin/Dockerfile.vim.git
