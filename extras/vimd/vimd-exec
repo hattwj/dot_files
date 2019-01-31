@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+set -e
+[ -z "$1" ] && { echo "Error: You must specify a command" >&2; exit 1; }
+
+DOCKER_IMAGE=vim-ale-linters:v1
+BASEDIR=$PWD
+
+##
+# Forward all parameters to the docker container
+# - For one arg specified we check to see if it is a file/dir that exists
+#   in a git repository
+#   - If yes: mount that git root as a volume
+#   - If no: mount the base directory as a volume
+declare -a ARGS
+
+##
+# Convert all args to realpath (if they are files)
+# Check for files that are inside of a git repository
+# and mount the git root as a volume if there is one.
+for var in "$@"; do
+  if [ ! -z "$var" ] && [ -e "$var" ]; then
+    # Full local path to the file
+    var="$(realpath $var)"
+
+    # Base volume that should be mounted
+    BASEDIR="$var"
+    if [ -f $var ]; then
+      BASEDIR="$(dirname $var)"
+    fi
+
+    pushd $BASEDIR
+    if [ $(git rev-parse --is-inside-work-tree) ]; then
+      BASEDIR=$(git rev-parse --show-toplevel)
+    fi
+    popd
+  fi
+
+  ARGS+=("$var")
+done
+
+# Command to fix permissions inside of docker container
+CMD_PERMS="usermod -u $(id -u) app; usermod -g $(id -g) app"
+
+# Join array with spaces
+ARGS=$(IFS=" " ; echo "cd $BASEDIR; $CMD_PERMS; su -m app -c '${ARGS[@]}'")
+
+# Print out command that we exec
+set -o xtrace
+
+# Run the command
+docker run --rm -it \
+  -e HOME=$HOME \
+  -v $BASEDIR:$BASEDIR \
+  -v $HOME:$HOME \
+  --user root \
+  $DOCKER_IMAGE bash -c "${ARGS[@]}"
