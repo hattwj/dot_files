@@ -30,8 +30,5 @@ RUN pip install \
 
 RUN useradd -ms /bin/bash app
 
-# Create dir for mounting src
-RUN mkdir /src
-
 USER app
 WORKDIR /home/app

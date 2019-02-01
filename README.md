@@ -9,6 +9,10 @@ cd dot_files
 ./install
 ```
 
+### Extras:
+#### Dockerized vim:
+vimd:
+
 ## Uninstall:
 ```bash
 cd $HOME
