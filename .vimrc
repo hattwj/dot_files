@@ -9,11 +9,11 @@ execute pathogen#infect()
 " http://superuser.com/questions/401926/how-to-get-shiftarrows-and-ctrlarrows-working-in-vim-in-tmux
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 if &term =~ '^screen'
-    " tmux will send xterm-style keys when its xterm-keys option is on
-    execute "set <xUp>=\e[1;*A"
-    execute "set <xDown>=\e[1;*B"
-    execute "set <xRight>=\e[1;*C"
-    execute "set <xLeft>=\e[1;*D"
+  " tmux will send xterm-style keys when its xterm-keys option is on
+  execute "set <xUp>=\e[1;*A"
+  execute "set <xDown>=\e[1;*B"
+  execute "set <xRight>=\e[1;*C"
+  execute "set <xLeft>=\e[1;*D"
 endif
 
 
@@ -22,12 +22,12 @@ endif
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 if has("mac")
     " This is mac vim
-	if has("gui_running")
-	    " Background Transparency
-	    set transparency=16
-	endif
+  if has("gui_running")
+    " Background Transparency
+    set transparency=16
+  endif
 elseif !has("gui_running")
-    " This is console Vim.
+  " This is console Vim.
 endif
 
 
@@ -44,7 +44,7 @@ let g:netrw_liststyle= 1
 let g:netrw_browse_split = 3
 " let g:netrw_altv = 1
 
-" Netrw previews should be around 30 lines 
+" Netrw previews should be around 30 lines
 let g:netrw_winsize=50
 
 """
@@ -108,7 +108,7 @@ set ignorecase "Ignore case when searching
 "set search "Highlight search things
 
 "set incsearch "Make search act like search in modern browsers
-"set nolazyredraw "Don't redraw while executing macros 
+"set nolazyredraw "Don't redraw while executing macros
 
 "set magic "Set magic on, for regular expressions
 
@@ -205,7 +205,7 @@ set history=10000
 set hlsearch
 
 " Disable highlight when pressing escape
-noremap <Space> :let @/ = "" <CR> 
+noremap <Space> :let @/ = "" <CR>
 
 " Map pageup and page down keys
 map <PageUp> <C-U>
@@ -236,7 +236,7 @@ filetype indent on
 ""
 " Make tabs visible
 ""
-"Invisible character colors 
+"Invisible character colors
 highlight NonText guifg=#4a4a59
 highlight SpecialKey guifg=#4a4a59
 " show tabs as triangle
@@ -248,7 +248,7 @@ nmap <leader>l :set list!<CR>
 
 " Set noexpandtab for makefiles, do not expand tabs to spaces for make files
 " Makefiles will choke if they contain a line that starts with a space
-let _curfile = expand("%:t") 
+let _curfile = expand("%:t")
 if _curfile =~ "Makefile" || _curfile =~ "makefile" || _curfile =~ ".*\.mk" || _curfile =~ ".*\.json"
     set noexpandtab
 endif
@@ -311,8 +311,8 @@ let g:ctrlp_custom_ignore = '\vpublic[\/](surveys)$'
 " # 2 open new files in a new tab
 " # 3 use space as a token separator
 let g:ctrlp_prompt_mappings = {
-  \ 'AcceptSelection("e")': [], 
-  \ 'AcceptSelection("t")': ['<cr>', '<c-m>'], 
+  \ 'AcceptSelection("e")': [],
+  \ 'AcceptSelection("t")': ['<cr>', '<c-m>'],
   \ 'PrtAdd(".*")': ['<space>'],
   \ }
 
@@ -355,12 +355,26 @@ fun! <SID>StripTrailingWhitespaces()
 endfun
 
 """
-" Automatically trailing whitespace on save for these filetypes
-autocmd FileType javascript,json,css,html,c,cpp,java,php,ruby,python autocmd BufWritePre <buffer> :call <SID>StripTrailingWhitespaces()
+" Automatically trim trailing white space on save for these file types
+autocmd FileType c,
+  \cpp,
+  \css,
+  \docker,
+  \html,
+  \java,
+  \javascript,
+  \json,
+  \markdown,
+  \php,
+  \python,
+  \ruby,
+  \sh,
+  \vim,
+  \yaml autocmd BufWritePre <buffer> :call <SID>StripTrailingWhitespaces()
 
 """
 " Highlight trailing whitespace
-highlight ExtraWhitespace ctermbg=red guibg=red
+highlight ExtraWhitespace ctermbg=DarkRed guibg=DarkRed
 match ExtraWhitespace /\s\+$/
 autocmd BufWinEnter * match ExtraWhitespace /\s\+$/
 autocmd InsertEnter * match ExtraWhitespace /\s\+\%#\@<!$/
@@ -378,8 +392,20 @@ if has("unix")
 endif
 
 """
-" Vim ALE Linter Config
+" Vim GitGutter config
+"  Update the gutter state every x milliseconds
+set updatetime=100
+highlight clear SignColumn
+highlight GitGutterAdd ctermfg=green
+highlight GitGutterChange ctermfg=yellow
+highlight GitGutterDelete ctermfg=red
+highlight GitGutterChangeDelete ctermfg=yellow
 
+" Make the background for the line numbers transparent as well
+highlight lineNr ctermbg=NONE
+
+"""
+" Vim ALE Linter Config
 " Always show linter gutter
 let g:ale_sign_column_always = 1
 " Disable linting on text change, will only lint on save instead
