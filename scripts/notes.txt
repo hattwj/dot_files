@@ -1,3 +1,0 @@
-# Search and replace text in all files with a newline at the end of the match:
-ack -l --print0 "src=" ./app | xargs -0 sed -i "{:q;N;s/javascript'\s\n/javascript' /g;t q}"
-

@@ -19,7 +19,7 @@ end
 options = {}
 
 optparse = OptionParser.new do|opts|
-  
+
   # This displays the help screen, all programs are
   # assumed to have this option.
   opts.on( '-h', '--help', 'Display this screen' ) do
@@ -35,7 +35,7 @@ path = ARGV[1] || '.'
 # remove quotes if present
 pattern = ARGV[0].to_s
 if pattern.size > 2
-    if (pattern.start_with?('"') && pattern.end_with?('"')) || 
+    if (pattern.start_with?('"') && pattern.end_with?('"')) ||
         ( pattern.start_with?("'") && pattern.end_with?("'") )
         pattern = [1..-2]
     end
