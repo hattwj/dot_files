@@ -5,6 +5,10 @@ set -e
 DOCKER_IMAGE=vim-ale-linters:v1
 BASEDIR=$PWD
 
+# Source the vimdrc file for customization options
+VIMD_OPTS=""
+[ -e "$HOME/.vimd" ] && source "$HOME/.vimdirc"
+
 ##
 # Forward all parameters to the docker container
 # - For one arg specified we check to see if it is a file/dir that exists
@@ -18,6 +22,10 @@ declare -a ARGS
 # Check for files that are inside of a git repository
 # and mount the git root as a volume if there is one.
 for var in "$@"; do
+  ##
+  # If its not empty
+  # and its a file / directory
+  # Then add it to the volume mounts
   if [ ! -z "$var" ] && [ -e "$var" ]; then
     # Full local path to the file
     var="$(realpath $var)"
@@ -38,6 +46,11 @@ for var in "$@"; do
   ARGS+=("$var")
 done
 
+# Avoid mounting anything from $HOME because it will already be mounted
+MOUNT_OPTS="-v $BASEDIR:$BASEDIR"
+[[ "$BASEDIR" == $HOME* ]] && MOUNT_OPTS=""
+MOUNT_OPTS="$MOUNT_OPTS -v $HOME:$HOME"
+
 # Command to fix permissions inside of docker container
 CMD_PERMS="usermod -u $(id -u) app; usermod -g $(id -g) app"
 
@@ -50,7 +63,7 @@ set -o xtrace
 # Run the command
 docker run --rm -it \
   -e HOME=$HOME \
-  -v $BASEDIR:$BASEDIR \
-  -v $HOME:$HOME \
+  $MOUNT_OPTS \
+  $VIMD_OPTS \
   --user root \
   $DOCKER_IMAGE bash -c "${ARGS[@]}"
