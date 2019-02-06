@@ -3,6 +3,11 @@ set encoding=utf-8
 
 execute pathogen#infect()
 
+""
+" Vim :terminal configuration
+""
+" Set the default shell to use for :terminal
+set shell=/bin/bash
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " tmux hack to allow ctrl-arrow passthrough in vim
