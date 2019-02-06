@@ -1,6 +1,29 @@
 #!/usr/bin/env bash
 set -e
 
+function usage(){
+  echo '
+
+vimd-exec <options> <command> <args>
+options:
+  --user NAME   execute the command as a different user
+  --help
+
+
+examples:
+
+# Use vim to edit a file
+vimd-exec vim /path/to/some/file
+
+# Explore the docker container as root
+vimd-exec --user root bash
+'
+}
+
+function die(){
+  return 1
+}
+
 # Find directory that this script is in
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -37,7 +60,9 @@ if [ "$1" == "--user" ]; then
   shift
 fi
 
-[ -z "$1" ] && { echo "Error: You must specify a command" >&2; exit 1; }
+[ "$1" == "--help" ] && usage && die
+
+[ -z "$1" ] && { echo "Error: You must specify a command" >&2; die; }
 
 ##
 # Forward all parameters to the docker container
@@ -53,16 +78,16 @@ declare -a ARGS
 # and mount the git root as a volume if there is one.
 for var in "$@"; do
   ##
-  # If its not empty
-  # and its a file / directory
+  # If it starts with "/"
+  # and its a file / directory or a new file in an old directory
   # Then add it to the volume mounts
-  if [ ! -z "$var" ] && [ -e "$var" ]; then
+  if [[ "$var" = /* ]] && ([ -e "$var" ] || [ -d $(dirname "$var") ]); then
     # Full local path to the file
     var="$(realpath $var)"
 
     # Base volume that should be mounted
     BASEDIR="$var"
-    if [ -f $var ]; then
+    if [ ! -d "$var" ]; then
       BASEDIR="$(dirname $var)"
     fi
 
@@ -72,9 +97,20 @@ for var in "$@"; do
     fi
     popd
   fi
-
   ARGS+=("$var")
 done
+
+# Do not allow mounting root
+if [[ "$BASEDIR" = '/' ]]; then
+  echo "ERROR: Editing this file would require mounting root, which is not allowed."
+  die
+fi
+
+# Do not allow mounting proc
+if [[ "$BASEDIR" = '/proc' ]]; then
+  echo "ERROR: Editing this file would require mounting '/proc', which is not allowed."
+  die
+fi
 
 # Avoid mounting anything from $HOME because it will already be mounted
 MOUNT_OPTS="-v $BASEDIR:$BASEDIR"
@@ -91,7 +127,8 @@ if [ "$APP_USER" != "root" ]; then
   # run command as a different user by default
   ARGS=$(IFS=" " ; echo "cd $BASEDIR; $CMD_PERMS; su -m $APP_USER -c '${ARGS[@]}'")
 else
-  ARGS=$(IFS=" " ; echo "cd $BASEDIR; echo WARNING: unable to update ID/GID for root user; ${ARGS[@]}")
+  echo WARNING: unable to update ID/GID for root user
+  ARGS=$(IFS=" " ; echo "cd $BASEDIR; ${ARGS[@]}")
 fi
 # Print out command that we exec
 set -o xtrace
