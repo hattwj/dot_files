@@ -364,7 +364,8 @@ endfun
 autocmd FileType c,
   \cpp,
   \css,
-  \docker,
+  \cloudformation,
+  \dockerfile,
   \html,
   \java,
   \javascript,
@@ -408,6 +409,11 @@ highlight GitGutterChangeDelete ctermfg=yellow
 
 " Make the background for the line numbers transparent as well
 highlight lineNr ctermbg=NONE
+
+augroup cfn_ft
+  au!
+  autocmd BufNewFile,BufRead *.cfn.yaml set filetype=cloudformation syntax=yaml
+augroup END
 
 """
 " Vim ALE Linter Config
