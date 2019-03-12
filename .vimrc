@@ -3,6 +3,13 @@ set encoding=utf-8
 
 execute pathogen#infect()
 
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Modify vimdiff to use a better algorithm (if supported)
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+if has("patch-8.1.0360")
+  set diffopt+=internal,algorithm:patience
+endif
+
 ""
 " Vim :terminal configuration
 ""
