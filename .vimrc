@@ -127,6 +127,12 @@ set ignorecase "Ignore case when searching
 set showmatch "Show matching brackets when text indicator is over them
 "set mat=2 "How many tenths of a second to blink
 
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Settings for tmp, backup and undo files
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+set backupdir=/tmp//
+set directory=/tmp//
+set undodir=/tmp//
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Sudo Settings
