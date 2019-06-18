@@ -1,7 +1,18 @@
 #!/usr/bin/env ruby
+
 require 'optparse'
 require 'pp'
+require 'mkmf'
+require 'ostruct'
+# require 'pry'
 
+# Configure mkmf so that is does not create logfiles or print path checks
+module MakeMakefile::Logging
+  @logfile = File::NULL
+  @quiet = true
+end
+
+# CLI colorization config
 class String
   # colorization
   def colorize(color_code)
@@ -11,47 +22,152 @@ class String
   def red
     colorize(31)
   end
+
+  def green
+    colorize(32)
+  end
+
+  def yellow
+    colorize(33)
+  end
 end
 
 # This hash will hold all of the options
 # parsed from the command-line by
 # OptionParser.
-options = {}
+DEFAULT_CONFIG = {
+  auto: false,
+  pattern: nil,
+  path: nil,
+  replace: nil,
+  confirm: false,
+  cmd: nil
+}.freeze
 
-optparse = OptionParser.new do|opts|
+def parse_args(args)
+  options = OpenStruct.new(DEFAULT_CONFIG)
 
-  # This displays the help screen, all programs are
-  # assumed to have this option.
-  opts.on( '-h', '--help', 'Display this screen' ) do
-    puts opts
-    exit
+  optparse = OptionParser.new do |opts|
+    # This displays the help screen, all programs are
+    # assumed to have this option.
+    opts.on('-h', '--help', 'Display this screen') do
+      puts opts
+      exit 0
+    end
+
+    opts.on('-r', '--replace val', 'Value to replace matches with') do |val|
+      options.replace = val
+    end
+
+    opts.on('-c', '--confirm', 'Ask for confirmation for each edit') do
+      options.confirm = true
+      options.auto = true
+    end
+
+    opts.on('-a', 'Automatically perform replacement') do
+      options.auto = true
+    end
+  end
+
+  # Parse the command-line.
+  optparse.parse!(args)
+  options.path = args[1] || '.'
+
+  # remove quotes if present
+  options.pattern = args[0].to_s
+  options.cmd = get_search_cmd
+
+  options
+end
+
+def get_search_cmd
+  cmd = find_executable('ag')
+  cmd ||= find_executable('ack')
+
+  unless cmd
+    raise 'either "ag" or "ack" must be installed in order to use this tool'
+  end
+
+  cmd
+end
+
+def demo_command(options)
+  # Print command that will carry out changes
+  puts 'Re-run the command with "-a" or run the following command to ' \
+       'recursively replace values matching: ' \
+       "'#{options.pattern.red}'"
+  puts "#{options.cmd} -Q --print0 -l \"#{options.pattern.shellescape}\" #{options.path} | " \
+    "xargs -0 sed -i \"s/#{options.pattern.shellescape}/#{options.replace}/g'\""
+end
+
+def user_accepts(options)
+  return true unless options.confirm
+
+  response = nil
+  loop do
+    puts 'Replace? y/n'
+    response = STDIN.gets.chomp.downcase
+    unless %w[y n].include?(response)
+      puts "#{response} is not an option, try again or Ctrl-C to abort"
+      next
+    end
+    break
+  end
+  response == 'y'
+end
+
+def auto_command(files, options)
+  max = files.count
+  files.each_with_index do |file, idx|
+    cmd_matches = "#{options.cmd} -Q  '#{options.pattern.shellescape}' #{file}"
+
+    puts "#{file}: match #{idx} of #{max}"
+    matches = `#{cmd_matches}`
+    puts 'Before:'
+    puts matches.gsub(options.pattern, options.pattern.red)
+    puts 'After: '
+    puts matches.gsub(options.pattern, options.replace.green)
+
+    # puts `echo '#{matches.shellescape}' | sed 's/#{options.pattern}/#{options.replace}/g`
+    if user_accepts(options)
+      text = File.read(file)
+      File.write(file, text.gsub(options.pattern, options.replace))
+    else
+      puts "Skipping #{file}...\n\n".yellow
+    end
   end
 end
 
-# Parse the command-line.
-optparse.parse!
-path = ARGV[1] || '.'
+def get_matching_files(options)
+  # Execute ack to show what will be affected
+  cmd = "#{options.cmd} -l -Q \"#{options.pattern.shellescape}\" #{options.path}"
+  puts cmd
+  files = `#{cmd}`
 
-# remove quotes if present
-pattern = ARGV[0].to_s
-if pattern.size > 2
-    if (pattern.start_with?('"') && pattern.end_with?('"')) ||
-        ( pattern.start_with?("'") && pattern.end_with?("'") )
-        pattern = [1..-2]
-    end
+  if files == ''
+    STDERR.puts "Nothing matched pattern: '#{options.pattern.red}'"
+    exit 0
+  elsif !$CHILD_STATUS.success?
+    exit_code = $CHILD_STATUS.to_i
+    STDERR.puts "Non zero exit code (#{exit_code}) for '#{cmd.shellescape}'"
+    exit 0
+  else
+    puts "Files contianing text from pattern: '#{options.pattern.green}'"
+    puts files.red
+  end
+
+  files.split
 end
 
-# Execute ack to show what will be affected
-result = `ack -l -Q #{pattern} #{path}`.to_s
-
-unless result == ''
-    puts "Files matching pattern: '#{pattern.red}'"
-    puts result.red
-else
-    puts "Nothing matched pattern: '#{pattern.red}'"
+def main(args)
+  options = parse_args(args)
+  options.replace ||= options.pattern
+  files = get_matching_files(options)
+  if options.auto
+    auto_command(files, options)
+  else
+    demo_command(options)
+  end
 end
 
-# Print command that will carry out changes
-puts "Run the following command to recursively replace values matching: '#{pattern.red}'"
-puts  "ack -Q --print0 -l '#{pattern}' #{path} | xargs -0 sed -i 's/#{pattern}/#{pattern}/g'"
-
+main(ARGV) if $PROGRAM_NAME == __FILE__
