@@ -8,113 +8,61 @@
   [[default]]
     [[[child0]]]
       fullscreen = False
-      last_active_term = c707b6d3-1eb3-4217-a5c9-2fd4cf7ec0d7
+      last_active_term = 4fe2e7f7-620d-4a0b-8ffd-5250a5bea37d
       last_active_window = True
       maximised = True
       order = 0
       parent = ""
-      position = 3585:24
+      position = 3905:24
       size = 1855, 1056
       title = elemental@hattb_conductor: ~
       type = Window
     [[[child1]]]
       order = 0
       parent = child0
-      position = 434
-      ratio = 0.411931818182
-      type = VPaned
-    [[[child11]]]
-      order = 1
-      parent = child9
-      position = 226
-      ratio = 0.366129032258
-      type = VPaned
-    [[[child12]]]
-      order = 0
-      parent = child11
-      position = 463
-      ratio = 0.5
+      position = 924
+      ratio = 0.498652291105
       type = HPaned
-    [[[child2]]]
-      order = 0
+    [[[child3]]]
+      order = 1
       parent = child1
-      position = 926
-      ratio = 0.499730458221
-      type = HPaned
-    [[[child4]]]
-      order = 1
-      parent = child2
-      position = 207
-      ratio = 0.479262672811
+      position = 384
+      ratio = 0.364583333333
       type = VPaned
     [[[child5]]]
-      order = 0
-      parent = child4
-      position = 462
-      ratio = 0.499460625674
-      type = HPaned
-    [[[child9]]]
       order = 1
-      parent = child1
-      position = 925
-      ratio = 0.499191374663
-      type = HPaned
-    [[[terminal10]]]
+      parent = child3
+      position = 334
+      ratio = 0.5
+      type = VPaned
+    [[[terminal2]]]
       group = Conductor
       order = 0
-      parent = child9
+      parent = child1
       profile = default
       type = Terminal
       uuid = 4fe2e7f7-620d-4a0b-8ffd-5250a5bea37d
-    [[[terminal13]]]
+    [[[terminal4]]]
       group = Conductor
       order = 0
-      parent = child12
-      profile = default
-      type = Terminal
-      uuid = 9cfa0fd7-4053-43ac-8edc-6a43846a0ffa
-    [[[terminal14]]]
-      group = Conductor
-      order = 1
-      parent = child12
+      parent = child3
       profile = default
       type = Terminal
       uuid = 592df2a7-1589-445d-8815-646714c4eb41
-    [[[terminal15]]]
+    [[[terminal6]]]
+      group = Conductor
+      order = 0
+      parent = child5
+      profile = default
+      type = Terminal
+      uuid = 9cfa0fd7-4053-43ac-8edc-6a43846a0ffa
+    [[[terminal7]]]
       group = Conductor
       order = 1
-      parent = child11
+      parent = child5
       profile = default
       type = Terminal
       uuid = 11315fa1-32ea-4e80-8cda-340136d87f10
-    [[[terminal3]]]
-      group = Live
-      order = 0
-      parent = child2
-      profile = default
-      type = Terminal
-      uuid = c707b6d3-1eb3-4217-a5c9-2fd4cf7ec0d7
-    [[[terminal6]]]
-      group = Live
-      order = 0
-      parent = child5
-      profile = default
-      type = Terminal
-      uuid = 6a196847-8eb2-43ec-aab4-e19deb0f4f75
-    [[[terminal7]]]
-      group = Live
-      order = 1
-      parent = child5
-      profile = default
-      type = Terminal
-      uuid = 510de4f5-5f13-4a3b-995a-a6165f998261
-    [[[terminal8]]]
-      group = Live
-      order = 1
-      parent = child4
-      profile = default
-      type = Terminal
-      uuid = 2af5c0b5-3ec2-4472-a8ee-3b11cd1a9724
 [plugins]
 [profiles]
   [[default]]
