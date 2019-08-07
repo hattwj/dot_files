@@ -26,6 +26,18 @@ For example:
 
 }
 
+##
+# Repeatedly run a command until it fails
+function until-fail()
+{
+  count=1
+  while $@; do
+    echo Ran $count times successfully
+    ((count++))
+  done
+  echo Ran $count times
+}
+
 # some more ls aliases
 alias ll='ls -alF'
 alias la='ls -A'
