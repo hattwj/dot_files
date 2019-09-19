@@ -2,7 +2,7 @@ TZ='America/Los_Angeles'; export TZ
 
 #export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python
 #export VIRTUALENVWRAPPER_VIRTUALENV=/usr/local/bin/virtualenv
-
+export LESS=eFRX
 export WORKON_HOME=$HOME/.virtualenvs
 export PROJECT_HOME=$HOME/Devel
 source /usr/local/bin/virtualenvwrapper.sh
