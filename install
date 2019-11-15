@@ -4,7 +4,7 @@
 function echolog()
 {
 	echo $1
-	echo $1 >> $LOG_FILE	
+	echo $1 >> $LOG_FILE
 }
 
 git submodule update --init --recursive
@@ -12,7 +12,7 @@ git submodule update --init --recursive
 #get cur dir
 OLD_DIR="$(pwd)"
 
-# Find directory that this script is in 
+# Find directory that this script is in
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Create log file name
@@ -26,6 +26,13 @@ pf3="$HOME/.bash_custom"
 if [ ! -f "$pf3" ]; then
     touch $pf3
     echo "[created]    $pf3"
+fi
+
+# create home bin dir
+if [ ! -d "$HOME/backups" ]; then
+   echo "[created]    $HOME/bin"
+   mkdir "$HOME/bin"
+   chmod go-w "$HOME/bin"
 fi
 
 # create backup dir
@@ -64,7 +71,7 @@ do
 
     # Create link to new directory
     if [ -d "$SCRIPT_DIR/$dir" ]; then
-        echolog "[linked]    $SCRIPT_DIR/$dir  -->  $HOME/$dir" 
+        echolog "[linked]    $SCRIPT_DIR/$dir  -->  $HOME/$dir"
         ln -s $SCRIPT_DIR/$dir "$HOME/$dir"
     fi
 done
@@ -93,7 +100,7 @@ do
     fi
 
     # Link new file
-    echolog "[linked]    $SCRIPT_DIR/$file --> $HOME/$file"  
+    echolog "[linked]    $SCRIPT_DIR/$file --> $HOME/$file"
     ln -s "$SCRIPT_DIR/$file" "$HOME/$file"
 
 done
