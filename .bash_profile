@@ -7,5 +7,3 @@ pf3="$HOME/.bash_custom"
 
 # Load the right bashrc for this OS
 [[ -e $pf1 ]] && source $pf1
-
-[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*

@@ -96,7 +96,7 @@ done
 
 declare -a file_arr=('.ackrc' '.tmux.conf' '.bash_aliases' \
     '.bash_profile' '.gitconfig' \
-    '.pryrc' '.irbrc' \
+    '.pryrc' '.irbrc' '.gemrc' \
     '.bashrc' '.inputrc' '.psqlrc' '.vimrc' '.gdbinit' \
     "$pf1" "$pf2")
 for file in "${file_arr[@]}"
