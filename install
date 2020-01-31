@@ -28,6 +28,13 @@ if [ ! -f "$pf3" ]; then
     echo "[created]    $pf3"
 fi
 
+# create home bin dir
+if [ ! -d "$HOME/backups" ]; then
+   echo "[created]    $HOME/bin"
+   mkdir "$HOME/bin"
+   chmod go-w "$HOME/bin"
+fi
+
 # create backup dir
 if [ ! -d "$SCRIPT_DIR/backups" ]; then
     echo "[created]    $SCRIPT_DIR/backups"

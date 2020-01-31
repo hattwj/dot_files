@@ -147,10 +147,10 @@ def get_matching_files(options)
   if files == ''
     STDERR.puts "Nothing matched pattern: '#{options.pattern.red}'"
     exit 0
-  elsif !$CHILD_STATUS.success?
-    exit_code = $CHILD_STATUS.to_i
+  elsif !$?.success
+    exit_code = $?.to_i
     STDERR.puts "Non zero exit code (#{exit_code}) for '#{cmd.shellescape}'"
-    exit 0
+    exit exit_code
   else
     puts "Files contianing text from pattern: '#{options.pattern.green}'"
     puts files.red

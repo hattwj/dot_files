@@ -96,5 +96,5 @@ if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
 fi
 
 DIR="$( cd "$( dirname "`readlink -f ${BASH_SOURCE[0]}`" )" && pwd -P )"
-PATH="$PATH:$DIR/scripts"
+PATH="$PATH:$DIR/scripts:$HOME/bin"
 

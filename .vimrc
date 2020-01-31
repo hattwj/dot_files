@@ -86,7 +86,7 @@ set nowrap
 
 " Only syntax highlight the first 200 characters of a line
 " Prevent Slowdown from long lines
-set synmaxcol=200
+set synmaxcol=300
 
 " Set the textwidth to be 80 chars
 "set textwidth=80
@@ -440,5 +440,5 @@ let g:airline#extensions#ale#enabled = 1
 " Require vim restart to run linters that are not installed
 let g:ale_cache_executable_check_failures = 1
 " Set this variable to 1 to fix files when you save them.
-let g:ale_fix_on_save = 1
+let g:ale_fix_on_save = 0
 let b:ale_fixers = ['prettier', 'rubocop']
