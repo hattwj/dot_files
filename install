@@ -4,7 +4,7 @@
 function echolog()
 {
 	echo $1
-	echo $1 >> $LOG_FILE	
+	echo $1 >> $LOG_FILE
 }
 
 git submodule update --init --recursive
@@ -12,7 +12,7 @@ git submodule update --init --recursive
 #get cur dir
 OLD_DIR="$(pwd)"
 
-# Find directory that this script is in 
+# Find directory that this script is in
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Create log file name
@@ -40,6 +40,24 @@ if [ -f "$SCRIPT_DIR/install.log"  ]; then
     rm -f "$LOG_FILE"
 fi
 
+# Create ~/bin directory if it does not exist
+if [ ! -d "$HOME/bin" ]; then
+    echolog "[created]    $HOME/bin"
+    mkdir $HOME/bin
+fi
+
+echo "Symlinking scripts to $HOME/bin"
+
+SCRIPTS=$SCRIPT_DIR/scripts/*
+for f in $SCRIPTS
+do
+  fname="$(basename -- $f)"
+  # take action on each file. $f store current file name
+  [ ! -f "$HOME/bin/$fname" ] && \
+    ln -sf $f $HOME/bin/$fname && \
+    echolog "[created]    $HOME/bin/$fname"
+done
+
 # Create .config directory if it does not exist
 if [ ! -d "$HOME/.config" ]; then
     echolog "[created]    $HOME/.config"
@@ -64,14 +82,16 @@ do
 
     # Create link to new directory
     if [ -d "$SCRIPT_DIR/$dir" ]; then
-        echolog "[linked]    $SCRIPT_DIR/$dir  -->  $HOME/$dir" 
+        echolog "[linked]    $SCRIPT_DIR/$dir  -->  $HOME/$dir"
         ln -s $SCRIPT_DIR/$dir "$HOME/$dir"
     fi
 done
 
-declare -a file_arr=('.ackrc' '.tmux.conf' '.bash_aliases' '.bash_profile' \
+declare -a file_arr=('.ackrc' '.tmux.conf' '.bash_aliases' \
+    '.bash_profile' '.gitconfig' \
     '.pryrc' '.irbrc' \
-    '.bashrc' '.inputrc' '.psqlrc' '.vimrc' '.gdbinit' "$pf1" "$pf2")
+    '.bashrc' '.inputrc' '.psqlrc' '.vimrc' '.gdbinit' \
+    "$pf1" "$pf2")
 for file in "${file_arr[@]}"
 do
     # See if file exists in dot_files
@@ -93,7 +113,7 @@ do
     fi
 
     # Link new file
-    echolog "[linked]    $SCRIPT_DIR/$file --> $HOME/$file"  
+    echolog "[linked]    $SCRIPT_DIR/$file --> $HOME/$file"
     ln -s "$SCRIPT_DIR/$file" "$HOME/$file"
 
 done
