@@ -66,10 +66,10 @@
 [plugins]
 [profiles]
   [[default]]
-    background_darkness = 0.9
+    background_darkness = 0.93
     background_image = None
     background_type = transparent
-    font = Ubuntu Mono 11
+    font = Ubuntu Mono 10
     login_shell = True
     scrollback_lines = 15000
     update_records = False
