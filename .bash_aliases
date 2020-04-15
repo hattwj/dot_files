@@ -9,7 +9,7 @@ function git-is-not-resetting-to()
 {
   [ -z "$1" ] && echo "
 Error: remote/branch argument is required
-For example:  
+For example:
   git-is-not-resetting-to origin/master
 
 " && return 0
@@ -24,6 +24,12 @@ For example:
     popd
   fi
 
+}
+
+function git-reset-submodules(){
+  git reset --hard
+  git submodule update --init
+  git submodule foreach --recursive git reset --hard
 }
 
 ##
