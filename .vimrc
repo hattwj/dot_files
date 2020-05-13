@@ -130,15 +130,24 @@ set showmatch "Show matching brackets when text indicator is over them
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Settings for tmp, backup and undo files
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-set backupdir=/tmp//
-set directory=/tmp//
-set undodir=/tmp//
+set backupdir=$HOME/tmp//
+set directory=$HOME/tmp//
+set undodir=$HOME/tmp//
+
+" Make folder automatically if it doesn't already exist.
+if !isdirectory(expand(&undodir))
+  call mkdir(expand(&undodir), "p")
+endif
+
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Sudo Settings
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Allow saving of files as sudo when I forgot to start vim using sudo.
-
+fu! SudoSave()
+  w ! sudo tee %
+endf
+command! -nargs=0 SudoSave call SudoSave()
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Vim-Airline settings
