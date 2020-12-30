@@ -4,7 +4,9 @@ require 'optparse'
 require 'pp'
 require 'mkmf'
 require 'ostruct'
-# require 'pry'
+require 'open3'
+
+require 'pry'
 
 # Configure mkmf so that is does not create logfiles or print path checks
 module MakeMakefile::Logging
@@ -40,14 +42,30 @@ DEFAULT_CONFIG = {
   pattern: nil,
   path: nil,
   replace: nil,
-  confirm: false,
-  cmd: nil
+  confirm: true,
+  cmd: nil,
+  file_types: []
 }.freeze
 
 def parse_args(args)
   options = OpenStruct.new(DEFAULT_CONFIG)
 
+  # Auto expand ack --lang options
+  args = args.map do |val|
+    next val unless val.start_with?('--')
+    next val if ['--replace'].include?(val)
+
+    ['-f', val[2..-1]]
+  end.flatten
+
   optparse = OptionParser.new do |opts|
+    opts.banner = <<~DOC
+      ackrep [FILE-TYPE] [OPTIONS] PATTERN [PATH]
+
+      Example:
+        ackrep --js foo -r bar -c
+    DOC
+
     # This displays the help screen, all programs are
     # assumed to have this option.
     opts.on('-h', '--help', 'Display this screen') do
@@ -57,15 +75,15 @@ def parse_args(args)
 
     opts.on('-r', '--replace val', 'Value to replace matches with') do |val|
       options.replace = val
-    end
-
-    opts.on('-c', '--confirm', 'Ask for confirmation for each edit') do
-      options.confirm = true
       options.auto = true
     end
 
     opts.on('-a', 'Automatically perform replacement') do
-      options.auto = true
+      options.confirm = false
+    end
+
+    opts.on('-f file_type', 'Only match against a specific file type') do |val|
+      options.file_types << val
     end
   end
 
@@ -93,11 +111,14 @@ end
 
 def demo_command(options)
   # Print command that will carry out changes
-  puts 'Re-run the command with "-a" or run the following command to ' \
-       'recursively replace values matching: ' \
-       "'#{options.pattern.red}'"
-  puts "#{options.cmd} -Q --print0 -l \"#{options.pattern.shellescape}\" #{options.path} | " \
-    "xargs -0 sed -i \"s/#{options.pattern.shellescape}/#{options.replace}/g'\""
+  puts <<~DOC
+
+    Re-run the command with "-r PATTERN -c" to replace the matching values and
+    confirm each change. Using a '-a' instead of '-c' will make the process automatic.
+
+    You can also do this yourself with a command that looks like this:
+    #{options.cmd} -Q --print0 -l \"#{options.pattern.shellescape}\" #{options.path} | xargs -0 sed -i "s/#{options.pattern.shellescape}/#{options.replace}/g"
+  DOC
 end
 
 def user_accepts(options)
@@ -119,16 +140,19 @@ end
 def auto_command(files, options)
   max = files.count
   files.each_with_index do |file, idx|
-    cmd_matches = "#{options.cmd} -Q  '#{options.pattern.shellescape}' #{file}"
+    cmd_matches = [options.cmd, '-A4', '-B4', '-m', '1', '-Q', options.pattern]
+    options.file_types.each { |val| cmd_matches << "--#{val}" }
+    cmd_matches << file
 
     puts "#{file}: match #{idx} of #{max}"
-    matches = `#{cmd_matches}`
-    puts 'Before:'
+    matches, status = Open3.capture2(*cmd_matches)
+
+    puts "\nBefore:"
     puts matches.gsub(options.pattern, options.pattern.red)
-    puts 'After: '
+
+    puts "\nAfter: "
     puts matches.gsub(options.pattern, options.replace.green)
 
-    # puts `echo '#{matches.shellescape}' | sed 's/#{options.pattern}/#{options.replace}/g`
     if user_accepts(options)
       text = File.read(file)
       File.write(file, text.gsub(options.pattern, options.replace))
@@ -138,25 +162,31 @@ def auto_command(files, options)
   end
 end
 
+##
+# Return an array of files that match the search terms
 def get_matching_files(options)
-  # Execute ack to show what will be affected
-  cmd = "#{options.cmd} -l -Q \"#{options.pattern.shellescape}\" #{options.path}"
-  puts cmd
-  files = `#{cmd}`
+  cmd = [options.cmd, '-l', '-Q',]
+  cmd << '--ackmate' if options.cmd.end_with?('ag')
+  options.file_types.each { |val| cmd << "--#{val}" }
+  cmd << options.pattern
+  cmd << options.path
 
-  if files == ''
+  puts cmd.join(' ')
+  files, status = Open3.capture2(*cmd)
+  files = files[1..-1].to_s.gsub("\n:", "\n").split("\n")
+
+  if files.empty?
     STDERR.puts "Nothing matched pattern: '#{options.pattern.red}'"
     exit 0
-  elsif !$?.success?
+  elsif !status.success?
     exit_code = $?.to_i
-    STDERR.puts "Non zero exit code (#{exit_code}) for '#{cmd.shellescape}'"
+    STDERR.puts "Non zero exit code (#{exit_code}) for #{cmd.join(' ').inspect}"
     exit exit_code
   else
     puts "Files contianing text from pattern: '#{options.pattern.green}'"
-    puts files.red
+    puts files.join("\n").green
   end
-
-  files.split
+  files
 end
 
 def main(args)
@@ -170,4 +200,10 @@ def main(args)
   end
 end
 
-main(ARGV) if $PROGRAM_NAME == __FILE__
+if $PROGRAM_NAME == __FILE__
+  trap "SIGINT" do
+    puts "Exiting..."
+    exit 130
+  end
+  main(ARGV)
+end
