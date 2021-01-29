@@ -139,7 +139,6 @@ if !isdirectory(expand(&undodir))
   call mkdir(expand(&undodir), "p")
 endif
 
-
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Sudo Settings
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -369,7 +368,7 @@ highlight NonText ctermbg=none
 
 """
 " 80 character line - black
-set cc=80
+set cc=80,120
 hi ColorColumn ctermbg=black guibg=black
 
 """
@@ -442,7 +441,7 @@ augroup END
 " Always show linter gutter
 let g:ale_sign_column_always = 1
 " Disable linting on text change, will only lint on save instead
-let g:ale_lint_on_text_changed = "never"
+"let g:ale_lint_on_text_changed = "never"
 
 " Set this. Airline will handle the rest.
 let g:airline#extensions#ale#enabled = 1
@@ -451,3 +450,12 @@ let g:ale_cache_executable_check_failures = 1
 " Set this variable to 1 to fix files when you save them.
 let g:ale_fix_on_save = 0
 let b:ale_fixers = ['prettier', 'rubocop']
+
+" Specify ruby linters, you'll likely want others enabled
+" let g:ale_linters = {'ruby': ['solargraph']}
+
+" Set the executable for ALE to call to get Solargraph
+" up and running in a given session
+let g:ale_ruby_solargraph_executable = 'solargraph'
+let g:ale_completion_enabled = 1
+

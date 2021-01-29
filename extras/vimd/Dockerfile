@@ -55,10 +55,11 @@ RUN gem install \
     --bindir /usr/bin \
     brakeman \
     parser \
-    rails_best_practices \
-    reek \
-    rubocop \
-    unparser
+    'psych:3.1.0' \
+    'reek:5.6.0' \
+    'rubocop:0.81.0' \
+    solargraph \
+    'unparser:0.5.2'
 
 ##
 # Node related dependencies
@@ -82,9 +83,9 @@ RUN useradd -ms /bin/bash app
 # Install a newer version of vim
 RUN mkdir /opt/source && \
   cd /opt/source && \
-  curl https://codeload.github.com/vim/vim/zip/v8.1.0873 --output v8.1.0873.zip && \
-  unzip v8.1.0873.zip && \
-  cd vim-8.1.0873 && \
+  curl https://codeload.github.com/vim/vim/zip/v8.2.1947 --output vim.zip && \
+  unzip vim.zip -d vim && \
+  cd vim/vim* && \
   ./configure --enable-rubyinterp && \
   make && \
   make install
