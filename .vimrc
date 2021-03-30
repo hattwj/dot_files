@@ -437,6 +437,13 @@ augroup cfn_ft
 augroup END
 
 """
+" Vim tempfile config
+
+set backupdir=.backup/,~/.backup/,/tmp//
+set directory=.swp/,~/.swp/,/tmp//
+set undodir=.undo/,~/.undo/,/tmp//
+
+"""
 " Vim ALE Linter Config
 " Always show linter gutter
 let g:ale_sign_column_always = 1
