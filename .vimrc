@@ -1,7 +1,43 @@
 scriptencoding utf-8
 set encoding=utf-8
 
-execute pathogen#infect()
+" Plugins will be downloaded under the specified directory.
+"   Run :PlugInstall to download and install plugins
+call plug#begin(has('nvim') ? stdpath('data') . '/plugged' : '~/.vim/plugged')
+  " jsx highlighter
+  Plug 'MaxMEllon/vim-jsx-pretty'
+  " Left hand side git diff (+/-/~) sybols
+  Plug 'airblade/vim-gitgutter'
+  " Static analysis suite
+  Plug 'dense-analysis/ale'
+  " Syntax highlighting for Dockerfiles
+  Plug 'ekalinin/Dockerfile.vim'
+  " Snippet support
+  Plug 'garbas/vim-snipmate'
+  " Required dependency for snipmate
+  Plug 'MarcWeber/vim-addon-mw-utils'
+  " Markdown automatic previews, open in browser, likely won't work over ssh.
+  Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
+  " File searching plugin
+  Plug 'kien/ctrlp.vim'
+  " Untested, colored parens highlighter
+  Plug 'kien/rainbow_parentheses.vim'
+  " File searching plugin / ag / ack based.
+  Plug 'mileszs/ack.vim'
+  " JS highlighting
+  Plug 'pangloss/vim-javascript'
+  " Gdiff / Gblame support
+  Plug 'tpope/vim-fugitive'
+  " General rails support
+  Plug 'tpope/vim-rails'
+  " Netrw enhancements, '-' to view parent directory
+  Plug 'tpope/vim-vinegar'
+  " Airline statusbar / git meta data viewer
+  Plug 'vim-airline/vim-airline'
+  Plug 'vim-airline/vim-airline-themes'
+  " Generic ruby enhancements / code completion
+  Plug 'vim-ruby/vim-ruby'
+call plug#end()
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Modify vimdiff to use a better algorithm (if supported)
@@ -84,9 +120,9 @@ set number
 " Disable linewrapping
 set nowrap
 
-" Only syntax highlight the first 200 characters of a line
+" Only syntax highlight the first 400 characters of a line
 " Prevent Slowdown from long lines
-set synmaxcol=300
+set synmaxcol=400
 
 " Set the textwidth to be 80 chars
 "set textwidth=80
@@ -437,13 +473,6 @@ augroup cfn_ft
 augroup END
 
 """
-" Vim tempfile config
-
-set backupdir=.backup/,~/.backup/,/tmp//
-set directory=.swp/,~/.swp/,/tmp//
-set undodir=.undo/,~/.undo/,/tmp//
-
-"""
 " Vim ALE Linter Config
 " Always show linter gutter
 let g:ale_sign_column_always = 1
@@ -466,3 +495,111 @@ let b:ale_fixers = ['prettier', 'rubocop']
 let g:ale_ruby_solargraph_executable = 'solargraph'
 let g:ale_completion_enabled = 1
 
+"""
+" SnipMate Configuration
+"""
+" Use new parser to prevent startup warning
+let g:snipMate = { 'snippet_version' : 1 }
+
+"""
+" rainbowParenthesis configuration
+"""
+au VimEnter * RainbowParenthesesToggle       " On by default
+au Syntax * RainbowParenthesesLoadRound      " ()
+au Syntax * RainbowParenthesesLoadSquare     " []
+au Syntax * RainbowParenthesesLoadBraces     " {}
+au Syntax * RainbowParenthesesLoadChevrons   " <>
+
+ """
+ " Vim-markdown preview configuration
+ """
+" set to 1, nvim will open the preview window after entering the markdown buffer
+" default: 0
+let g:mkdp_auto_start = 0
+
+" set to 1, the nvim will auto close current preview window when change
+" from markdown buffer to another buffer
+" default: 1
+let g:mkdp_auto_close = 1
+
+" set to 1, the vim will refresh markdown when save the buffer or
+" leave from insert mode, default 0 is auto refresh markdown as you edit or
+" move the cursor
+" default: 0
+let g:mkdp_refresh_slow = 0
+
+" set to 1, the MarkdownPreview command can be use for all files,
+" by default it can be use in markdown file
+" default: 0
+let g:mkdp_command_for_global = 0
+
+" set to 1, preview server available to others in your network
+" by default, the server listens on localhost (127.0.0.1)
+" default: 0
+let g:mkdp_open_to_the_world = 0
+
+" use custom IP to open preview page
+" useful when you work in remote vim and preview on local browser
+" more detail see: https://github.com/iamcco/markdown-preview.nvim/pull/9
+" default empty
+let g:mkdp_open_ip = ''
+
+" specify browser to open preview page
+" default: ''
+let g:mkdp_browser = ''
+
+" set to 1, echo preview page url in command line when open preview page
+" default is 0
+let g:mkdp_echo_preview_url = 0
+
+" a custom vim function name to open preview page
+" this function will receive url as param
+" default is empty
+let g:mkdp_browserfunc = ''
+
+" options for markdown render
+" mkit: markdown-it options for render
+" katex: katex options for math
+" uml: markdown-it-plantuml options
+" maid: mermaid options
+" disable_sync_scroll: if disable sync scroll, default 0
+" sync_scroll_type: 'middle', 'top' or 'relative', default value is 'middle'
+"   middle: mean the cursor position alway show at the middle of the preview page
+"   top: mean the vim top viewport alway show at the top of the preview page
+"   relative: mean the cursor position alway show at the relative positon of the preview page
+" hide_yaml_meta: if hide yaml metadata, default is 1
+" sequence_diagrams: js-sequence-diagrams options
+" content_editable: if enable content editable for preview page, default: v:false
+" disable_filename: if disable filename header for preview page, default: 0
+let g:mkdp_preview_options = {
+    \ 'mkit': {},
+    \ 'katex': {},
+    \ 'uml': {},
+    \ 'maid': {},
+    \ 'disable_sync_scroll': 0,
+    \ 'sync_scroll_type': 'middle',
+    \ 'hide_yaml_meta': 1,
+    \ 'sequence_diagrams': {},
+    \ 'flowchart_diagrams': {},
+    \ 'content_editable': v:false,
+    \ 'disable_filename': 0
+    \ }
+
+" use a custom markdown style must be absolute path
+" like '/Users/username/markdown.css' or expand('~/markdown.css')
+let g:mkdp_markdown_css = ''
+
+" use a custom highlight style must absolute path
+" like '/Users/username/highlight.css' or expand('~/highlight.css')
+let g:mkdp_highlight_css = ''
+
+" use a custom port to start server or random for empty
+let g:mkdp_port = ''
+
+" preview page title
+" ${name} will be replace with the file name
+let g:mkdp_page_title = '「${name}」'
+
+" recognized filetypes
+" these filetypes will have MarkdownPreview... commands
+let g:mkdp_filetypes = ['markdown']
