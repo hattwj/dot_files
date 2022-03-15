@@ -483,6 +483,9 @@ let g:ale_sign_column_always = 1
 " Disable linting on text change, will only lint on save instead
 "let g:ale_lint_on_text_changed = "never"
 
+" Lint on save
+let g:ale_lint_on_save = 1
+
 " Set this. Airline will handle the rest.
 let g:airline#extensions#ale#enabled = 1
 " Require vim restart to run linters that are not installed

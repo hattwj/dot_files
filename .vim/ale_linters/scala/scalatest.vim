@@ -49,6 +49,7 @@ function! ale_linters#scala#scalatest#Opscript(buffer, lines) abort
             \   'lnum': str2nr(l:match[3]),
             \   'col': str2nr(l:match[4]),
             \   'text': "Scalatest : " . l:match[5],
+            \   'lint_file': 1,
             \})
         endif
     endfor
