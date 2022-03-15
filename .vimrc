@@ -13,7 +13,7 @@ call plug#begin(has('nvim') ? stdpath('data') . '/plugged' : '~/.vim/plugged')
   " Syntax highlighting for Dockerfiles
   Plug 'ekalinin/Dockerfile.vim'
   " Snippet support
-  Plug 'garbas/vim-snipmate'
+  " Plug 'garbas/vim-snipmate'
   " Required dependency for snipmate
   Plug 'MarcWeber/vim-addon-mw-utils'
   " Markdown automatic previews, open in browser, likely won't work over ssh.
@@ -393,6 +393,9 @@ endfunction
 " Search from git root if possible
 command! -nargs=1 Ag execute "Ack! <args> " . Find_git_root()
 
+map <F2> :mksession! ~/.vim_session <cr> " Quick write session with F2
+map <F3> :source ~/.vim_session <cr>     " And load session with F3
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Terminal Appearance
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -431,6 +434,7 @@ autocmd FileType c,
   \php,
   \python,
   \ruby,
+  \scala,
   \sh,
   \vim,
   \yaml autocmd BufWritePre <buffer> :call <SID>StripTrailingWhitespaces()
@@ -485,10 +489,10 @@ let g:airline#extensions#ale#enabled = 1
 let g:ale_cache_executable_check_failures = 1
 " Set this variable to 1 to fix files when you save them.
 let g:ale_fix_on_save = 0
-let b:ale_fixers = ['prettier', 'rubocop']
+let g:ale_fixers = { 'ruby': ['prettier', 'rubocop'], 'scala': [ 'scalafmt' ] }
 
 " Specify ruby linters, you'll likely want others enabled
-" let g:ale_linters = {'ruby': ['solargraph']}
+let g:ale_linters = {'ruby': ['solargraph', 'rubocop', 'reek', 'ruby'], 'scala': [ 'scalatest' ] }
 
 " Set the executable for ALE to call to get Solargraph
 " up and running in a given session
@@ -508,7 +512,7 @@ au VimEnter * RainbowParenthesesToggle       " On by default
 au Syntax * RainbowParenthesesLoadRound      " ()
 au Syntax * RainbowParenthesesLoadSquare     " []
 au Syntax * RainbowParenthesesLoadBraces     " {}
-au Syntax * RainbowParenthesesLoadChevrons   " <>
+" au Syntax * RainbowParenthesesLoadChevrons   " <>
 
  """
  " Vim-markdown preview configuration
