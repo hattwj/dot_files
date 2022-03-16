@@ -28,7 +28,7 @@ function! ale_linters#scala#scalatest#Opscript(buffer, lines) abort
     "Error: WRONG_SCOPE_COMMENT  (line:  12, col:   9): Comment is invalid in this scope
     "ft_isalnum.c: OK!
 
-    let l:pattern = '\(^[^:]*\):\([^:]*\):\([^:]*\):\([^:]*\):\([^:]*\)'
+    let l:pattern = '\(^[^:]*\):\([^:]*\):\([^:]*\):\([^:]*\):\(.*\)'
     let l:output = []
     let l:curr_file = ''
 
@@ -48,7 +48,7 @@ function! ale_linters#scala#scalatest#Opscript(buffer, lines) abort
             \   'filename': l:match[2],
             \   'lnum': str2nr(l:match[3]),
             \   'col': str2nr(l:match[4]),
-            \   'text': "Scalatest : " . l:match[5],
+            \   'text': "Scalatest : " . substitute(l:match[5], "<--newline-->", "\n", "g"),
             \   'lint_file': 1,
             \})
         endif
