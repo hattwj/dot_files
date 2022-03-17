@@ -8,6 +8,8 @@ call plug#begin(has('nvim') ? stdpath('data') . '/plugged' : '~/.vim/plugged')
   Plug 'MaxMEllon/vim-jsx-pretty'
   " Left hand side git diff (+/-/~) sybols
   Plug 'airblade/vim-gitgutter'
+  " Scala LSP
+  Plug 'scalameta/coc-metals', {'do': 'yarn install --frozen-lockfile'}
   " Static analysis suite
   Plug 'dense-analysis/ale'
   " Syntax highlighting for Dockerfiles
@@ -501,6 +503,10 @@ let g:ale_linters = {'ruby': ['solargraph', 'rubocop', 'reek', 'ruby'], 'scala':
 " up and running in a given session
 let g:ale_ruby_solargraph_executable = 'solargraph'
 let g:ale_completion_enabled = 1
+
+" Show a floating preview window for AleDetail on current line
+let g:ale_cursor_detail=1
+let g:ale_floating_preview = 1
 
 """
 " SnipMate Configuration

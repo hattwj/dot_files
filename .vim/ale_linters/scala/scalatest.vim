@@ -48,7 +48,7 @@ function! ale_linters#scala#scalatest#Opscript(buffer, lines) abort
             \   'filename': l:match[2],
             \   'lnum': str2nr(l:match[3]),
             \   'col': str2nr(l:match[4]),
-            \   'text': "Scalatest : " . substitute(l:match[5], "<--newline-->", "\n", "g"),
+            \   'text': substitute(l:match[5], "<--newline-->", "\n", "g") . "\n(From Scalatest)",
             \   'lint_file': 1,
             \})
         endif
