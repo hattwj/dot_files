@@ -616,3 +616,94 @@ let g:mkdp_page_title = '「${name}」'
 " recognized filetypes
 " these filetypes will have MarkdownPreview... commands
 let g:mkdp_filetypes = ['markdown']
+
+
+
+" Hackday fun
+command! -complete=shellcmd -nargs=+ Shell call s:RunShellCommand(<q-args>)
+function! s:RunShellCommand(cmdline)
+  echo a:cmdline
+  let expanded_cmdline = a:cmdline
+  for part in split(a:cmdline, ' ')
+     if part[0] =~ '\v[%#<]'
+        let expanded_part = fnameescape(expand(part))
+        let expanded_cmdline = substitute(expanded_cmdline, part, expanded_part, '')
+     endif
+  endfor
+  botright new
+  setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap
+  call setline(1, 'You entered:    ' . a:cmdline)
+  call setline(2, 'Expanded Form:  ' .expanded_cmdline)
+  call setline(3,substitute(getline(2),'.','=','g'))
+  execute '$read !'. expanded_cmdline
+  setlocal nomodifiable
+  1
+endfunction
+
+command! -complete=file -nargs=+ CodeSearch call s:CodeSearch(<q-args>)
+
+function! s:CodeSearch(command='')
+  if !empty(a:command)
+    let query = a:command
+  else
+    let query = expand('<cword>')
+  endif
+
+  call s:RunShellCommand('code_search2 "repo:Flagfish* status:active '.query.'"')
+
+  " Feed a character in order to prevent the 'Press enter or type command in
+  " order to continue' message
+  call feedkeys(" ")
+  1
+endfunction
+
+" Automatically restrict to Flagfish related packages
+" - Optionally search for word under the current cursor
+command! -complete=file -nargs=* FFCodeSearch call s:FlagfishCodeSearch(<q-args>)
+function! s:FlagfishCodeSearch(command='')
+  if !empty(a:command)
+    let query = a:command
+  else
+    let query = expand('<cword>')
+  endif
+
+  call s:RunShellCommand('code_search2 "repo:Flagfish*,Elemental* status:active '.query.'"')
+  " Feed a character in order to prevent the 'Press enter or type command in
+  " order to continue' message
+  call feedkeys(" ")
+  1
+endfunction
+
+" Checkout the given package either as a parameter or a word under the cursor
+command! -complete=file -nargs=* BrazilWsUse call s:BrazilWs('use', <q-args>)
+command! -complete=file -nargs=* BrazilWsRemove call s:BrazilWs('remove', <q-args>)
+function! s:BrazilWs(action, command='')
+  if !empty(a:command)
+    let query = a:command
+  else
+    let query = expand('<cword>')
+  endif
+
+  call s:RunShellCommand('brazil ws '.action.' -p '.query)
+  " Feed a character in order to prevent the 'Press enter or type command in
+  " order to continue' message
+  call feedkeys(" ")
+  1
+endfunction
+
+
+command! -complete=file -nargs=* FFOpen call s:FlagfishOpen(<q-args>)
+function! s:FlagfishOpen(command='')
+
+  let workspace="/home/hatt/workplace/MS1/FlagfishEncoderService/src/"
+  if !empty(a:command)
+    let query = a:command
+  else
+    let query = expand('<cfile>')
+  endif
+  let fpath = system('find ~/workplace/MS1 -wholename "*/'.query.'" |head -n1')
+  if !empty(fpath)
+    exec "tabnew ".fpath
+  endif
+  1
+endfunction
