@@ -640,7 +640,7 @@ function! s:RunShellCommand(cmdline)
   1
 endfunction
 
-command! -complete=file -nargs=+ CodeSearch call s:CodeSearch(<q-args>)
+command! -complete=file -nargs=+ CodeSearchAll call s:CodeSearch(<q-args>)
 
 function! s:CodeSearch(command='')
   if !empty(a:command)
@@ -659,7 +659,7 @@ endfunction
 
 " Automatically restrict to Flagfish related packages
 " - Optionally search for word under the current cursor
-command! -complete=file -nargs=* FFCodeSearch call s:FlagfishCodeSearch(<q-args>)
+command! -complete=file -nargs=* CodeSearch call s:FlagfishCodeSearch(<q-args>)
 function! s:FlagfishCodeSearch(command='')
   if !empty(a:command)
     let query = a:command
@@ -675,19 +675,26 @@ function! s:FlagfishCodeSearch(command='')
 endfunction
 
 " Checkout the given package either as a parameter or a word under the cursor
-command! -complete=file -nargs=* BrazilWsUse call s:BrazilWs('use', <q-args>)
-command! -complete=file -nargs=* BrazilWsRemove call s:BrazilWs('remove', <q-args>)
-function! s:BrazilWs(action, command='')
+command! -complete=file -nargs=* BrazilWsUse call s:BrazilWsUse(<q-args>)
+command! -complete=file -nargs=* BrazilWsRemove call s:BrazilWsRemove(<q-args>)
+function! s:BrazilWsUse(command='')
   if !empty(a:command)
     let query = a:command
   else
     let query = expand('<cword>')
   endif
 
-  call s:RunShellCommand('brazil ws '.action.' -p '.query)
-  " Feed a character in order to prevent the 'Press enter or type command in
-  " order to continue' message
-  call feedkeys(" ")
+  let foo = system('brazil ws use -p '.query)
+  1
+endfunction
+function! s:BrazilWsRemove(command='')
+  if !empty(a:command)
+    let query = a:command
+  else
+    let query = expand('<cword>')
+  endif
+
+  let foo = system('brazil ws remove -p '.query)
   1
 endfunction
 
@@ -695,15 +702,16 @@ endfunction
 command! -complete=file -nargs=* FFOpen call s:FlagfishOpen(<q-args>)
 function! s:FlagfishOpen(command='')
 
-  let workspace="/home/hatt/workplace/MS1/FlagfishEncoderService/src/"
   if !empty(a:command)
     let query = a:command
   else
     let query = expand('<cfile>')
   endif
-  let fpath = system('find ~/workplace/MS1 -wholename "*/'.query.'" |head -n1')
+  let fpath = system('flagfish-workflow --locate '.query)
   if !empty(fpath)
     exec "tabnew ".fpath
+  else
+    echoerr("File not found: ".fpath)
   endif
   1
 endfunction
