@@ -698,20 +698,35 @@ function! s:BrazilWsRemove(command='')
   1
 endfunction
 
-
-command! -complete=file -nargs=* FFOpen call s:FlagfishOpen(<q-args>)
-function! s:FlagfishOpen(command='')
-
+command! -nargs=* FFOpen call FlagfishOpen(<q-args>)
+function! FlagfishOpen(command='')
   if !empty(a:command)
     let query = a:command
+    let query_details=split(query, ":")
+    let query_fpath=query_details[0]
+    " Add a line number offset for the file
+    if len(query_details) > 1
+      let query_linenumber=" +".query_details[1]." "
+    else
+      let query_linenumber=""
+    endif
   else
-    let query = expand('<cfile>')
+    let query_fpath=expand("<cfile>")
+    let query=matchstr(getline('.'), query_fpath.':\(\d\+\)')
+    let query_details=split(getline('.'),":")
+    if len(query_details) > 1
+      let query_details=split(query_details[1]," ")
+      let query_linenumber=" +".query_details[0]." "
+    else
+      let query_linenumber=""
+    end
   endif
-  let fpath = system('flagfish-workflow --locate '.query)
+
+  let fpath = system('flagfish-workflow --locate '.query_fpath)
   if !empty(fpath)
-    exec "tabnew ".fpath
+    exec "tabe ".query_linenumber.fpath
   else
     echoerr("File not found: ".fpath)
   endif
-  1
+  " Do not return 1 if you would like to change the line location
 endfunction
