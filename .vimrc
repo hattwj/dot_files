@@ -621,7 +621,7 @@ let g:mkdp_filetypes = ['markdown']
 
 " Hackday fun
 command! -complete=shellcmd -nargs=+ Shell call s:RunShellCommand(<q-args>)
-function! s:RunShellCommand(cmdline)
+function! s:RunShellCommand(cmdline, name='')
   echo a:cmdline
   let expanded_cmdline = a:cmdline
   for part in split(a:cmdline, ' ')
@@ -630,7 +630,7 @@ function! s:RunShellCommand(cmdline)
         let expanded_cmdline = substitute(expanded_cmdline, part, expanded_part, '')
      endif
   endfor
-  botright new
+  exec "botright new ".a:name
   setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap
   call setline(1, 'You entered:    ' . a:cmdline)
   call setline(2, 'Expanded Form:  ' .expanded_cmdline)
@@ -640,16 +640,16 @@ function! s:RunShellCommand(cmdline)
   1
 endfunction
 
-command! -complete=file -nargs=+ CodeSearchAll call s:CodeSearch(<q-args>)
+command! -complete=file -nargs=+ CodeSearchAll call s:CodeSearchAll(<q-args>)
 
-function! s:CodeSearch(command='')
+function! s:CodeSearchAll(command='')
   if !empty(a:command)
     let query = a:command
   else
     let query = expand('<cword>')
   endif
 
-  call s:RunShellCommand('code_search2 "repo:Flagfish* status:active '.query.'"')
+  call s:RunShellCommand('code_search2 "status:active '.query.'"', '_CodeSearch_')
 
   " Feed a character in order to prevent the 'Press enter or type command in
   " order to continue' message
@@ -667,16 +667,20 @@ function! s:FlagfishCodeSearch(command='')
     let query = expand('<cword>')
   endif
 
-  call s:RunShellCommand('code_search2 "repo:Flagfish*,Elemental* status:active '.query.'"')
+  call s:RunShellCommand('code_search2 "repo:Flagfish*,Elemental* status:active '.query.'"', '_CodeSearch_')
   " Feed a character in order to prevent the 'Press enter or type command in
   " order to continue' message
   call feedkeys(" ")
   1
 endfunction
 
+""
+" let wins = win_findbuf(bufnr('_CodeSearch_'))
+" call win_gotoid(wins[0])
+""
+
 " Checkout the given package either as a parameter or a word under the cursor
 command! -complete=file -nargs=* BrazilWsUse call s:BrazilWsUse(<q-args>)
-command! -complete=file -nargs=* BrazilWsRemove call s:BrazilWsRemove(<q-args>)
 function! s:BrazilWsUse(command='')
   if !empty(a:command)
     let query = a:command
@@ -687,6 +691,8 @@ function! s:BrazilWsUse(command='')
   let foo = system('brazil ws use -p '.query)
   1
 endfunction
+
+command! -complete=file -nargs=* BrazilWsRemove call s:BrazilWsRemove(<q-args>)
 function! s:BrazilWsRemove(command='')
   if !empty(a:command)
     let query = a:command
@@ -698,9 +704,26 @@ function! s:BrazilWsRemove(command='')
   1
 endfunction
 
+""
+" Open the Brazil file (as an arg, or under the cursor)
+" - Search up to find pipeline root and then jump to new
+"   file. This search can cross pipelines, as long as they share the
+"   pipelines share the same root directory.
+" Given:
+" ~/workplace
+"   FlagfishChannelService (where we are viewing)
+"   FlagfishEncoderService (has a package we want to see)
+"
+" Example:
+"   Open a package by name:
+"   FFOpen FlagfishWorkerServiceProtobufs
+"
+"   Open a file in a package and jump to a specific line:
+"   FFOpen FlagfishWorkerServiceProtobufs/configuration/protobuf/worker.proto:167
 command! -nargs=* FFOpen call FlagfishOpen(<q-args>)
 function! FlagfishOpen(command='')
   if !empty(a:command)
+    " A command in the form of 'file/path:line_number"
     let query = a:command
     let query_details=split(query, ":")
     let query_fpath=query_details[0]
