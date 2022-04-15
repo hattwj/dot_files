@@ -620,28 +620,111 @@ let g:mkdp_filetypes = ['markdown']
 
 
 " Hackday fun
-command! -complete=shellcmd -nargs=+ Shell call s:RunShellCommand(<q-args>)
-function! s:RunShellCommand(cmdline, name='')
-  echo a:cmdline
-  let expanded_cmdline = a:cmdline
-  for part in split(a:cmdline, ' ')
-     if part[0] =~ '\v[%#<]'
-        let expanded_part = fnameescape(expand(part))
-        let expanded_cmdline = substitute(expanded_cmdline, part, expanded_part, '')
-     endif
+let g:code_search_buffers = []
+let g:code_search_bcount = 0
+let g:code_search_status = "status:active"
+let g:code_search_repo = "repo:Flagfish*,Elemental*"
+let g:code_search_file_found = "🟢"
+let g:code_search_file_missing = "⭕"
+
+command! -complete=shellcmd -nargs=+ Shell call s:CodeSearchHandler(<q-args>)
+function! s:CodeSearchHandler(command)
+  let l:header =<< trim HEADER
+===============================================================================================
+Brazil Code Search
+===============================================================================================
+Details:
+ State: State of the file on the local machine
+  ⭕              - File or package not found
+  🟢              - File or package was found
+
+ File name: The name of the file that was found via CodeSearch
+
+ Keywords: Definition related keywords that were found near the code snippet
+           IE: #{defining_patterns}
+
+Commands:           Key:      Description:
+-----------------------------------------------
+  BrazilWsUse     - [U]     - Add package
+  BrazilWsRemove  - [R]     - Remove package
+  FFOpen          - [ENTER] - Open file
+
+HEADER
+
+  " Close any _CodeSearch_ buffers that are open in the current tab
+  for buf_num in tabpagebuflist(tabpagenr())
+    let l:bidx = index(g:code_search_buffers, buf_num)
+    if l:bidx >= 0
+      exec "bd ".g:code_search_buffers[l:bidx]
+      call remove(g:code_search_buffers, l:bidx)
+    endif
   endfor
-  exec "botright new ".a:name
+
+  " Update buffer list and remove bufnr for buffers that are closed
+  let l:new_buf_list = []
+  for buf_num in g:code_search_buffers
+    if bufexists(buf_num) == 0
+      call add(l:new_buf_list, buf_num)
+    endif
+  endfor
+  let g:code_search_buffers = l:new_buf_list
+
+  let l:name = CodeSearchBufName()
+  exec "botright new ".name
   setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap
-  call setline(1, 'You entered:    ' . a:cmdline)
-  call setline(2, 'Expanded Form:  ' .expanded_cmdline)
-  call setline(3,substitute(getline(2),'.','=','g'))
-  execute '$read !'. expanded_cmdline
+  call add(g:code_search_buffers, bufnr("%"))
+
+  " Keybindings for search buffer
+
+  "" Press [ENTER] to open file
+  nnoremap <buffer> <CR> :FFOpen<CR>
+  "" Press [R] to remove package
+  nnoremap <buffer> R :BrazilWsRemove<CR>
+  "" Press [U] to use package
+  nnoremap <buffer> U :BrazilWsUse<CR>
+
+  call append(0, l:header)
+  execute '$read !'. a:command
   setlocal nomodifiable
   1
 endfunction
 
-command! -complete=file -nargs=+ CodeSearchAll call s:CodeSearchAll(<q-args>)
+function! CodeSearchBufName()
+  " for all buffers in the global
+  " - skip if the buffer no longer exists
+  " - skip if the buffer is not in the current window
+  " -
 
+  " " The current buffer as number
+  " let current_buff = bufnr("%")
+
+  " " The current window as number
+  " let l:cur_win=winnr()
+
+  " " The current tabpage
+  " let l:current_tabpage = tabpagenr()
+
+  " " Buffers on the current tab
+  " let l:vis_bufs = tabpagebuflist(tabpagenr())
+
+  " " Get the window ID of the given buffer
+  " let l:win_of_cur_buf=win_findbuf(current_buf)
+
+  " " Convert the window ID to a window number
+  " let l:win_cur_nr = win_id2win(win_of_cur_buf)
+
+  " for bnum in tabpagebuflist(tabpagenr())
+
+  " endfor
+  " getbufvar()             get a variable value from a specific buffer
+  " setbufvar()             set a variable in a specific buffer
+
+  " let l:binfo = buffers!
+  let g:code_search_bcount += 1
+  return "_CodeSearch_".g:code_search_bcount
+endfunction
+
+command! -complete=file -nargs=+ CodeSearchAll call s:CodeSearchAll(<q-args>)
 function! s:CodeSearchAll(command='')
   if !empty(a:command)
     let query = a:command
@@ -649,7 +732,7 @@ function! s:CodeSearchAll(command='')
     let query = expand('<cword>')
   endif
 
-  call s:RunShellCommand('code_search2 "status:active '.query.'"', '_CodeSearch_')
+  call s:CodeSearchHandler('code_search2 "status:active '.query.'"')
 
   " Feed a character in order to prevent the 'Press enter or type command in
   " order to continue' message
@@ -659,19 +742,33 @@ endfunction
 
 " Automatically restrict to Flagfish related packages
 " - Optionally search for word under the current cursor
-command! -complete=file -nargs=* CodeSearch call s:FlagfishCodeSearch(<q-args>)
-function! s:FlagfishCodeSearch(command='')
-  if !empty(a:command)
-    let query = a:command
+command! -nargs=* CodeSearch call CodeSearch(<q-args>)
+function! CodeSearch(cmd='')
+  if !empty(a:cmd)
+    let l:query = a:cmd
   else
-    let query = expand('<cword>')
+    let l:query = expand('<cword>')
   endif
 
-  call s:RunShellCommand('code_search2 "repo:Flagfish*,Elemental* status:active '.query.'"', '_CodeSearch_')
+  let l:cmd_query = g:code_search_repo . " " . g:code_search_status . " ". l:query
+  call s:CodeSearchHandler('code_search2 ' . l:cmd_query)
+
   " Feed a character in order to prevent the 'Press enter or type command in
   " order to continue' message
   call feedkeys(" ")
-  1
+  " Set cursor to line 20 (where the results start)
+  20
+endfunction
+
+command! -nargs=* BrazilLs call BrazilLs()
+function! BrazilLs()
+  call s:CodeSearchHandler('flagfish-workflow --ls')
+
+  " Feed a character in order to prevent the 'Press enter or type command in
+  " order to continue' message
+  call feedkeys(" ")
+  " Set cursor to line 20 (where the results start)
+  20
 endfunction
 
 ""
@@ -682,6 +779,11 @@ endfunction
 " Checkout the given package either as a parameter or a word under the cursor
 command! -complete=file -nargs=* BrazilWsUse call s:BrazilWsUse(<q-args>)
 function! s:BrazilWsUse(command='')
+  " Todo: Be smart about which pipeline we use for the package
+  " In each pipeline we can run 'bazil ws show' to get the versionSet
+  " - or manually inspect the 'packageInfo' file.
+  " Then run 'brazil vs --print --versionSet <versionSet>' to get a list of
+  " dependencies.
   if !empty(a:command)
     let query = a:command
   else

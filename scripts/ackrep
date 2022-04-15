@@ -2,17 +2,17 @@
 
 require 'optparse'
 require 'pp'
-require 'mkmf'
+# require 'mkmf'
 require 'ostruct'
 require 'open3'
 
 require 'pry'
 
 # Configure mkmf so that is does not create logfiles or print path checks
-module MakeMakefile::Logging
-  @logfile = File::NULL
-  @quiet = true
-end
+# module MakeMakefile::Logging
+#   @logfile = File::NULL
+#   @quiet = true
+# end
 
 # CLI colorization config
 class String
@@ -59,12 +59,12 @@ def parse_args(args)
   end.flatten
 
   optparse = OptionParser.new do |opts|
-    opts.banner = <<~DOC
-      ackrep [FILE-TYPE] [OPTIONS] PATTERN [PATH]
+    opts.banner = <<-DOC
+  ackrep [FILE-TYPE] [OPTIONS] PATTERN [PATH]
 
-      Example:
-        ackrep --js foo -r bar -c
-    DOC
+  Example:
+    ackrep --js foo -r bar -c
+DOC
 
     # This displays the help screen, all programs are
     # assumed to have this option.
@@ -99,8 +99,8 @@ def parse_args(args)
 end
 
 def get_search_cmd
-  cmd = find_executable('ag')
-  cmd ||= find_executable('ack')
+  cmd = 'ag' #find_executable('ag')
+  #cmd ||= find_executable('ack')
 
   unless cmd
     raise 'either "ag" or "ack" must be installed in order to use this tool'
@@ -111,14 +111,14 @@ end
 
 def demo_command(options)
   # Print command that will carry out changes
-  puts <<~DOC
+  puts <<-DOC
 
-    Re-run the command with "-r PATTERN -c" to replace the matching values and
-    confirm each change. Using a '-a' instead of '-c' will make the process automatic.
+Re-run the command with "-r PATTERN -c" to replace the matching values and
+confirm each change. Using a '-a' instead of '-c' will make the process automatic.
 
-    You can also do this yourself with a command that looks like this:
-    #{options.cmd} -Q --print0 -l \"#{options.pattern.shellescape}\" #{options.path} | xargs -0 sed -i "s/#{options.pattern.shellescape}/#{options.replace}/g"
-  DOC
+You can also do this yourself with a command that looks like this:
+#{options.cmd} -Q --print0 -l \"#{options.pattern.shellescape}\" #{options.path} | xargs -0 sed -i "s/#{options.pattern.shellescape}/#{options.replace}/g"
+DOC
 end
 
 def user_accepts(options)
@@ -145,7 +145,7 @@ def auto_command(files, options)
     cmd_matches << file
 
     puts "#{file}: match #{idx} of #{max}"
-    matches, status = Open3.capture2(*cmd_matches)
+    matches, _status = Open3.capture2(*cmd_matches)
 
     puts "\nBefore:"
     puts matches.gsub(options.pattern, options.pattern.red)
