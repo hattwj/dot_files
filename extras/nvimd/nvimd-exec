@@ -1,0 +1,142 @@
+#!/usr/bin/env bash
+set -e
+
+function usage(){
+  echo '
+
+vimd-exec <options> <command> <args>
+options:
+  --user NAME   execute the command as a different user
+  --help
+
+
+examples:
+
+# Use vim to edit a file
+nvimd-exec vim /path/to/some/file
+
+# Explore the docker container as root
+nvimd-exec --user root bash
+'
+}
+
+function die(){
+  return 1
+}
+
+# Find directory that this script is in
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Default to mounting the current working directory
+BASEDIR=$PWD
+
+# TODO:
+# Collect all mount volumes and find the lowest common denominators
+# - Look for common root paths and deduplicate them
+# - Check each common root path for git repository membership and trim the
+#   mount path back to the root.
+
+# The docker image that we should use
+DOCKER_IMAGE=vim-ale-linters:v1
+
+has_image=$(docker images --format '{{.Repository}}:{{.Tag}}' | grep $DOCKER_IMAGE && echo 'yes' || echo 'no')
+
+if [ "$has_image" == 'no' ]; then
+  echo Building docker image: $DOCKER_IMAGE
+  $SCRIPT_DIR/nvimd-build
+fi
+
+# Source the vimdrc file for customization options
+VIMD_OPTS=""
+[ -e "$HOME/.vimdrc" ] && source "$HOME/.vimdrc"
+
+
+# If the first parameter is a flag; then consume it and forward the rest of the
+# parameters
+APP_USER='app'
+if [ "$1" == "--user" ]; then
+  APP_USER="$2"
+  shift
+  shift
+fi
+
+[ "$1" == "--help" ] && usage && die
+
+[ -z "$1" ] && { echo "Error: You must specify a command" >&2; die; }
+
+##
+# Forward all parameters to the docker container
+# - For one arg specified we check to see if it is a file/dir that exists
+#   in a git repository
+#   - If yes: mount that git root as a volume
+#   - If no: mount the base directory as a volume
+declare -a ARGS
+
+##
+# Convert all args to realpath (if they are files)
+# Check for files that are inside of a git repository
+# and mount the git root as a volume if there is one.
+for var in "$@"; do
+  ##
+  # If it starts with "/"
+  # and its a file / directory or a new file in an old directory
+  # Then add it to the volume mounts
+  if [[ "$var" = /* ]] && ([ -e "$var" ] || [ -d $(dirname "$var") ]); then
+    # Full local path to the file
+    var="$(realpath $var)"
+
+    # Base volume that should be mounted
+    BASEDIR="$var"
+    if [ ! -d "$var" ]; then
+      BASEDIR="$(dirname $var)"
+    fi
+
+    pushd $BASEDIR
+    if [ $(git rev-parse --is-inside-work-tree) ]; then
+      BASEDIR=$(git rev-parse --show-toplevel)
+    fi
+    popd
+  fi
+  ARGS+=("$var")
+done
+
+# Do not allow mounting root
+if [[ "$BASEDIR" = '/' ]]; then
+  echo "ERROR: Editing this file would require mounting root, which is not allowed."
+  die
+fi
+
+# Do not allow mounting proc
+if [[ "$BASEDIR" = '/proc' ]]; then
+  echo "ERROR: Editing this file would require mounting '/proc', which is not allowed."
+  die
+fi
+
+# Avoid mounting anything from $HOME because it will already be mounted
+MOUNT_OPTS="-v $BASEDIR:$BASEDIR"
+[[ "$BASEDIR" == $HOME* ]] && MOUNT_OPTS=""
+# TODO: This is a hack to avoid mounts from vimdrc file
+[[ "$BASEDIR" == /work* ]] && MOUNT_OPTS=""
+MOUNT_OPTS="$MOUNT_OPTS -v $HOME:$HOME"
+
+# Command to fix permissions inside of docker container
+CMD_PERMS="usermod -u $(id -u) $APP_USER; usermod -g $(id -g) $APP_USER"
+
+# Join array with spaces
+if [ "$APP_USER" != "root" ]; then
+  # run command as a different user by default
+  ARGS=$(IFS=" " ; echo "cd $BASEDIR; $CMD_PERMS; su -m $APP_USER -c '${ARGS[@]}'")
+else
+  echo WARNING: unable to update ID/GID for root user
+  ARGS=$(IFS=" " ; echo "cd $BASEDIR; ${ARGS[@]}")
+fi
+# Print out command that we exec
+set -o xtrace
+
+# Run the command
+docker run --rm -it \
+  -e HOME=$HOME \
+  $MOUNT_OPTS \
+  $VIMD_OPTS \
+  --user root \
+  $DOCKER_IMAGE bash -c "$ARGS"
