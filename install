@@ -3,8 +3,12 @@
 # Echo parameter and log it to file
 function echolog()
 {
-	echo $1
-	echo $1 >> $LOG_FILE
+  echo $1
+  echo $1 >> $LOG_FILE
+}
+
+function backupAndLink() {
+
 }
 
 git submodule update --init --recursive
@@ -14,9 +18,10 @@ OLD_DIR="$(pwd)"
 
 # Find directory that this script is in
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+CONFIG_DIR="$SCRIPT_DIR/configs"
 
 # Create log file name
-LOG_FILE="$SCRIPT_DIR/install.log"
+LOG_FILE="$HOME/dot_files_install.log"
 
 # what bash files will this computer use?
 pf1=".bashrc_"`uname`
@@ -29,7 +34,7 @@ if [ ! -f "$pf3" ]; then
 fi
 
 # create home bin dir
-if [ ! -d "$HOME/backups" ]; then
+if [ ! -d "$HOME/bin" ]; then
    echo "[created]    $HOME/bin"
    mkdir "$HOME/bin"
    chmod go-w "$HOME/bin"
@@ -42,20 +47,14 @@ if [ ! -d "$SCRIPT_DIR/backups" ]; then
 fi
 
 # Check and remove old log file (if exists)
-if [ -f "$SCRIPT_DIR/install.log"  ]; then
+if [ -f "$LOG_FILE"  ]; then
     echo "[deleted] $LOG_FILE"
     rm -f "$LOG_FILE"
 fi
 
-# Create ~/bin directory if it does not exist
-if [ ! -d "$HOME/bin" ]; then
-    echolog "[created]    $HOME/bin"
-    mkdir $HOME/bin
-fi
-
 echo "Symlinking scripts to $HOME/bin"
 
-SCRIPTS=$SCRIPT_DIR/scripts/*
+SCRIPTS=$SCRIPT_DIR/bin/*
 for f in $SCRIPTS
 do
   fname="$(basename -- $f)"
@@ -90,15 +89,17 @@ do
     # Create link to new directory
     if [ -d "$SCRIPT_DIR/$dir" ]; then
         echolog "[linked]    $SCRIPT_DIR/$dir  -->  $HOME/$dir"
-        ln -s $SCRIPT_DIR/$dir "$HOME/$dir"
+        ln -s $CONFIGS_DIR/$dir "$HOME/$dir"
     fi
 done
 
-declare -a file_arr=('.ackrc' '.tmux.conf' '.bash_aliases' \
-    '.bash_profile' '.gitconfig' \
-    '.pryrc' '.irbrc' '.gemrc' \
-    '.bashrc' '.inputrc' '.psqlrc' '.vimrc' '.gdbinit' \
-    "$pf1" "$pf2")
+
+declare -a file_arr=($(ls -fA $CONFIGS_DIR))
+# declare -a file_arr=('.ackrc' '.tmux.conf' '.bash_aliases' \
+#     '.bash_profile' '.gitconfig' \
+#     '.pryrc' '.irbrc' '.gemrc' \
+#     '.bashrc' '.inputrc' '.psqlrc' '.vimrc' '.gdbinit' \
+#     "$pf1" "$pf2")
 for file in "${file_arr[@]}"
 do
     # See if file exists in dot_files
@@ -121,8 +122,7 @@ do
 
     # Link new file
     echolog "[linked]    $SCRIPT_DIR/$file --> $HOME/$file"
-    ln -s "$SCRIPT_DIR/$file" "$HOME/$file"
-
+    ln -s "$CONFIGS_DIR/$file" "$HOME/$file"
 done
 
 # Parse command line options

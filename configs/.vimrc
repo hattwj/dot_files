@@ -9,7 +9,7 @@ call plug#begin(has('nvim') ? stdpath('data') . '/plugged' : '~/.vim/plugged')
   " Left hand side git diff (+/-/~) sybols
   Plug 'airblade/vim-gitgutter'
   " Scala LSP
-  Plug 'scalameta/coc-metals', {'do': 'yarn install --frozen-lockfile'}
+  " Plug 'scalameta/coc-metals', {'do': 'yarn install --frozen-lockfile'}
   " Static analysis suite
   Plug 'dense-analysis/ale'
   " Syntax highlighting for Dockerfiles
