@@ -1,27 +1,93 @@
 #!/bin/bash
 
 # Echo parameter and log it to file
-function echolog()
-{
-  echo $1
-  echo $1 >> $LOG_FILE
+function echoLog() {
+  if [ -z "$NO_OP" ]; then
+    echo -e $1
+    echo [$(date)] $1 >> $LOG_FILE
+  else
+    echo -e [no-op] $1
+  fi
 }
 
-function backupAndLink() {
+function backupAndLinkFiles() {
+  DEST="$1"
+  shift
 
+  file_arr=("$@")
+  for SRC_FILE in "${file_arr[@]}"
+  do
+    DEST_FILE="$DEST/$(basename $SRC_FILE)"
+
+    # See if file exists in dot_files
+    if [ ! -f "$SRC_FILE" ]; then
+      echoLog "[source missing] $SRC_FILE"
+      continue
+    fi
+
+    # Save file if not a link
+    if  [ -f "$DEST_FILE" ] && [ ! -L "$DEST_FILE" ] ; then
+      echoLog "[backup]   $DEST_FILE --> $SCRIPT_DIR/backups"
+      [ -z "$NO_OP" ] && cp "$DEST_FILE" "$SCRIPT_DIR/backups"
+    fi
+
+    # Delete original file
+    if  [ -f "$DEST_FILE" ] || [ -L "$DEST_FILE" ] ; then
+      echoLog "[deleted]   $DEST_FILE"
+      [ -z "$NO_OP" ] && rm -f "$DEST_FILE"
+    fi
+
+    # Link new file
+    echoLog "[linked]    $SRC_FILE --> $DEST_FILE"
+    [ -z "$NO_OP" ] && ln -s "$SRC_FILE" "$DEST_FILE"
+  done
 }
 
-git submodule update --init --recursive
+function backupAndLinkDirs() {
+  DEST="$1"
+  shift
+
+  dir_arr=("$@")
+  for SRC_DIR in "${dir_arr[@]}"
+  do
+    DEST_DIR="$DEST/$(basename $SRC_DIR)"
+
+    # See if file exists in dot_files
+    if [ ! -d "$SRC_DIR" ]; then
+      echoLog "[source missing] $SRC_DIR"
+      continue
+    fi
+
+    # Save directory if it is not a symlink
+    if [ ! -L "$DEST_DIR" ] && [ -d "$DEST_DIR" ]; then
+      echoLog "[backup]    $DEST_DIR --> $SCRIPT_DIR/backups"
+      [ -z "$NO_OP" ] && cp -R "$DEST_DIR" "$SCRIPT_DIR/backups"
+    fi
+
+    # Delete directory/symlink
+    if [ -d "$SRC_DIR" ] && [ -d "$DEST_DIR" ]; then
+      echoLog "[deleted]    $DEST_DIR"
+      [ -z "$NO_OP" ] && rm -rf "$DEST_DIR"
+    fi
+
+    # Create link to new directory
+    if [ -d "$SRC_DIR" ]; then
+      echoLog "[linked]    $SRC_DIR  -->  $DEST_DIR"
+      [ -z "$NO_OP" ] && ln -s $SRC_DIR "$DEST_DIR"
+    fi
+  done
+}
 
 #get cur dir
 OLD_DIR="$(pwd)"
 
 # Find directory that this script is in
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-CONFIG_DIR="$SCRIPT_DIR/configs"
+CONFIGS_DIR="$SCRIPT_DIR/configs"
+BINS_DIR="$SCRIPT_DIR/bin"
 
 # Create log file name
-LOG_FILE="$HOME/dot_files_install.log"
+LOG_FILE="$SCRIPT_DIR/install.log"
 
 # what bash files will this computer use?
 pf1=".bashrc_"`uname`
@@ -29,106 +95,44 @@ pf2=".bashrc_"`uname`'_'`hostname`
 pf3="$HOME/.bash_custom"
 
 if [ ! -f "$pf3" ]; then
-    touch $pf3
-    echo "[created]    $pf3"
+  [ -z "$NO_OP" ] && touch $pf3
+  echo "[created]    $pf3"
 fi
 
 # create home bin dir
 if [ ! -d "$HOME/bin" ]; then
-   echo "[created]    $HOME/bin"
-   mkdir "$HOME/bin"
-   chmod go-w "$HOME/bin"
+  echo "[created]    $HOME/bin"
+  [ -z "$NO_OP" ] && mkdir "$HOME/bin"
+  [ -z "$NO_OP" ] && chmod go-w "$HOME/bin"
 fi
 
 # create backup dir
 if [ ! -d "$SCRIPT_DIR/backups" ]; then
-    echo "[created]    $SCRIPT_DIR/backups"
-    mkdir "$SCRIPT_DIR/backups"
+  echo "[created]    $SCRIPT_DIR/backups"
+  [ -z "$NO_OP" ] && mkdir "$SCRIPT_DIR/backups"
 fi
 
-# Check and remove old log file (if exists)
-if [ -f "$LOG_FILE"  ]; then
-    echo "[deleted] $LOG_FILE"
-    rm -f "$LOG_FILE"
-fi
-
-echo "Symlinking scripts to $HOME/bin"
-
-SCRIPTS=$SCRIPT_DIR/bin/*
-for f in $SCRIPTS
-do
-  fname="$(basename -- $f)"
-  # take action on each file. $f store current file name
-  [ ! -f "$HOME/bin/$fname" ] && \
-    ln -sf $f $HOME/bin/$fname && \
-    echolog "[created]    $HOME/bin/$fname"
-done
+echo
+declare -a scripts=($(ls -fAd $BINS_DIR/*))
+echo -e "\nLinking scripts:"
+backupAndLinkFiles "$HOME/bin" "${scripts[@]}"
 
 # Create .config directory if it does not exist
 if [ ! -d "$HOME/.config" ]; then
-    echolog "[created]    $HOME/.config"
-    mkdir $HOME/.config
+  echoLog "[created]    $HOME/.config"
+  [ -z "$NO_OP" ] && mkdir $HOME/.config
 fi
 
 # create backups and generate symlinks
-declare -a dir_arr=('.vim' '.config/terminator')
-for dir in "${dir_arr[@]}"
-do
-    # Save directory if it is not a symlink
-    if [ ! -L "$HOME/$dir" ] && [ -d "$HOME/$dir" ]; then
-        echolog "[backup]    $HOME/$dir --> $SCRIPT_DIR/backups"
-        cp -R "$HOME/$dir" "$SCRIPT_DIR/backups"
-    fi
+# Not ready:
+# ls -Ad $CONFIGS_DIR/.??*/
+echo -e "\nLinking config directories:"
+declare -a dir_arr=("$CONFIGS_DIR/.vim" "$CONFIGS_DIR/.config/terminator")
+backupAndLinkDirs "$HOME" "${dir_arr[@]}"
 
-    # Delete directory/symlink
-    if [ -d "$SCRIPT_DIR/$dir" ] && [ -d "$HOME/$dir" ]; then
-        echolog "[deleted]    $HOME/$dir"
-        rm -rf "$HOME/$dir"
-    fi
-
-    # Create link to new directory
-    if [ -d "$SCRIPT_DIR/$dir" ]; then
-        echolog "[linked]    $SCRIPT_DIR/$dir  -->  $HOME/$dir"
-        ln -s $CONFIGS_DIR/$dir "$HOME/$dir"
-    fi
-done
-
-
-declare -a file_arr=($(ls -fA $CONFIGS_DIR))
-# declare -a file_arr=('.ackrc' '.tmux.conf' '.bash_aliases' \
-#     '.bash_profile' '.gitconfig' \
-#     '.pryrc' '.irbrc' '.gemrc' \
-#     '.bashrc' '.inputrc' '.psqlrc' '.vimrc' '.gdbinit' \
-#     "$pf1" "$pf2")
-for file in "${file_arr[@]}"
-do
-    # See if file exists in dot_files
-    if [ ! -f "$SCRIPT_DIR/$file" ]; then
-        echolog "[missing] $file"
-        continue
-    fi
-
-    # Save file if not a link
-    if  [ -f "$HOME/$file" ] || [ ! -L "$HOME/$file" ] ; then
-        echolog "[backup]   $HOME/$file --> $SCRIPT_DIR/backups"
-        cp "$HOME/$file" "$SCRIPT_DIR/backups"
-    fi
-
-    # Delete original file
-    if  [ -f "$HOME/$file" ] || [ -L "$HOME/$file" ] ; then
-        echolog "[deleted]   $HOME/$file"
-        rm -f "$HOME/$file"
-    fi
-
-    # Link new file
-    echolog "[linked]    $SCRIPT_DIR/$file --> $HOME/$file"
-    ln -s "$CONFIGS_DIR/$file" "$HOME/$file"
-done
-
-# Parse command line options
-if [[ "$@" == "--extras" ]]
-then
-    $SCRIPT_DIR/install_extras
-fi
+echo -e "\nLinking dot files:"
+# -f only files, -A show hidden; except . and .., -d give full path of file
+declare -a file_arr=($(find $CONFIGS_DIR -maxdepth 1 -type f))
+backupAndLinkFiles "$HOME" "${file_arr[@]}"
 
 cd $OLD_DIR
