@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+##
+# Disable the middle click button on mouse named "Pixart Optical Mouse"
+# so that it doesn't paste the clipboard when I accidentally click the
+# middle button
+
+INPUT_ID=$(xinput list |grep 'Optical Mouse'|tail -n1|grep -oP 'id=(\d+)'|grep -oP '\d+')
+xinput set-button-map $INPUT_ID 1 1 3 4 5 6 7

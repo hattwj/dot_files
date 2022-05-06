@@ -1,0 +1,21 @@
+#!/usr/bin/env sh
+
+MAX_TRIES=4
+
+if [ "$1" == '-n' ]; then
+  MAX_TRIES=$2
+  shift
+  shift
+fi
+COUNT=0
+
+while [  $COUNT -lt $MAX_TRIES ]; do
+   eval $@
+   if [ $? -ne 0 ];then
+      echo "Command failed after $COUNT iterations"
+      exit 1
+   fi
+   echo "Completed round $COUNT of $MAX_TRIES"
+   let COUNT=COUNT+1
+done
+echo "Command completed without error"
