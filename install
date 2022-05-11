@@ -18,11 +18,19 @@ function backupAndLinkFiles() {
   for SRC_FILE in "${file_arr[@]}"
   do
     DEST_FILE="$DEST/$(basename $SRC_FILE)"
+    DEST_DIR="$(readlink -f $DEST_FILE |xargs dirname)"
 
     # See if file exists in dot_files
     if [ ! -f "$SRC_FILE" ]; then
       echoLog "[source missing] $SRC_FILE"
       continue
+    fi
+
+    if [ ! -d "$DEST_DIR" ]; then
+      echoLog "[created]   $DEST_DIR"
+      [ -z "$NO_OP" ] && mkdir -p "$DEST_DIR"
+    else
+      echoLog "[exists]   $DEST_DIR"
     fi
 
     # Save file if not a link
@@ -127,11 +135,18 @@ fi
 # Not ready:
 # ls -Ad $CONFIGS_DIR/.??*/
 echo -e "\nLinking config directories:"
-declare -a dir_arr=("$CONFIGS_DIR/.vim" "$CONFIGS_DIR/.config/terminator")
+declare -a dir_arr=("$CONFIGS_DIR/.vim")
 backupAndLinkDirs "$HOME" "${dir_arr[@]}"
 
+echo -e "\nLinking application configs:"
+declare -a file_arr=("$CONFIGS_DIR/.config/terminator/config")
+backupAndLinkFiles "$HOME/.config/terminator" "${file_arr[@]}"
+
+echo -e "\nLinking desktop launchers:"
+declare -a file_arr=($(find "$CONFIGS_DIR/.local/share/applications" -maxdepth 1 -type f))
+backupAndLinkFiles "$HOME/.local/share/applications" "${file_arr[@]}"
+
 echo -e "\nLinking dot files:"
-# -f only files, -A show hidden; except . and .., -d give full path of file
 declare -a file_arr=($(find $CONFIGS_DIR -maxdepth 1 -type f))
 backupAndLinkFiles "$HOME" "${file_arr[@]}"
 
