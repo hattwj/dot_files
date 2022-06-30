@@ -683,7 +683,9 @@ HEADER
   "" Press [U] to use package
   nnoremap <buffer> U :BrazilWsUse<CR>
 
+  "" Write the header to the buffer
   call append(0, l:header)
+  "" Write output to buffer
   execute '$read !'. a:command
   setlocal nomodifiable
   1

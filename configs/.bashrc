@@ -1,12 +1,12 @@
 # General stuff here
 
 # Make paging in postgres much nicer
-export PAGER=less
+export PAGER='less -r'
 export LESS="-iMSx4 -FX"
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-## 
+##
 # Plan:
 # Remove period (.) from all files in dot_files
 # Add scripts directory to PATH
