@@ -6,7 +6,11 @@ BASE=v9.0.0471.zip
 VER=vim-9.0.0471
 URI=https://github.com/vim/vim/archive/$BASE
 
-# sudo /usr/bin/yum -y install ncurses ncurses-devel
+sudo /usr/bin/yum -y install \
+  ncurses ncurses-devel \
+  ruby ruby-devel \
+  python3 python3-devel \
+  make
 
 [ ! -d $HOME/src ] && mkdir $HOME/src
 cd $HOME/src

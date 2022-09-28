@@ -473,6 +473,7 @@ highlight GitGutterChangeDelete ctermfg=yellow
 " Make the background for the line numbers transparent as well
 highlight lineNr ctermbg=NONE
 
+" Create a custom file type for cloudformation cfn.yaml files
 augroup cfn_ft
   au!
   autocmd BufNewFile,BufRead *.cfn.yaml set filetype=cloudformation syntax=yaml
@@ -494,10 +495,18 @@ let g:airline#extensions#ale#enabled = 1
 let g:ale_cache_executable_check_failures = 1
 " Set this variable to 1 to fix files when you save them.
 let g:ale_fix_on_save = 0
-let g:ale_fixers = { 'ruby': ['prettier', 'rubocop'], 'scala': [ 'scalafmt' ] }
+let g:ale_fixers = {
+      \   '*': ['remove_trailing_lines', 'trim_whitespace'],
+      \   'ruby': ['prettier', 'rubocop'],
+      \   'scala': [ 'scalafmt' ],
+      \   'yaml': [ 'prettier' ]
+      \ }
 
 " Specify ruby linters, you'll likely want others enabled
-let g:ale_linters = {'ruby': ['solargraph', 'rubocop', 'reek', 'ruby'], 'scala': [ 'scalatest' ] }
+let g:ale_linters = {
+      \ 'ruby': ['solargraph', 'rubocop', 'reek', 'ruby'],
+      \ 'scala': [ 'scalatest' ]
+      \ }
 
 " Set the executable for ALE to call to get Solargraph
 " up and running in a given session
@@ -618,242 +627,30 @@ let g:mkdp_page_title = '「${name}」'
 let g:mkdp_filetypes = ['markdown']
 
 
-
-" Hackday fun
-let g:code_search_buffers = []
-let g:code_search_bcount = 0
-let g:code_search_status = "status:active"
-let g:code_search_repo = "repo:Flagfish*,Elemental*"
-let g:code_search_file_found = "🟢"
-let g:code_search_file_missing = "⭕"
-
-command! -complete=shellcmd -nargs=+ Shell call s:CodeSearchHandler(<q-args>)
-function! s:CodeSearchHandler(command)
-  let l:header =<< trim HEADER
-===============================================================================================
-Brazil Code Search
-===============================================================================================
-Details:
- State: State of the file on the local machine
-  ⭕              - File or package not found
-  🟢              - File or package was found
-
- File name: The name of the file that was found via CodeSearch
-
- Keywords: Definition related keywords that were found near the code snippet
-           IE: #{defining_patterns}
-
-Commands:           Key:      Description:
------------------------------------------------
-  BrazilWsUse     - [U]     - Add package
-  BrazilWsRemove  - [R]     - Remove package
-  FFOpen          - [ENTER] - Open file
-
-HEADER
-
-  " Close any _CodeSearch_ buffers that are open in the current tab
-  for buf_num in tabpagebuflist(tabpagenr())
-    let l:bidx = index(g:code_search_buffers, buf_num)
-    if l:bidx >= 0
-      exec "bd ".g:code_search_buffers[l:bidx]
-      call remove(g:code_search_buffers, l:bidx)
-    endif
-  endfor
-
-  " Update buffer list and remove bufnr for buffers that are closed
-  let l:new_buf_list = []
-  for buf_num in g:code_search_buffers
-    if bufexists(buf_num) == 0
-      call add(l:new_buf_list, buf_num)
-    endif
-  endfor
-  let g:code_search_buffers = l:new_buf_list
-
-  let l:name = CodeSearchBufName()
-  exec "botright new ".name
-  setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap
-  call add(g:code_search_buffers, bufnr("%"))
-
-  " Keybindings for search buffer
-
-  "" Press [ENTER] to open file
-  nnoremap <buffer> <CR> :FFOpen<CR>
-  "" Press [R] to remove package
-  nnoremap <buffer> R :BrazilWsRemove<CR>
-  "" Press [U] to use package
-  nnoremap <buffer> U :BrazilWsUse<CR>
-
-  "" Write the header to the buffer
-  call append(0, l:header)
-  "" Write output to buffer
-  execute '$read !'. a:command
-  setlocal nomodifiable
-  1
-endfunction
-
-function! CodeSearchBufName()
-  " for all buffers in the global
-  " - skip if the buffer no longer exists
-  " - skip if the buffer is not in the current window
-  " -
-
-  " " The current buffer as number
-  " let current_buff = bufnr("%")
-
-  " " The current window as number
-  " let l:cur_win=winnr()
-
-  " " The current tabpage
-  " let l:current_tabpage = tabpagenr()
-
-  " " Buffers on the current tab
-  " let l:vis_bufs = tabpagebuflist(tabpagenr())
-
-  " " Get the window ID of the given buffer
-  " let l:win_of_cur_buf=win_findbuf(current_buf)
-
-  " " Convert the window ID to a window number
-  " let l:win_cur_nr = win_id2win(win_of_cur_buf)
-
-  " for bnum in tabpagebuflist(tabpagenr())
-
-  " endfor
-  " getbufvar()             get a variable value from a specific buffer
-  " setbufvar()             set a variable in a specific buffer
-
-  " let l:binfo = buffers!
-  let g:code_search_bcount += 1
-  return "_CodeSearch_".g:code_search_bcount
-endfunction
-
-command! -complete=file -nargs=+ CodeSearchAll call s:CodeSearchAll(<q-args>)
-function! s:CodeSearchAll(command='')
-  if !empty(a:command)
-    let query = a:command
-  else
-    let query = expand('<cword>')
-  endif
-
-  call s:CodeSearchHandler('code_search2 "status:active '.query.'"')
-
-  " Feed a character in order to prevent the 'Press enter or type command in
-  " order to continue' message
-  call feedkeys(" ")
-  1
-endfunction
-
-" Automatically restrict to Flagfish related packages
-" - Optionally search for word under the current cursor
-command! -nargs=* CodeSearch call CodeSearch(<q-args>)
-function! CodeSearch(cmd='')
-  if !empty(a:cmd)
-    let l:query = a:cmd
-  else
-    let l:query = expand('<cword>')
-  endif
-
-  let l:cmd_query = g:code_search_repo . " " . g:code_search_status . " ". l:query
-  call s:CodeSearchHandler('code_search2 ' . l:cmd_query)
-
-  " Feed a character in order to prevent the 'Press enter or type command in
-  " order to continue' message
-  call feedkeys(" ")
-  " Set cursor to line 20 (where the results start)
-  20
-endfunction
-
-command! -nargs=* BrazilLs call BrazilLs()
-function! BrazilLs()
-  call s:CodeSearchHandler('flagfish-workflow --ls')
-
-  " Feed a character in order to prevent the 'Press enter or type command in
-  " order to continue' message
-  call feedkeys(" ")
-  " Set cursor to line 20 (where the results start)
-  20
-endfunction
-
 ""
-" let wins = win_findbuf(bufnr('_CodeSearch_'))
-" call win_gotoid(wins[0])
+" CodeSearch / Brazil integration config
 ""
 
-" Checkout the given package either as a parameter or a word under the cursor
-command! -complete=file -nargs=* BrazilWsUse call s:BrazilWsUse(<q-args>)
-function! s:BrazilWsUse(command='')
-  " Todo: Be smart about which pipeline we use for the package
-  " In each pipeline we can run 'bazil ws show' to get the versionSet
-  " - or manually inspect the 'packageInfo' file.
-  " Then run 'brazil vs --print --versionSet <versionSet>' to get a list of
-  " dependencies.
-  if !empty(a:command)
-    let query = a:command
-  else
-    let query = expand('<cword>')
-  endif
+" Source the CodeSearch plugin - WIP
+let code_search_script = $HOME . '/.vimrc_code_search'
+if filereadable(code_search_script)
+  exec 'so ' . code_search_script
+  " Command line flag to only show results from active packages
+  let g:code_search_status = "status:active"
 
-  let foo = system('brazil ws use -p '.query)
-  1
-endfunction
+  " Limit code search results to these respositories
+  let g:code_search_repo = "repo:Flagfish*,Elemental*"
 
-command! -complete=file -nargs=* BrazilWsRemove call s:BrazilWsRemove(<q-args>)
-function! s:BrazilWsRemove(command='')
-  if !empty(a:command)
-    let query = a:command
-  else
-    let query = expand('<cword>')
-  endif
+  " Prefix if file is found in the current workflow default:
+  " let g:code_search_file_found = "🌲"
+  " let g:code_search_file_found = "🎉"
 
-  let foo = system('brazil ws remove -p '.query)
-  1
-endfunction
+  " Prefix if file is found in the current workflow
+  " let g:code_search_file_missing = "👿"
+  " let g:code_search_file_missing = "❌"
 
-""
-" Open the Brazil file (as an arg, or under the cursor)
-" - Search up to find pipeline root and then jump to new
-"   file. This search can cross pipelines, as long as they share the
-"   pipelines share the same root directory.
-" Given:
-" ~/workplace
-"   FlagfishChannelService (where we are viewing)
-"   FlagfishEncoderService (has a package we want to see)
-"
-" Example:
-"   Open a package by name:
-"   FFOpen FlagfishWorkerServiceProtobufs
-"
-"   Open a file in a package and jump to a specific line:
-"   FFOpen FlagfishWorkerServiceProtobufs/configuration/protobuf/worker.proto:167
-command! -nargs=* FFOpen call FlagfishOpen(<q-args>)
-function! FlagfishOpen(command='')
-  if !empty(a:command)
-    " A command in the form of 'file/path:line_number"
-    let query = a:command
-    let query_details=split(query, ":")
-    let query_fpath=query_details[0]
-    " Add a line number offset for the file
-    if len(query_details) > 1
-      let query_linenumber=" +".query_details[1]." "
-    else
-      let query_linenumber=""
-    endif
-  else
-    let query_fpath=expand("<cfile>")
-    let query=matchstr(getline('.'), query_fpath.':\(\d\+\)')
-    let query_details=split(getline('.'),":")
-    if len(query_details) > 1
-      let query_details=split(query_details[1]," ")
-      let query_linenumber=" +".query_details[0]." "
-    else
-      let query_linenumber=""
-    end
-  endif
-
-  let fpath = system('flagfish-workflow --locate '.query_fpath)
-  if !empty(fpath)
-    exec "tabe ".query_linenumber.fpath
-  else
-    echoerr("File not found: ".fpath)
-  endif
-  " Do not return 1 if you would like to change the line location
-endfunction
+  " Keybindings for Scratch buffer that displays results
+  let g:code_search_kb_add = "u"
+  let g:code_search_kb_remove = "r"
+  let g:code_search_kb_open = '<CR>'
+endif
