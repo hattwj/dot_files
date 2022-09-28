@@ -1,7 +1,7 @@
 .svn
 *.log
 .vim/.netrwhist
-.vim/plugged
+configs/.vim/plugged/
 .netrwhist
 *.swp
 *.swo
