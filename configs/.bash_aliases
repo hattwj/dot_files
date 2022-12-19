@@ -1,4 +1,4 @@
-alias serve='python -m SimpleHTTPServer'
+alias serve='ruby -run -e httpd -- -p 9000 --bind 127.0.0.1'
 alias cls="echo -ne '\033c'"
 alias tmux="TERM=xterm-256color tmux"
 alias git-is-slow-again='git gc;git repack -a -d --depth=250 --window=250;git prune'

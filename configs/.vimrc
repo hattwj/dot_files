@@ -389,11 +389,31 @@ if executable('ag')
   let g:ackprg = 'ag --vimgrep'
 endif
 
-function! Find_git_root()
-  return system('git rev-parse --show-toplevel 2> /dev/null')[:-2]
+function! FindGitRoot()
+  let l:path = expand('%:p:h')
+  if l:path != ''
+    let l:gitArgs = '-C ' . l:path
+  endif
+  return system('git ' . l:gitArgs . ' rev-parse --show-toplevel 2> /dev/null')[:-2]
 endfunction
+
 " Search from git root if possible
-command! -nargs=1 Ag execute "Ack! <args> " . Find_git_root()
+command! -nargs=* Ag call Ag(<q-args>)
+function! Ag(cmd='')
+  let l:root = FindGitRoot()
+
+  if l:root == ''
+    " If not, print an error message and return
+    echoerr "Error: Current file is not part of a git repository"
+    return
+  endif
+
+  let l:oldwd = getcwd()
+
+  exec('cd ' . l:root)
+  exec('Ack! '. a:cmd)
+  exec('cd ' . l:oldwd)
+endfunction
 
 map <F2> :mksession! ~/.vim_session <cr> " Quick write session with F2
 map <F3> :source ~/.vim_session <cr>     " And load session with F3
@@ -503,10 +523,32 @@ let g:ale_fixers = {
       \ }
 
 " Specify ruby linters, you'll likely want others enabled
+"      \ 'scala': [ 'scalatest']
+"      \ 'scala': [ 'metals' ]
 let g:ale_linters = {
       \ 'ruby': ['solargraph', 'rubocop', 'reek', 'ruby'],
-      \ 'scala': [ 'scalatest' ]
+      \ 'scala': ['scalatest', 'scalafmt', 'metals']
       \ }
+
+function! FindConfig(buffer) abort
+    " The Config is always in the root directory
+    return expand('%:p:h')
+endfunction
+
+let g:brazil_config_plugin_path = '/apollo/env/envImprovement/vim/amazon/brazil-config'
+
+" With Plug
+Plug g:brazil_config_plugin_path
+
+au BufReadPost,BufNewFile Config setf brazil-config
+
+call ale#linter#Define('brazil-config', {
+    \ 'name': 'barium',
+    \ 'lsp': 'stdio',
+    \ 'executable': 'barium',
+    \ 'command': '%e',
+    \ 'project_root': function('FindConfig'),
+    \})
 
 " Set the executable for ALE to call to get Solargraph
 " up and running in a given session
@@ -632,7 +674,7 @@ let g:mkdp_filetypes = ['markdown']
 ""
 
 " Source the CodeSearch plugin - WIP
-let code_search_script = $HOME . '/.vimrc_code_search'
+let code_search_script = $HOME . '/dddot_files/config/basil.vim'
 if filereadable(code_search_script)
   exec 'so ' . code_search_script
   " Command line flag to only show results from active packages

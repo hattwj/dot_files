@@ -150,4 +150,8 @@ echo -e "\nLinking dot files:"
 declare -a file_arr=($(find $CONFIGS_DIR -maxdepth 1 -type f))
 backupAndLinkFiles "$HOME" "${file_arr[@]}"
 
+echoLog "[linking] .vimrc to ~/.config/nvim/init.vim"
+mkdir -p ~/.config/nvim
+ln -s $CONFIGS_DIR/.vimrc ~/.config/nvim/init.vim
+
 cd $OLD_DIR
