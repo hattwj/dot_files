@@ -19,7 +19,8 @@ call plug#begin(has('nvim') ? stdpath('data') . '/plugged' : '~/.vim/plugged')
   " Required dependency for snipmate
   Plug 'MarcWeber/vim-addon-mw-utils'
   " Markdown automatic previews, open in browser, likely won't work over ssh.
-  Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
+  Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && yarn install' }
+  " Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
   " File searching plugin
   Plug 'kien/ctrlp.vim'
   " Untested, colored parens highlighter
@@ -400,17 +401,24 @@ endfunction
 " Search from git root if possible
 command! -nargs=* Ag call Ag(<q-args>)
 function! Ag(cmd='')
-  let l:root = FindGitRoot()
-
-  if l:root == ''
-    " If not, print an error message and return
-    echoerr "Error: Current file is not part of a git repository"
-    return
-  endif
-
+  " Get current git root
   let l:oldwd = getcwd()
 
-  exec('cd ' . l:root)
+  " First attempt to use the current file
+  let l:curfile = expand('%:p:h')
+
+  if empty(l:curfile)
+    " Fall back to netrw current directory if the cur file is empty
+    let l:curfile = b:netrw_curdir
+  end
+
+  exec('cd ' . l:curfile)
+  let l:root = FindGitRoot()
+
+  if l:root != ''
+    exec('cd ' . l:root)
+  endif
+
   exec('Ack! '. a:cmd)
   exec('cd ' . l:oldwd)
 endfunction
@@ -602,11 +610,14 @@ let g:mkdp_command_for_global = 0
 " default: 0
 let g:mkdp_open_to_the_world = 0
 
+" preview server port
+let g:mkdp_port = 9000
+
 " use custom IP to open preview page
 " useful when you work in remote vim and preview on local browser
 " more detail see: https://github.com/iamcco/markdown-preview.nvim/pull/9
 " default empty
-let g:mkdp_open_ip = ''
+let g:mkdp_open_ip = '127.0.0.1'
 
 " specify browser to open preview page
 " default: ''
@@ -614,12 +625,15 @@ let g:mkdp_browser = ''
 
 " set to 1, echo preview page url in command line when open preview page
 " default is 0
-let g:mkdp_echo_preview_url = 0
+let g:mkdp_echo_preview_url = 1
 
 " a custom vim function name to open preview page
 " this function will receive url as param
 " default is empty
-let g:mkdp_browserfunc = ''
+let g:mkdp_browserfunc = 'g:EchoUrl'
+function! g:EchoUrl(url)
+  :echo a:url
+endfunction
 
 " options for markdown render
 " mkit: markdown-it options for render
@@ -656,9 +670,6 @@ let g:mkdp_markdown_css = ''
 " use a custom highlight style must absolute path
 " like '/Users/username/highlight.css' or expand('~/highlight.css')
 let g:mkdp_highlight_css = ''
-
-" use a custom port to start server or random for empty
-let g:mkdp_port = ''
 
 " preview page title
 " ${name} will be replace with the file name
