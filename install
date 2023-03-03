@@ -18,37 +18,43 @@ function backupAndLinkFiles() {
   for SRC_FILE in "${file_arr[@]}"
   do
     DEST_FILE="$DEST/$(basename $SRC_FILE)"
-    DEST_DIR="$(readlink -f $DEST_FILE |xargs dirname)"
-
-    # See if file exists in dot_files
-    if [ ! -f "$SRC_FILE" ]; then
-      echoLog "[source missing] $SRC_FILE"
-      continue
-    fi
-
-    if [ ! -d "$DEST_DIR" ]; then
-      echoLog "[created]   $DEST_DIR"
-      [ -z "$NO_OP" ] && mkdir -p "$DEST_DIR"
-    else
-      echoLog "[exists]   $DEST_DIR"
-    fi
-
-    # Save file if not a link
-    if  [ -f "$DEST_FILE" ] && [ ! -L "$DEST_FILE" ] ; then
-      echoLog "[backup]   $DEST_FILE --> $SCRIPT_DIR/backups"
-      [ -z "$NO_OP" ] && cp "$DEST_FILE" "$SCRIPT_DIR/backups"
-    fi
-
-    # Delete original file
-    if  [ -f "$DEST_FILE" ] || [ -L "$DEST_FILE" ] ; then
-      echoLog "[deleted]   $DEST_FILE"
-      [ -z "$NO_OP" ] && rm -f "$DEST_FILE"
-    fi
-
-    # Link new file
-    echoLog "[linked]    $SRC_FILE --> $DEST_FILE"
-    [ -z "$NO_OP" ] && ln -s "$SRC_FILE" "$DEST_FILE"
+    backupAndLinkFile "$SRC_FILE" "$DEST_FILE"
   done
+}
+
+function backupAndLinkFile() {
+  SRC_FILE=$1
+  DEST_FILE=$2
+  DEST_DIR="$(readlink -f $DEST_FILE |xargs dirname)"
+
+  # See if file exists in dot_files
+  if [ ! -f "$SRC_FILE" ]; then
+    echoLog "[source missing] $SRC_FILE"
+    continue
+  fi
+
+  if [ ! -d "$DEST_DIR" ]; then
+    echoLog "[created]   $DEST_DIR"
+    [ -z "$NO_OP" ] && mkdir -p "$DEST_DIR"
+  else
+    echoLog "[exists]   $DEST_DIR"
+  fi
+
+  # Save file if not a link
+  if  [ -f "$DEST_FILE" ] && [ ! -L "$DEST_FILE" ] ; then
+    echoLog "[backup]   $DEST_FILE --> $SCRIPT_DIR/backups"
+    [ -z "$NO_OP" ] && cp "$DEST_FILE" "$SCRIPT_DIR/backups"
+  fi
+
+  # Delete original file
+  if  [ -f "$DEST_FILE" ] || [ -L "$DEST_FILE" ] ; then
+    echoLog "[deleted]   $DEST_FILE"
+    [ -z "$NO_OP" ] && rm -f "$DEST_FILE"
+  fi
+
+  # Link new file
+  echoLog "[linked]    $SRC_FILE --> $DEST_FILE"
+  [ -z "$NO_OP" ] && ln -s "$SRC_FILE" "$DEST_FILE"
 }
 
 function backupAndLinkDirs() {
@@ -114,6 +120,13 @@ if [ ! -d "$HOME/bin" ]; then
   [ -z "$NO_OP" ] && chmod go-w "$HOME/bin"
 fi
 
+# create home .bin dir
+if [ ! -d "$HOME/.bin" ]; then
+  echo "[created]    $HOME/.bin"
+  [ -z "$NO_OP" ] && mkdir "$HOME/.bin"
+  [ -z "$NO_OP" ] && chmod go-w "$HOME/.bin"
+fi
+
 # create backup dir
 if [ ! -d "$SCRIPT_DIR/backups" ]; then
   echo "[created]    $SCRIPT_DIR/backups"
@@ -150,8 +163,13 @@ echo -e "\nLinking dot files:"
 declare -a file_arr=($(find $CONFIGS_DIR -maxdepth 1 -type f))
 backupAndLinkFiles "$HOME" "${file_arr[@]}"
 
-echoLog "[linking] .vimrc to ~/.config/nvim/init.vim"
-mkdir -p ~/.config/nvim
-ln -s $CONFIGS_DIR/.vimrc ~/.config/nvim/init.vim
+mkdir -p $HOME/.config/nvim
+mkdir -p $HOME/.local/share/nvim/site
+
+declare -a dir_arr=("$CONFIGS_DIR/.vim/autoload" "$CONFIGS_DIR/.vim/colors")
+backupAndLinkDirs "$HOME/.local/share/nvim/site" "${dir_arr[@]}"
+
+echo -e "\nLinking nvim"
+backupAndLinkFile "$CONFIGS_DIR/.vimrc" "$HOME/.config/nvim/init.vim"
 
 cd $OLD_DIR
