@@ -19,8 +19,14 @@ call plug#begin(has('nvim') ? stdpath('data') . '/plugged' : '~/.vim/plugged')
   " Required dependency for snipmate
   Plug 'MarcWeber/vim-addon-mw-utils'
   " Markdown automatic previews, open in browser, likely won't work over ssh.
-  Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && yarn install' }
-  " Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
+  "--
+  " Note: Cannot find module 'tslib' error fixed by: (from :messages vim command)
+  " - cd ~/.local/share/nvim/plugged/markdown-preview.nvim && yarn install
+  "--
+  Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug', 'plantuml']}
+
+  Plug 'aklt/plantuml-syntax'
+
   " File searching plugin
   Plug 'kien/ctrlp.vim'
   " Untested, colored parens highlighter
@@ -41,6 +47,10 @@ call plug#begin(has('nvim') ? stdpath('data') . '/plugged' : '~/.vim/plugged')
   " Generic ruby enhancements / code completion
   Plug 'vim-ruby/vim-ruby'
 call plug#end()
+
+" Detect if we are local or operating over ssh
+let g:remoteSession = ($SSH_TTY != "")
+
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Modify vimdiff to use a better algorithm (if supported)
@@ -357,7 +367,7 @@ set laststatus=2
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Vim title bar
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-:auto BufEnter * let &titlestring = hostname() . GetCurFile()
+":auto BufEnter * let &titlestring = hostname() . GetCurFile()
 :set title titlestring=%<%F%=%l/%L-%P titlelen=70
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -407,7 +417,7 @@ endfunction
 
 function! GetCurFile()
   " First attempt to use the current file
-  let l:curfile = expand('%:p:h')
+  let l:curfile = expand('%:p')
 
   if empty(l:curfile)
     " Fall back to netrw current directory if the cur file is empty
@@ -615,36 +625,42 @@ let g:mkdp_refresh_slow = 0
 " set to 1, the MarkdownPreview command can be use for all files,
 " by default it can be use in markdown file
 " default: 0
-let g:mkdp_command_for_global = 0
+let g:mkdp_command_for_global = 1
 
 " set to 1, preview server available to others in your network
 " by default, the server listens on localhost (127.0.0.1)
 " default: 0
 let g:mkdp_open_to_the_world = 0
 
-" preview server port
-let g:mkdp_port = 9000
+" Print url instead if we are running over ssh
+if g:remoteSession
 
-" use custom IP to open preview page
-" useful when you work in remote vim and preview on local browser
-" more detail see: https://github.com/iamcco/markdown-preview.nvim/pull/9
-" default empty
-let g:mkdp_open_ip = '127.0.0.1'
+  " preview server port
+  let g:mkdp_port = 9000
 
-" specify browser to open preview page
-" default: ''
-let g:mkdp_browser = ''
+  " use custom IP to open preview page
+  " useful when you work in remote vim and preview on local browser
+  " more detail see: https://github.com/iamcco/markdown-preview.nvim/pull/9
+  " default empty
+  let g:mkdp_open_ip = '127.0.0.1'
 
-" set to 1, echo preview page url in command line when open preview page
-" default is 0
-let g:mkdp_echo_preview_url = 1
+  " specify browser to open preview page
+  " default: ''
+  let g:mkdp_browser = ''
 
-" a custom vim function name to open preview page
-" this function will receive url as param
-" default is empty
-let g:mkdp_browserfunc = 'g:EchoUrl'
+  " set to 1, echo preview page url in command line when open preview page
+  " default is 0
+  let g:mkdp_echo_preview_url = 1
+
+  " a custom vim function name to open preview page
+  " this function will receive url as param
+  " default is empty
+  let g:mkdp_browserfunc = 'g:EchoUrl'
+
+endif
 function! g:EchoUrl(url)
-  :echo a:url
+  "echoerr("Some URL: " . a:url)
+  echo a:url
 endfunction
 
 " options for markdown render
@@ -661,10 +677,11 @@ endfunction
 " sequence_diagrams: js-sequence-diagrams options
 " content_editable: if enable content editable for preview page, default: v:false
 " disable_filename: if disable filename header for preview page, default: 0
+" 'uml': { 'server': 'http://127.0.0.1/plantuml' },
 let g:mkdp_preview_options = {
     \ 'mkit': {},
     \ 'katex': {},
-    \ 'uml': {},
+    \ 'uml': { 'server': 'http://127.0.0.1:8080'},
     \ 'maid': {},
     \ 'disable_sync_scroll': 0,
     \ 'sync_scroll_type': 'middle',
