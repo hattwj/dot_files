@@ -6,16 +6,30 @@
 # If not running interactively, don't do anything
 [ -z "$PS1" ] && return
 
-# don't put duplicate lines in the history. See bash(1) for more options
-# ... or force ignoredups and ignorespace
-HISTCONTROL=ignoredups:ignorespace
+# Prevent repeat duplicates
+# Ignore whitespace differences when looking for duplicates
+# Erase duplicates
+HISTCONTROL=ignoreboth:erasedups
 
 # append to the history file, don't overwrite it
 shopt -s histappend
 
 # for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
-HISTSIZE=19000
-HISTFILESIZE=20000
+HISTSIZE=190000
+HISTFILESIZE=2000000
+
+# Include a timestamp in the history file
+export HISTTIMEFORMAT="[%F %T] "
+
+# append and reload the history after each command
+PROMPT_COMMAND="history -a; history -n"
+
+# commands to ignore, only matches complete command, not partial
+HISTIGNORE='ls:ll:cd:pwd:bg:fg:history:docker login -u *'
+
+# Change the file location because certain bash sessions truncate .bash_history file upon close.
+# http://superuser.com/questions/575479/bash-history-truncated-to-500-lines-on-each-login
+export HISTFILE="$HOME/.bash_eternal_history"
 
 # check the window size after each command and, if necessary,
 # update the values of LINES and COLUMNS.
