@@ -353,6 +353,13 @@ nnoremap \s ea<C-X><C-S>
 set statusline+=%F " filename
 set laststatus=2
 
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Vim title bar
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+:auto BufEnter * let &titlestring = hostname() . GetCurFile()
+:set title titlestring=%<%F%=%l/%L-%P titlelen=70
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Fuzzy filename searching plugin
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -398,12 +405,7 @@ function! FindGitRoot()
   return system('git ' . l:gitArgs . ' rev-parse --show-toplevel 2> /dev/null')[:-2]
 endfunction
 
-" Search from git root if possible
-command! -nargs=* Ag call Ag(<q-args>)
-function! Ag(cmd='')
-  " Get current git root
-  let l:oldwd = getcwd()
-
+function! GetCurFile()
   " First attempt to use the current file
   let l:curfile = expand('%:p:h')
 
@@ -411,6 +413,16 @@ function! Ag(cmd='')
     " Fall back to netrw current directory if the cur file is empty
     let l:curfile = b:netrw_curdir
   end
+  return l:curfile
+endfunction
+
+" Search from git root if possible
+command! -nargs=* Ag call Ag(<q-args>)
+function! Ag(cmd='')
+  " Get current git root
+  let l:oldwd = getcwd()
+
+  let l:curfile = GetCurFile()
 
   exec('cd ' . l:curfile)
   let l:root = FindGitRoot()
