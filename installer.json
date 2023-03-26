@@ -1,0 +1,21 @@
+{
+	"symlink_recursive": [
+		{
+			"src": "{{git_root}}/configs",
+			"dest": "{{home}}",
+			"exclude": [
+				"{{git_root}}/configs/.vim"
+			]
+		},
+		{
+			"src": "{{git_root}}/bin",
+			"dest": "{{home}}/bin"
+		}
+	],
+	"symlinks": [
+		{
+			"src": "{{git_root}}/configs/.vim",
+			"dest": "{{home}}/.vim"
+		}
+	]
+}
