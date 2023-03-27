@@ -1,21 +1,29 @@
 {
+  // Recursively symlink the files in the following directories
+  // and create directories to build the same dir structure
   "symlink_recursive": [
     {
       "src": "{{git_root}}/configs",
       "dest": "{{home}}",
-      "exclude": [
+      // Symlink the directory only, do not recurse into these directories
+      "dir_only": [
         "{{git_root}}/configs/.vim/plugged",
         "{{git_root}}/configs/.vim/after"
-      ]
+      ],
+      // Exclude patterns
+      "exclude": ["{{git_root}}/foo/example/file"]
     },
-    { "src": "{{git_root}}/configs/.vim/autoload", "dest": "{{home}}/.local/share/nvim/site/autoload" },
-    { "src": "{{git_root}}/configs/.vim/colors",   "dest": "{{home}}/.local/share/nvim/site/colors" },
     { "src": "{{git_root}}/bin",                   "dest": "{{home}}/bin" }
   ],
+  // Non recursive symlinks
   "symlinks": [
     { "src": "{{git_root}}/install",               "dest": "{{home}}/bin/dot-file-installer" },
-    { "src": "{{git_root}}/configs/.vimrc",        "dest": "{{home}}/.config/nvim/init.vim" },
-    { "src": "{{git_root}}/configs/.vim/after",    "dest": "{{home}}/.vim/after" },
-    { "src": "{{git_root}}/configs/.vim/plugged",  "dest": "{{home}}/.vim/plugged" }
+    { "src": "{{git_root}}/configs/.vim/colors",   "dest": "{{home}}/.local/share/nvim/site/colors" },
+    { "src": "{{git_root}}/configs/.vim/autoload", "dest": "{{home}}/.local/share/nvim/site/autoload" },
+    { "src": "{{git_root}}/configs/.vimrc",        "dest": "{{home}}/.config/nvim/init.vim" }
+  ],
+  // Commands to run at the end of the installation
+  "exec": [
+    "echo 'Done!'"
   ]
 }

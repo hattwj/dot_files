@@ -130,7 +130,7 @@ def log_exclude(msg)
 end
 
 # Define a method to recursively symlink files from the source to target directory
-def symlink_files(src:, dest:, exclude: [])
+def symlink_files(src:, dest:, exclude: [], dir_only: [])
   Dir.foreach(src) do |filename|
     next if filename == '.' || filename == '..'
 
@@ -138,7 +138,7 @@ def symlink_files(src:, dest:, exclude: [])
 
     if exclude.include?(source_path)
       log_exclude source_path
-      return
+      next
     end
 
     target_path = File.join(dest, filename)
@@ -149,6 +149,10 @@ def symlink_files(src:, dest:, exclude: [])
     end
 
     if File.directory?(source_path)
+      if dir_only.include?(source_path)
+        symlink_path(src: source_path, dest: target_path)
+        next
+      end
 
       # If the filename is a directory, create it if it doesn't exist, in the target directory
       unless File.exists?(target_path)
@@ -156,7 +160,7 @@ def symlink_files(src:, dest:, exclude: [])
         FileUtils.mkdir_p(target_path) unless $no_op
       end
       # Recursively symlink its contents
-      symlink_files(src: source_path, dest: target_path, exclude: exclude)
+      symlink_files(src: source_path, dest: target_path, exclude: exclude, dir_only: dir_only)
     else
       symlink_path(src: source_path, dest: target_path)
     end
@@ -255,10 +259,11 @@ def run_installer(config)
   Array(config[:symlink_recursive]).each do |symlink_opts|
     name = symlink_opts[:name] || symlink_opts[:src]
     symlink_opts[:exclude] = symlink_opts[:exclude] || []
+    symlink_opts[:dir_only] = symlink_opts[:dir_only] || []
     puts "\nLinking #{name}"
 
     # Call the method to symlink all files from the source to target directory
-    symlink_files(**symlink_opts.fetch_slice(:src, :dest, :exclude))
+    symlink_files(**symlink_opts.fetch_slice(:src, :dest, :exclude, :dir_only))
   end
 
   Array(config[:symlinks]).each do |symlink_opts|
@@ -267,6 +272,14 @@ def run_installer(config)
 
     # Call the method to symlink all files from the source to target directory
     symlink_path(**symlink_opts.fetch_slice(:src, :dest))
+  end
+
+  if !Array(config[:exec]).empty?
+    puts "\nRunning commands:"
+  end
+  Array(config[:exec]).each do |command|
+    puts command
+    puts `#{command}` unless $no_op
   end
 end
 
