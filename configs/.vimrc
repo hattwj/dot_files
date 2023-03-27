@@ -303,7 +303,8 @@ set autoindent
 " Filetype extensions
 set nocompatible
 autocmd BufRead,BufNewFile *.rb,*.py,*.js,*.css,*.html,*.erb,*.yml,*.yaml set et ts=2 sts=2 sw=2
-autocmd BufRead,BufNewFile *.json set noet ts=2 sts=2 sw=2
+" tabs in json - Disabled for now because it clutters the screen
+" autocmd BufRead,BufNewFile *.json set noet ts=2 sts=2 sw=2
 filetype on
 filetype plugin indent on
 filetype indent on
@@ -483,6 +484,7 @@ autocmd FileType c,
   \javascript,
   \json,
   \markdown,
+  \plantuml,
   \php,
   \python,
   \ruby,
@@ -681,7 +683,7 @@ endfunction
 let g:mkdp_preview_options = {
     \ 'mkit': {},
     \ 'katex': {},
-    \ 'uml': { 'server': 'http://127.0.0.1:8080'},
+    \ 'uml': { 'server': 'http://127.0.0.1:8080', 'imageFormat': 'svg'},
     \ 'maid': {},
     \ 'disable_sync_scroll': 0,
     \ 'sync_scroll_type': 'middle',

@@ -1,21 +1,22 @@
 {
-	"symlink_recursive": [
-		{
-			"src": "{{git_root}}/configs",
-			"dest": "{{home}}",
-			"exclude": [
-				"{{git_root}}/configs/.vim"
-			]
-		},
-		{
-			"src": "{{git_root}}/bin",
-			"dest": "{{home}}/bin"
-		}
-	],
-	"symlinks": [
-		{
-			"src": "{{git_root}}/configs/.vim",
-			"dest": "{{home}}/.vim"
-		}
-	]
+  "symlink_recursive": [
+    {
+      "src": "{{git_root}}/configs",
+      "dest": "{{home}}",
+      "exclude": [
+        "{{git_root}}/configs/.vim"
+      ]
+    },
+    {
+      "src": "{{git_root}}/bin",
+      "dest": "{{home}}/bin"
+    }
+  ],
+  "symlinks": [
+    { "src": "{{git_root}}/installer",             "dest": "{{home}}/bin/dot-file-installer" },
+    { "src": "{{git_root}}/configs/.vim",          "dest": "{{home}}/.vim" },
+    { "src": "{{git_root}}/configs/.vim/autoload", "dest": "{{home}}/.local/share/nvim/site/autoload" },
+    { "src": "{{git_root}}/configs/.vim/colors",   "dest": "{{home}}/.local/share/nvim/site/colors" },
+    { "src": "{{git_root}}/configs/.vimrc",        "dest": "{{home}}/.config/nvim/init.vim" }
+  ]
 }

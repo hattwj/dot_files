@@ -221,8 +221,13 @@ def run_installer(config)
   end
 end
 
-def list_packages(config)
+def list_files(config)
+  Dir.foreach(src) do |filename|
+    next if filename == '.' || filename == '..'
 
+    if File.directory?(filename)
+    end
+  end
 end
 
 if $PROGRAM_NAME == __FILE__

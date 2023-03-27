@@ -9,72 +9,74 @@
   [[default]]
     background_darkness = 0.91
     background_type = transparent
+    cursor_color = "#aaaaaa"
     font = Ubuntu Mono 10
     scrollback_lines = 25000
     login_shell = True
     use_system_font = False
   [[Cluster]]
+    cursor_color = "#aaaaaa"
     font = Ubuntu Mono 10
     use_system_font = False
 [layouts]
   [[default]]
     [[[child0]]]
-      fullscreen = False
-      last_active_term = 4fe2e7f7-620d-4a0b-8ffd-5250a5bea37d
-      last_active_window = True
-      maximised = True
-      order = 0
-      parent = ""
-      position = 3905:24
-      size = 1855, 1056
-      title = elemental@hattb_conductor: ~
       type = Window
+      parent = ""
+      order = 0
+      position = 1992:27
+      maximised = True
+      fullscreen = False
+      size = 3368, 1376
+      title = elemental@hattb_conductor: ~
+      last_active_term = 592df2a7-1589-445d-8815-646714c4eb41
+      last_active_window = True
     [[[child1]]]
-      order = 0
-      parent = child0
-      position = 924
-      ratio = 0.498652291105
       type = HPaned
-    [[[child3]]]
-      order = 1
-      parent = child1
-      position = 384
-      ratio = 0.364583333333
-      type = VPaned
-    [[[child5]]]
-      order = 1
-      parent = child3
-      position = 334
-      ratio = 0.5
-      type = VPaned
+      parent = child0
+      order = 0
+      position = 1736
+      ratio = 0.5158989598811293
     [[[terminal2]]]
-      group = Conductor
-      order = 0
+      type = Terminal
       parent = child1
+      order = 0
+      group = Conductor
       profile = default
-      type = Terminal
       uuid = 4fe2e7f7-620d-4a0b-8ffd-5250a5bea37d
-    [[[terminal4]]]
-      group = Conductor
-      order = 0
-      parent = child3
-      profile = default
-      type = Terminal
-      uuid = 592df2a7-1589-445d-8815-646714c4eb41
-    [[[terminal6]]]
-      group = Conductor
-      order = 0
-      parent = child5
-      profile = default
-      type = Terminal
-      uuid = 9cfa0fd7-4053-43ac-8edc-6a43846a0ffa
-    [[[terminal7]]]
-      group = Conductor
+    [[[child3]]]
+      type = VPaned
+      parent = child1
       order = 1
-      parent = child5
-      profile = default
+      position = 500
+      ratio = 0.3641660597232338
+    [[[terminal4]]]
       type = Terminal
+      parent = child3
+      order = 0
+      group = Conductor
+      profile = default
+      uuid = 592df2a7-1589-445d-8815-646714c4eb41
+    [[[child5]]]
+      type = VPaned
+      parent = child3
+      order = 1
+      position = 490
+      ratio = 0.5619266055045872
+    [[[terminal6]]]
+      type = Terminal
+      parent = child5
+      order = 0
+      group = Conductor
+      profile = default
       uuid = 11315fa1-32ea-4e80-8cda-340136d87f10
+    [[[terminal7]]]
+      type = Terminal
+      parent = child5
+      order = 1
+      group = Conductor
+      profile = default
+      uuid = 2b461bf2-2563-4ff8-b18f-2b8b41d2476f
   [[Cluster]]
     [[[child0]]]
       fullscreen = False

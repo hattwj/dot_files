@@ -19,7 +19,9 @@ HISTSIZE=190000
 HISTFILESIZE=2000000
 
 # Include a timestamp in the history file
-export HISTTIMEFORMAT="[%F %T] "
+# - Disabled because it makes the file difficult to
+#   use if we need it as as backup
+#export HISTTIMEFORMAT="[%F %T] "
 
 # append and reload the history after each command
 PROMPT_COMMAND="history -a; history -n"
