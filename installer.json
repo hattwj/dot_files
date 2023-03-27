@@ -4,19 +4,18 @@
       "src": "{{git_root}}/configs",
       "dest": "{{home}}",
       "exclude": [
-        "{{git_root}}/configs/.vim"
+        "{{git_root}}/configs/.vim/plugged",
+        "{{git_root}}/configs/.vim/after"
       ]
     },
-    {
-      "src": "{{git_root}}/bin",
-      "dest": "{{home}}/bin"
-    }
-  ],
-  "symlinks": [
-    { "src": "{{git_root}}/install",             "dest": "{{home}}/bin/dot-file-installer" },
-    { "src": "{{git_root}}/configs/.vim",          "dest": "{{home}}/.vim" },
     { "src": "{{git_root}}/configs/.vim/autoload", "dest": "{{home}}/.local/share/nvim/site/autoload" },
     { "src": "{{git_root}}/configs/.vim/colors",   "dest": "{{home}}/.local/share/nvim/site/colors" },
-    { "src": "{{git_root}}/configs/.vimrc",        "dest": "{{home}}/.config/nvim/init.vim" }
+    { "src": "{{git_root}}/bin",                   "dest": "{{home}}/bin" }
+  ],
+  "symlinks": [
+    { "src": "{{git_root}}/install",               "dest": "{{home}}/bin/dot-file-installer" },
+    { "src": "{{git_root}}/configs/.vimrc",        "dest": "{{home}}/.config/nvim/init.vim" },
+    { "src": "{{git_root}}/configs/.vim/after",    "dest": "{{home}}/.vim/after" },
+    { "src": "{{git_root}}/configs/.vim/plugged",  "dest": "{{home}}/.vim/plugged" }
   ]
 }

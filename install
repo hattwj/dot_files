@@ -117,8 +117,8 @@ def log_error(msg)
   puts "[#{'Error'.red}] #{msg}"
 end
 
-def log_rename(msg)
-  puts "[#{'rename'.yellow}] #{msg}"
+def log_backup(msg)
+  puts "[#{'backup'.yellow}] #{msg}"
 end
 
 def log_symlink(msg)
@@ -130,7 +130,7 @@ def log_exclude(msg)
 end
 
 # Define a method to recursively symlink files from the source to target directory
-def symlink_files(src:, dest:, recursive:, exclude: [])
+def symlink_files(src:, dest:, exclude: [])
   Dir.foreach(src) do |filename|
     next if filename == '.' || filename == '..'
 
@@ -143,12 +143,12 @@ def symlink_files(src:, dest:, recursive:, exclude: [])
 
     target_path = File.join(dest, filename)
 
-    if File.directory?(source_path) && recursive
-      # Broken symlink?
-      if !File.exists?(target_path) && File.symlink?(target_path)
-        log_delete("Broken symlink #{target_path}")
-        File.delete(target_path) unless $no_op
-      end
+    if File.symlink?(target_path) && File.readlink(target_path) != source_path
+      log_delete("unlink #{target_path}")
+      File.delete(target_path) unless $no_op
+    end
+
+    if File.directory?(source_path)
 
       # If the filename is a directory, create it if it doesn't exist, in the target directory
       unless File.exists?(target_path)
@@ -156,7 +156,7 @@ def symlink_files(src:, dest:, recursive:, exclude: [])
         FileUtils.mkdir_p(target_path) unless $no_op
       end
       # Recursively symlink its contents
-      symlink_files(src: source_path, dest: target_path, recursive: recursive, exclude: exclude)
+      symlink_files(src: source_path, dest: target_path, exclude: exclude)
     else
       symlink_path(src: source_path, dest: target_path)
     end
@@ -180,12 +180,12 @@ def symlink_path(src:, dest:)
 
   if File.exists?(dest)
     if !File.symlink?(dest)
-      log_rename "#{dest} to #{backup_path}"
+      log_backup "#{dest} to #{backup_path}"
       File.rename(dest, backup_path) unless $no_op
     else
       if File.readlink(dest) != src
         # If the target file is a symlink, delete it so it can be replaced
-        log_delete "symlink #{dest}"
+        log_delete("symlink #{dest}")
         File.delete(dest) unless $no_op
       else
         log_no_op("symlink #{src} to #{dest}")
@@ -255,11 +255,10 @@ def run_installer(config)
   Array(config[:symlink_recursive]).each do |symlink_opts|
     name = symlink_opts[:name] || symlink_opts[:src]
     symlink_opts[:exclude] = symlink_opts[:exclude] || []
-    symlink_opts[:recursive] = true
     puts "\nLinking #{name}"
 
     # Call the method to symlink all files from the source to target directory
-    symlink_files(**symlink_opts.fetch_slice(:src, :dest, :recursive, :exclude))
+    symlink_files(**symlink_opts.fetch_slice(:src, :dest, :exclude))
   end
 
   Array(config[:symlinks]).each do |symlink_opts|
