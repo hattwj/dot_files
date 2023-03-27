@@ -13,7 +13,7 @@
     }
   ],
   "symlinks": [
-    { "src": "{{git_root}}/installer",             "dest": "{{home}}/bin/dot-file-installer" },
+    { "src": "{{git_root}}/install",             "dest": "{{home}}/bin/dot-file-installer" },
     { "src": "{{git_root}}/configs/.vim",          "dest": "{{home}}/.vim" },
     { "src": "{{git_root}}/configs/.vim/autoload", "dest": "{{home}}/.local/share/nvim/site/autoload" },
     { "src": "{{git_root}}/configs/.vim/colors",   "dest": "{{home}}/.local/share/nvim/site/colors" },

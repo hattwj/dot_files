@@ -1,175 +1,245 @@
-#!/bin/bash
+#!/usr/bin/env ruby
 
-# Echo parameter and log it to file
-function echoLog() {
-  if [ -z "$NO_OP" ]; then
-    echo -e $1
-    echo [$(date)] $1 >> $LOG_FILE
-  else
-    echo -e [no-op] $1
-  fi
-}
+# Recursively symlinks files in a dot_files repository to the home directory
+# and creates backups of any files that would be replaced. Directories are created
+# if they are missing. Supports an optional parameter to rename target files that
+# match a pattern.
 
-function backupAndLinkFiles() {
-  DEST="$1"
-  shift
+require 'optparse'
+require 'fileutils'
+require 'json'
 
-  file_arr=("$@")
-  for SRC_FILE in "${file_arr[@]}"
-  do
-    DEST_FILE="$DEST/$(basename $SRC_FILE)"
-    backupAndLinkFile "$SRC_FILE" "$DEST_FILE"
-  done
-}
+# Flag to prevent actually symlinking or renaming files
+$no_op = false
 
-function backupAndLinkFile() {
-  SRC_FILE=$1
-  DEST_FILE=$2
-  DEST_DIR="$(readlink -f $DEST_FILE |xargs dirname)"
+def backups_dir
+  "#{ENV['HOME']}/.config/dot_files/backups/#{File.basename(git_root)}"
+end
 
-  # See if file exists in dot_files
-  if [ ! -f "$SRC_FILE" ]; then
-    echoLog "[source missing] $SRC_FILE"
-    continue
-  fi
+# Find the git root directory or raise an exception if not a git repository
+def git_root
+  git_dir = `git rev-parse --show-toplevel`.strip
+  raise "Error: not a git repository" if git_dir.empty?
 
-  if [ ! -d "$DEST_DIR" ]; then
-    echoLog "[created]   $DEST_DIR"
-    [ -z "$NO_OP" ] && mkdir -p "$DEST_DIR"
-  else
-    echoLog "[exists]   $DEST_DIR"
-  fi
+  git_dir
+end
 
-  # Save file if not a link
-  if  [ -f "$DEST_FILE" ] && [ ! -L "$DEST_FILE" ] ; then
-    echoLog "[backup]   $DEST_FILE --> $SCRIPT_DIR/backups"
-    [ -z "$NO_OP" ] && cp "$DEST_FILE" "$SCRIPT_DIR/backups"
-  fi
+def parse_args(args)
+  # Define CLI options and parse them
+  options = {
+    action: :run_installer,
+    config_path: "#{git_root}/installer.json",
+    no_op: false
+  }
 
-  # Delete original file
-  if  [ -f "$DEST_FILE" ] || [ -L "$DEST_FILE" ] ; then
-    echoLog "[deleted]   $DEST_FILE"
-    [ -z "$NO_OP" ] && rm -f "$DEST_FILE"
-  fi
+  OptionParser.new(args) do |opts|
+    opts.banner = "Usage: #{File.basename(__FILE__)} [options]
+Symlink dotfiles from the current git repository to the home directory"
 
-  # Link new file
-  echoLog "[linked]    $SRC_FILE --> $DEST_FILE"
-  [ -z "$NO_OP" ] && ln -s "$SRC_FILE" "$DEST_FILE"
-}
+    opts.on("-c", "--config PATH", "Specify a config file for installation details") do |p|
+      options[:config_path] = p
+    end
 
-function backupAndLinkDirs() {
-  DEST="$1"
-  shift
+    opts.on("-n", "--no-op", "") do
+      options[:no_op] = true
+    end
 
-  dir_arr=("$@")
-  for SRC_DIR in "${dir_arr[@]}"
-  do
-    DEST_DIR="$DEST/$(basename $SRC_DIR)"
+    opts.on("-l", "--ls", "List extra available packages") do
+      options[:action] = :ls_packages
+    end
 
-    # See if file exists in dot_files
-    if [ ! -d "$SRC_DIR" ]; then
-      echoLog "[source missing] $SRC_DIR"
-      continue
-    fi
+    opts.on_tail("-h", "--help", "Show this message") do
+      puts opts
+      exit
+    end
+  end.parse!
+  options
+end
 
-    # Save directory if it is not a symlink
-    if [ ! -L "$DEST_DIR" ] && [ -d "$DEST_DIR" ]; then
-      echoLog "[backup]    $DEST_DIR --> $SCRIPT_DIR/backups"
-      [ -z "$NO_OP" ] && cp -R "$DEST_DIR" "$SCRIPT_DIR/backups"
-    fi
+class Hash
+  def fetch_slice(*keys)
+    result = {}
+    keys.each do |key|
+      result[key] = self.fetch(key)
+    end
+    result
+  end
+end
 
-    # Delete directory/symlink
-    if [ -d "$SRC_DIR" ] && [ -d "$DEST_DIR" ]; then
-      echoLog "[deleted]    $DEST_DIR"
-      [ -z "$NO_OP" ] && rm -rf "$DEST_DIR"
-    fi
+# Define CLI colorization config
+class String
+  def colorize(color_code)
+    "\e[#{color_code}m#{self}\e[0m"
+  end
 
-    # Create link to new directory
-    if [ -d "$SRC_DIR" ]; then
-      echoLog "[linked]    $SRC_DIR  -->  $DEST_DIR"
-      [ -z "$NO_OP" ] && ln -s $SRC_DIR "$DEST_DIR"
-    fi
-  done
-}
+  def red
+    colorize(31)
+  end
 
-#get cur dir
-OLD_DIR="$(pwd)"
+  def green
+    colorize(32)
+  end
 
-# Find directory that this script is in
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-CONFIGS_DIR="$SCRIPT_DIR/configs"
-BINS_DIR="$SCRIPT_DIR/bin"
+  def yellow
+    colorize(33)
+  end
 
-# Create log file name
-LOG_FILE="$SCRIPT_DIR/install.log"
+  def blue
+    colorize(34)
+  end
+end
 
-# what bash files will this computer use?
-pf1=".bashrc_"`uname`
-pf2=".bashrc_"`uname`'_'`hostname`
-pf3="$HOME/.bash_custom"
+def log_no_op(msg)
+  puts "[#{'good'.green}] #{msg}"
+end
 
-if [ ! -f "$pf3" ]; then
-  [ -z "$NO_OP" ] && touch $pf3
-  echo "[created]    $pf3"
-fi
+def log_create(msg)
+  puts "[#{'create'.green}] #{msg}"
+end
 
-# create home bin dir
-if [ ! -d "$HOME/bin" ]; then
-  echo "[created]    $HOME/bin"
-  [ -z "$NO_OP" ] && mkdir "$HOME/bin"
-  [ -z "$NO_OP" ] && chmod go-w "$HOME/bin"
-fi
+def log_delete(msg)
+  puts "[#{'delete'.red}] #{msg}"
+end
 
-# create home .bin dir
-if [ ! -d "$HOME/.bin" ]; then
-  echo "[created]    $HOME/.bin"
-  [ -z "$NO_OP" ] && mkdir "$HOME/.bin"
-  [ -z "$NO_OP" ] && chmod go-w "$HOME/.bin"
-fi
+def log_rename(msg)
+  puts "[#{'rename'.yellow}] #{msg}"
+end
 
-# create backup dir
-if [ ! -d "$SCRIPT_DIR/backups" ]; then
-  echo "[created]    $SCRIPT_DIR/backups"
-  [ -z "$NO_OP" ] && mkdir "$SCRIPT_DIR/backups"
-fi
+def log_symlink(msg)
+  puts "[#{'symlink'.blue}] #{msg}"
+end
 
-echo
-declare -a scripts=($(ls -fAd $BINS_DIR/*))
-echo -e "\nLinking scripts:"
-backupAndLinkFiles "$HOME/bin" "${scripts[@]}"
+def log_exclude(msg)
+  puts "[#{"exclude".yellow}] #{msg}"
+end
 
-# Create .config directory if it does not exist
-if [ ! -d "$HOME/.config" ]; then
-  echoLog "[created]    $HOME/.config"
-  [ -z "$NO_OP" ] && mkdir $HOME/.config
-fi
+# Define a method to recursively symlink files from the source to target directory
+def symlink_files(src:, dest:, recursive:, exclude: [])
+  Dir.foreach(src) do |filename|
+    next if filename == '.' || filename == '..'
 
-# create backups and generate symlinks
-# Not ready:
-# ls -Ad $CONFIGS_DIR/.??*/
-echo -e "\nLinking config directories:"
-declare -a dir_arr=("$CONFIGS_DIR/.vim")
-backupAndLinkDirs "$HOME" "${dir_arr[@]}"
+    source_path = File.join(src, filename)
 
-echo -e "\nLinking application configs:"
-declare -a file_arr=("$CONFIGS_DIR/.config/terminator/config")
-backupAndLinkFiles "$HOME/.config/terminator" "${file_arr[@]}"
+    if exclude.include?(source_path)
+      log_exclude source_path
+      return
+    end
 
-echo -e "\nLinking desktop launchers:"
-declare -a file_arr=($(find "$CONFIGS_DIR/.local/share/applications" -maxdepth 1 -type f))
-backupAndLinkFiles "$HOME/.local/share/applications" "${file_arr[@]}"
+    target_path = File.join(dest, filename)
 
-echo -e "\nLinking dot files:"
-declare -a file_arr=($(find $CONFIGS_DIR -maxdepth 1 -type f))
-backupAndLinkFiles "$HOME" "${file_arr[@]}"
+    if File.directory?(source_path) && recursive
+      # If the filename is a directory, create it if it doesn't exist in the target directory
+      unless File.exists?(target_path)
+        log_create(target_path)
+        Dir.mkdir(target_path) unless $no_op
+      end
+      # Recursively symlink its contents
+      symlink_files(src: source_path, dest: target_path, recursive: recursive, exclude: exclude)
+    else
+      symlink_path(src: source_path, dest: target_path)
+    end
+  end
+end
 
-mkdir -p $HOME/.config/nvim
-mkdir -p $HOME/.local/share/nvim/site
+def symlink_path(src:, dest:)
+  backup_path = File.join(backups_dir, File.basename(src))
 
-declare -a dir_arr=("$CONFIGS_DIR/.vim/autoload" "$CONFIGS_DIR/.vim/colors")
-backupAndLinkDirs "$HOME/.local/share/nvim/site" "${dir_arr[@]}"
+  if !File.exists?(src)
+    puts "[#{"Missing".red }] #{src}"
+    exit 1
+  end
 
-echo -e "\nLinking nvim"
-backupAndLinkFile "$CONFIGS_DIR/.vimrc" "$HOME/.config/nvim/init.vim"
+  if File.exists?(dest)
+    if !File.symlink?(dest)
+      log_rename "#{dest} to #{backup_path}"
+      File.rename(dest, backup_path) unless $no_op
+    else
+      if File.readlink(dest) != src
+        # If the target file is a symlink, delete it so it can be replaced
+        log_delete "symlink #{dest}"
+        File.delete(dest) unless $no_op
+      else
+        log_no_op("symlink #{src} to #{dest}")
+        return
+      end
+    end
+  end
+  # Create a symlink to the source file in the target directory
+  log_symlink "#{src} to #{dest}"
+  File.symlink(src, dest) unless $no_op
+end
 
-cd $OLD_DIR
+def main(args)
+  opts = parse_args(args)
+  $no_op = opts.fetch(:no_op)
+
+  begin
+    # Check if the current directory is a Git repository
+    git_root
+  rescue StandardError => e
+    puts "Error: #{e.message}".red
+    exit 1
+  end
+
+  unless File.exists?(opts[:config_path])
+    puts "Config file not found: #{opts[:config_path]}"
+    exit 1
+  end
+
+  config_data = File
+    .read(opts[:config_path])
+    .gsub("{{git_root}}", git_root)
+    .gsub("{{home}}", ENV['HOME'])
+
+  config = JSON.parse(config_data, symbolize_names: true)
+  # config = default_config.merge(config)
+
+  unless File.exist?(backups_dir)
+    log_create(backups_dir)
+    FileUtils.mkdir_p(backups_dir) unless $no_op
+  end
+
+  case opts.fetch(:action)
+  when :run_installer
+    run_installer(config)
+  when :list_packages
+    list_packages(config)
+  end
+end
+
+def run_installer(config)
+  Array(config[:symlink_recursive]).each do |symlink_opts|
+    name = symlink_opts[:name] || symlink_opts[:src]
+    symlink_opts[:exclude] = symlink_opts[:exclude] || []
+    symlink_opts[:recursive] = true
+    puts "\nLinking #{name}"
+
+    # Call the method to symlink all files from the source to target directory
+    symlink_files(**symlink_opts.fetch_slice(:src, :dest, :recursive, :exclude))
+  end
+
+  Array(config[:symlinks]).each do |symlink_opts|
+    name = symlink_opts[:name] || symlink_opts[:src]
+    puts "\nLinking #{name}"
+
+    # Call the method to symlink all files from the source to target directory
+    symlink_path(**symlink_opts.fetch_slice(:src, :dest))
+  end
+end
+
+def list_files(config)
+  Dir.foreach(src) do |filename|
+    next if filename == '.' || filename == '..'
+
+    if File.directory?(filename)
+    end
+  end
+end
+
+if $PROGRAM_NAME == __FILE__
+  trap "SIGINT" do
+    puts "Exiting..."
+    exit 130
+  end
+  main(ARGV)
+end
