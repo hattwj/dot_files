@@ -33,8 +33,16 @@ def parse_args(args)
   }
 
   OptionParser.new(args) do |opts|
-    opts.banner = "Usage: #{File.basename(__FILE__)} [options]
-Symlink dotfiles from the current git repository to the home directory"
+    opts.banner = <<-DOC
+  Usage: #{File.basename(__FILE__)} [options]
+  Symlink dotfiles from the current git repository to the home directory"
+
+  Config file variables: A "{{ variable_name }}" string in the config file that can be replaced at runtime.
+    {{ home }}     - Home directory of the current user.
+    {{ git_root }} - Git root of the current folder.
+
+  Options:
+DOC
 
     opts.on("-c", "--config PATH", "Specify a config file for installation details") do |p|
       options[:config_path] = p
@@ -46,6 +54,10 @@ Symlink dotfiles from the current git repository to the home directory"
 
     opts.on("-l", "--ls", "List extra available packages") do
       options[:action] = :ls_packages
+    end
+
+    opts.on("--init", "Print out a sample config file") do
+      options[:action] = :init
     end
 
     opts.on_tail("-h", "--help", "Show this message") do
@@ -101,6 +113,10 @@ def log_delete(msg)
   puts "[#{'delete'.red}] #{msg}"
 end
 
+def log_error(msg)
+  puts "[#{'Error'.red}] #{msg}"
+end
+
 def log_rename(msg)
   puts "[#{'rename'.yellow}] #{msg}"
 end
@@ -128,10 +144,16 @@ def symlink_files(src:, dest:, recursive:, exclude: [])
     target_path = File.join(dest, filename)
 
     if File.directory?(source_path) && recursive
-      # If the filename is a directory, create it if it doesn't exist in the target directory
+      # Broken symlink?
+      if !File.exists?(target_path) && File.symlink?(target_path)
+        log_delete("Broken symlink #{target_path}")
+        File.delete(target_path) unless $no_op
+      end
+
+      # If the filename is a directory, create it if it doesn't exist, in the target directory
       unless File.exists?(target_path)
         log_create(target_path)
-        Dir.mkdir(target_path) unless $no_op
+        FileUtils.mkdir_p(target_path) unless $no_op
       end
       # Recursively symlink its contents
       symlink_files(src: source_path, dest: target_path, recursive: recursive, exclude: exclude)
@@ -144,9 +166,16 @@ end
 def symlink_path(src:, dest:)
   backup_path = File.join(backups_dir, File.basename(src))
 
+  # Source file missing?
   if !File.exists?(src)
     puts "[#{"Missing".red }] #{src}"
     exit 1
+  end
+
+  # Broken symlink?
+  if !File.exists?(dest) && File.symlink?(dest)
+    log_delete("Broken symlink #{dest}")
+    File.delete(dest) unless $no_op
   end
 
   if File.exists?(dest)
@@ -177,19 +206,30 @@ def main(args)
     # Check if the current directory is a Git repository
     git_root
   rescue StandardError => e
-    puts "Error: #{e.message}".red
+    log_error(e.message)
     exit 1
+  end
+
+  if opts[:action] == :init
+    generate_init_config
+    exit 0
   end
 
   unless File.exists?(opts[:config_path])
-    puts "Config file not found: #{opts[:config_path]}"
+    log_error("Config file not found: #{opts[:config_path]}")
     exit 1
   end
 
+  # Case insensitive variables
   config_data = File
     .read(opts[:config_path])
-    .gsub("{{git_root}}", git_root)
-    .gsub("{{home}}", ENV['HOME'])
+    .gsub(/{{\s*git_root\s*}}/i, git_root)
+    .gsub(/{{\s*home\s*}}/i, ENV['HOME'])
+
+  if config_data.include?('}}') || config_data.include?('{{')
+    log_error("Malformed config file, it looks like some variables are not substituted: IE {{_VAR_}}")
+    exit 1
+  end
 
   config = JSON.parse(config_data, symbolize_names: true)
   # config = default_config.merge(config)
@@ -205,6 +245,10 @@ def main(args)
   when :list_packages
     list_packages(config)
   end
+end
+
+def generate_init_config
+  puts File.read("#{__dir__}/installer.json")
 end
 
 def run_installer(config)
