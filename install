@@ -29,7 +29,7 @@ def parse_args(args)
   # Define CLI options and parse them
   options = {
     action: :run_installer,
-    config_path: "#{git_root}/installer.json",
+    config_path: "#{git_root rescue File.expand_path('.')}/installer.json",
     no_op: false
   }
 
@@ -49,7 +49,7 @@ DOC
       options[:config_path] = p
     end
 
-    opts.on("-n", "--no-op", "") do
+    opts.on("-n", "--no-op", "Dry run only, do not make any changes") do
       options[:no_op] = true
     end
 
