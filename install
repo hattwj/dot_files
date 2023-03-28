@@ -97,13 +97,21 @@ class String
     colorize(33)
   end
 
+  def cyan
+    colorize(36)
+  end
+
   def blue
     colorize(34)
   end
 end
 
+def log_info(msg)
+  logger.info "[#{'info'.cyan}] #{msg}"
+end
+
 def log_no_op(msg)
-  logger.info "[#{'no_op'.green}] #{msg}"
+  logger.info "[#{'no_op'.cyan}] #{msg}"
 end
 
 def log_create(msg)
@@ -119,7 +127,7 @@ def log_delete(msg)
 end
 
 def log_error(msg)
-  logger.error "[#{'Error'.red}] #{msg}"
+  logger.error "[#{'error'.red}] #{msg}"
 end
 
 def log_backup(msg)
@@ -322,6 +330,7 @@ def run_installer(config)
     if $no_op
       log_no_op command
     else
+      log_info command
       log_exec `#{command}`
     end
   end
