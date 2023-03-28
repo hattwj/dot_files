@@ -8,6 +8,7 @@
 require 'optparse'
 require 'fileutils'
 require 'json'
+require 'logger'
 
 # Flag to prevent actually symlinking or renaming files
 $no_op = false
@@ -102,31 +103,63 @@ class String
 end
 
 def log_no_op(msg)
-  puts "[#{'good'.green}] #{msg}"
+  logger.info "[#{'no_op'.green}] #{msg}"
 end
 
-def log_create(msg)
-  puts "[#{'create'.green}] #{msg}"
+def log_exec(msg)
+  logger.info "[#{'exec'.blue}] #{msg}"
 end
 
 def log_delete(msg)
-  puts "[#{'delete'.red}] #{msg}"
+  logger.info "[#{'delete'.red}] #{msg}"
 end
 
 def log_error(msg)
-  puts "[#{'Error'.red}] #{msg}"
+  logger.error "[#{'Error'.red}] #{msg}"
 end
 
 def log_backup(msg)
-  puts "[#{'backup'.yellow}] #{msg}"
+  logger.info "[#{'backup'.yellow}] #{msg}"
 end
 
 def log_symlink(msg)
-  puts "[#{'symlink'.blue}] #{msg}"
+  logger.info "[#{'symlink'.blue}] #{msg}"
 end
 
 def log_exclude(msg)
-  puts "[#{"exclude".yellow}] #{msg}"
+  logger.info "[#{"exclude".yellow}] #{msg}"
+end
+
+def logger
+  @logger
+end
+
+def init_logger
+  if $no_op
+    init_stdout_logger
+  else
+    init_file_logger("#{ENV['HOME']}/.config/dot_files/logs/installer-#{File.basename(git_root)}.log")
+  end
+end
+
+def init_stdout_logger
+  @logger = Logger.new(STDOUT)
+  @logger.formatter = proc do |severity, datetime, progname, msg|
+    puts msg
+    nil
+  end
+end
+
+def init_file_logger(log_file_path)
+  FileUtils.mkdir_p(File.dirname(log_file_path))
+  @logger = Logger.new(log_file_path)
+  original_formatter = Logger::Formatter.new
+  @logger.formatter = proc do |severity, datetime, progname, msg|
+    puts msg
+    msg_without_ascii =  msg.gsub(/\e\[([;\d]+)?m/, '')
+    result = original_formatter.call(severity, datetime, progname, msg_without_ascii.dump)
+    result
+  end
 end
 
 # Define a method to recursively symlink files from the source to target directory
@@ -168,7 +201,9 @@ def symlink_files(src:, dest:, exclude: [], dir_only: [])
 end
 
 def symlink_path(src:, dest:)
-  backup_path = File.join(backups_dir, File.basename(src))
+  raise "Invalid src: #{src.inspect} does not contain #{git_root.inspect}" unless src.include?(git_root)
+
+  backup_path = src.sub(git_root, backups_dir)
 
   # Source file missing?
   if !File.exists?(src)
@@ -185,6 +220,7 @@ def symlink_path(src:, dest:)
   if File.exists?(dest)
     if !File.symlink?(dest)
       log_backup "#{dest} to #{backup_path}"
+      FileUtils.mkdir_p(File.dirname(backup_path))
       File.rename(dest, backup_path) unless $no_op
     else
       if File.readlink(dest) != src
@@ -224,6 +260,8 @@ def main(args)
     exit 1
   end
 
+  init_logger
+
   # Case insensitive variables
   config_data = File
     .read(opts[:config_path])
@@ -236,7 +274,6 @@ def main(args)
   end
 
   config = JSON.parse(config_data, symbolize_names: true)
-  # config = default_config.merge(config)
 
   unless File.exist?(backups_dir)
     log_create(backups_dir)
@@ -260,7 +297,7 @@ def run_installer(config)
     name = symlink_opts[:name] || symlink_opts[:src]
     symlink_opts[:exclude] = symlink_opts[:exclude] || []
     symlink_opts[:dir_only] = symlink_opts[:dir_only] || []
-    puts "\nLinking #{name}"
+    logger.info "\nLinking #{name}"
 
     # Call the method to symlink all files from the source to target directory
     symlink_files(**symlink_opts.fetch_slice(:src, :dest, :exclude, :dir_only))
@@ -268,18 +305,21 @@ def run_installer(config)
 
   Array(config[:symlinks]).each do |symlink_opts|
     name = symlink_opts[:name] || symlink_opts[:src]
-    puts "\nLinking #{name}"
+    logger.info "\nLinking #{name}"
 
     # Call the method to symlink all files from the source to target directory
     symlink_path(**symlink_opts.fetch_slice(:src, :dest))
   end
 
   if !Array(config[:exec]).empty?
-    puts "\nRunning commands:"
+    logger.info "\nRunning commands:"
   end
   Array(config[:exec]).each do |command|
-    puts command
-    puts `#{command}` unless $no_op
+    if $no_op
+      log_no_op command
+    else
+      log_exec `#{command}`
+    end
   end
 end
 
