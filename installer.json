@@ -13,6 +13,7 @@
       // Exclude patterns
       "exclude": ["{{git_root}}/foo/example/file"]
     },
+    { "src": "{{git_root}}/configs/.vim/autoload", "dest": "{{home}}/.config/nvim/after/plugin" },
     { "src": "{{git_root}}/bin",                   "dest": "{{home}}/bin" }
   ],
   // Non recursive symlinks
