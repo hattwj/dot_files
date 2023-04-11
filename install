@@ -8,6 +8,7 @@
 require 'optparse'
 require 'fileutils'
 require 'json'
+# require 'pry'
 
 # Flag to prevent actually symlinking or renaming files
 $no_op = false
@@ -131,6 +132,12 @@ end
 
 # Define a method to recursively symlink files from the source to target directory
 def symlink_files(src:, dest:, exclude: [], dir_only: [])
+  raise "Not a directory: #{src}" unless File.directory?(src)
+
+  unless $no_op
+    FileUtils.mkdir_p(dest) unless File.directory?(dest)
+  end
+
   Dir.foreach(src) do |filename|
     next if filename == '.' || filename == '..'
 
