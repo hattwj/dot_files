@@ -4,6 +4,13 @@ set encoding=utf-8
 " Plugins will be downloaded under the specified directory.
 "   Run :PlugInstall to download and install plugins
 call plug#begin(has('nvim') ? stdpath('data') . '/plugged' : '~/.vim/plugged')
+  if has('nvim')
+    " in centos7 do:
+    " \"$scl enable devtoolset-6 bash"
+    " - then you can \":TSInstall javascript"
+    Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+  endif
+
   " jsx highlighter
   Plug 'MaxMEllon/vim-jsx-pretty'
   " Left hand side git diff (+/-/~) sybols
@@ -19,8 +26,8 @@ call plug#begin(has('nvim') ? stdpath('data') . '/plugged' : '~/.vim/plugged')
   " Required dependency for snipmate
   Plug 'MarcWeber/vim-addon-mw-utils'
   " Markdown automatic previews, open in browser, likely won't work over ssh.
-  Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && yarn install' }
-  " Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
+  " Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && yarn install' }
+  Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
   " File searching plugin
   Plug 'kien/ctrlp.vim'
   " Untested, colored parens highlighter
