@@ -11,7 +11,7 @@
         "{{git_root}}/configs/.vim/after"
       ],
       // Exclude patterns
-      "exclude": ["{{git_root}}/foo/example/file"]
+      "exclude": ["{{git_root}}/configs/nvim"]
     },
     { "src": "{{git_root}}/configs/.vim/autoload", "dest": "{{home}}/.config/nvim/after/plugin" },
     { "src": "{{git_root}}/bin",                   "dest": "{{home}}/bin" }

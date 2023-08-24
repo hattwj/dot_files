@@ -9,6 +9,9 @@ call plug#begin(has('nvim') ? stdpath('data') . '/plugged' : '~/.vim/plugged')
     " \"$scl enable devtoolset-6 bash"
     " - then you can \":TSInstall javascript"
     Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+
+    Plug 'nvim-lua/plenary.nvim'
+    Plug 'nvim-telescope/telescope.nvim'
   endif
 
   " jsx highlighter
@@ -47,6 +50,10 @@ call plug#begin(has('nvim') ? stdpath('data') . '/plugged' : '~/.vim/plugged')
   Plug 'vim-airline/vim-airline-themes'
   " Generic ruby enhancements / code completion
   Plug 'vim-ruby/vim-ruby'
+
+  if !empty(glob("$HOME/.vimrc_local_plugins.vim"))
+    source $HOME/.vimrc_local_plugins.vim
+  endif
 call plug#end()
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -55,6 +62,7 @@ call plug#end()
 if has("patch-8.1.0360")
   set diffopt+=internal,algorithm:patience
 endif
+
 
 ""
 " Vim :terminal configuration
@@ -699,30 +707,18 @@ let g:mkdp_page_title = '「${name}」'
 let g:mkdp_filetypes = ['markdown']
 
 
+
 ""
-" CodeSearch / Brazil integration config
+" Telescope configuration
 ""
 
-" Source the CodeSearch plugin - WIP
-let code_search_script = $HOME . '/dddot_files/config/basil.vim'
-if filereadable(code_search_script)
-  exec 'so ' . code_search_script
-  " Command line flag to only show results from active packages
-  let g:code_search_status = "status:active"
-
-  " Limit code search results to these respositories
-  let g:code_search_repo = "repo:Flagfish*,Elemental*"
-
-  " Prefix if file is found in the current workflow default:
-  " let g:code_search_file_found = "🌲"
-  " let g:code_search_file_found = "🎉"
-
-  " Prefix if file is found in the current workflow
-  " let g:code_search_file_missing = "👿"
-  " let g:code_search_file_missing = "❌"
-
-  " Keybindings for Scratch buffer that displays results
-  let g:code_search_kb_add = "u"
-  let g:code_search_kb_remove = "r"
-  let g:code_search_kb_open = '<CR>'
+if has("nvim")
+  " Find files using Telescope command-line sugar.
+  nnoremap <leader>ff <cmd>Telescope find_files<cr>
+  "nnoremap <leader>fg <cmd>Telescope live_grep<cr>
+  "nnoremap <leader>fb <cmd>Telescope buffers<cr>
+  "nnoremap <leader>fh <cmd>Telescope help_tags<cr>
 endif
+
+" Allow highlighting nested / embedded languages inside of a heredoc
+let g:vimsyn_embed='lPr'
