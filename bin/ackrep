@@ -2,11 +2,12 @@
 
 require 'optparse'
 require 'pp'
+require 'shellwords'
 # require 'mkmf'
 require 'ostruct'
 require 'open3'
 
-require 'pry'
+# require 'pry'
 
 # Configure mkmf so that is does not create logfiles or print path checks
 # module MakeMakefile::Logging

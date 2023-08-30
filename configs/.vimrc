@@ -412,6 +412,13 @@ if executable('ag')
   let g:ackprg = 'ag --vimgrep'
 endif
 
+""
+" Auto format json in current file to make it easier to read
+command! -nargs=0 JsonPretty call JsonPretty()
+function! JsonPretty()
+  exec('%!jq .')
+endfunction
+
 function! FindGitRoot()
   let l:path = expand('%:p:h')
   if l:path != ''
@@ -503,6 +510,7 @@ match ExtraWhitespace /\s\+$/
 autocmd BufWinEnter * match ExtraWhitespace /\s\+$/
 autocmd InsertEnter * match ExtraWhitespace /\s\+\%#\@<!$/
 autocmd InsertLeave * match ExtraWhitespace /\s\+$/
+autocmd BufNewFile,BufRead Config set syntax=perl
 
 """
 " Fix annoying 00~ ~01 characters that surround text that is pasted
