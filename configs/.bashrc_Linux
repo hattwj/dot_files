@@ -112,4 +112,9 @@ if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
 fi
 
 DIR="$( cd "$( dirname "`readlink -f ${BASH_SOURCE[0]}`" )" && pwd -P )"
-PATH="$PATH:$DIR/scripts:$HOME/bin:$HOME/.bin"
+
+[ -d $HOME/scripts ] && PATH="$PATH:$HOME/scripts"
+[ -d $HOME/bin ] && PATH="$PATH:$HOME/bin"
+[ -d $HOME/.bin ] && PATH="$PATH:$HOME/.bin"
+[ -d $HOME/.local/.bin ] && PATH="$PATH:$HOME/.local/.bin"
+

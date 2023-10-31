@@ -37,7 +37,7 @@ function git-reset-submodules(){
 function until-fail()
 {
   count=1
-  while $@; do
+  while "$@"; do
     echo Ran $count times successfully
     ((count++))
   done
