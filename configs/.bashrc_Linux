@@ -24,10 +24,13 @@ HISTFILESIZE=2000000
 #export HISTTIMEFORMAT="[%F %T] "
 
 # append and reload the history after each command
-PROMPT_COMMAND="history -a; history -n"
+# PROMPT_COMMAND="history -a; history -n"
+
+# append the history after each command
+PROMPT_COMMAND="history -a"
 
 # commands to ignore, only matches complete command, not partial
-HISTIGNORE='ls:ll:cd:pwd:bg:fg:history:docker login -u *'
+HISTIGNORE='cd:pwd:bg:fg:history:docker login -u *'
 
 # Change the file location because certain bash sessions truncate .bash_history file upon close.
 # http://superuser.com/questions/575479/bash-history-truncated-to-500-lines-on-each-login
