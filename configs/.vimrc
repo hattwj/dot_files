@@ -547,7 +547,7 @@ augroup END
 " Always show linter gutter
 let g:ale_sign_column_always = 1
 " Disable linting on text change, will only lint on save instead
-"let g:ale_lint_on_text_changed = "never"
+"let g:ale_lint_on_text_changed = 'never'
 
 " Lint on save
 let g:ale_lint_on_save = 1
@@ -572,6 +572,10 @@ let g:ale_linters = {
       \ 'ruby': ['solargraph', 'rubocop', 'reek', 'ruby'],
       \ 'scala': ['scalatest', 'scalafmt', 'metals']
       \ }
+
+if executable('bb_scalafmt')
+  let g:ale_scala_scalafmt_executable = 'bb_scalafmt'
+endif
 
 function! FindConfig(buffer) abort
     " The Config is always in the root directory
@@ -730,3 +734,12 @@ endif
 
 " Allow highlighting nested / embedded languages inside of a heredoc
 let g:vimsyn_embed='lPr'
+
+"
+let g:monk_profile = 'hatt'
+
+
+if has('nvim')
+  " Enable treesitter, allow nested syntax highlighting
+  lua require'nvim-treesitter.configs'.setup{highlight={enable=true}}
+endif
