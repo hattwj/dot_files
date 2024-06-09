@@ -236,6 +236,14 @@ def symlink_path(src:, dest:)
     File.delete(dest) unless $no_op
   end
 
+  # Create parent directories for target file
+  dest_parent = File.expand_path('..', File.absolute_path(dest))
+  if !File.exist?(dest_parent)
+    log_create(dest_parent)
+    # Create parent directories for target file
+    FileUtils.mkdir_p(dest_parent) unless $no_op
+  end
+
   if File.exists?(dest)
     if !File.symlink?(dest)
       log_backup "#{dest} to #{backup_path}"

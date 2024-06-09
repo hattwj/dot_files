@@ -1,10 +1,14 @@
 [global_config]
+  dbus = False
   handle_size = 3
   title_transmit_bg_color = "#006906"
   suppress_multiple_term_dialog = True
   title_use_system_font = False
   title_font = Droid Sans Mono for Powerline 9
 [keybindings]
+  broadcast_off = <Alt>o
+  broadcast_group = <Alt>g
+  broadcast_all = <Alt>a
 [profiles]
   [[default]]
     background_darkness = 0.91
