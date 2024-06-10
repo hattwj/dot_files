@@ -4,7 +4,7 @@
 export PAGER='less -r'
 export LESS="-iMSx4 -FX"
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 ##
 # Plan:
@@ -30,9 +30,8 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # hostname_md5=`lsb_release -si`-`hostname`-`uname -m` | md5sum | awk '{print $1}'
 # Touch file if it does not exist
 
-
-pf1="$DIR/.bashrc_"`uname`
-pf2="$DIR/.bashrc_"`uname`'_'`hostname`
+pf1="$DIR/.bashrc_"$(uname)
+pf2="$DIR/.bashrc_"$(uname)'_'$(hostname)
 pf3="$HOME/.bash_custom"
 
 # Make sure we include .inputrc
@@ -52,7 +51,6 @@ pf3="$HOME/.bash_custom"
 
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
 
-
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                   # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion

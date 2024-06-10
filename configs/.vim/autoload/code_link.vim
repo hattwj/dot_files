@@ -48,11 +48,11 @@ function! s:CodeLink(qargs='')
     end
 
     if stridx(l:remote_url, 'bitbucket') > -1
-      echo GitBitbucketFileURL(l:remote_url, l:branch)
+      echo s:GitBitbucketFileURL(l:remote_url, l:branch)
     elseif stridx(l:remote_url, 'github.com') > -1
-      echo GithubFileURL(l:remote_url, l:branch)
+      echo s:GithubFileURL(l:remote_url, l:branch)
     elseif stridx(l:remote_url, 'git-codecommit') > -1 && stridx(l:remote_url, 'amazonaws.com') > -1
-      echo GitAWSCodeCommitFileURL(l:remote_url, l:remote_name, l:branch)
+      echo s:GitAWSCodeCommitFileURL(l:remote_url, l:remote_name, l:branch)
     else
       echoerr "Error: unrecognized git host pattern - " . l:remote_url
     endif
@@ -62,7 +62,7 @@ function! s:CodeLink(qargs='')
   endtry
 endfunction
 
-function! GitBitbucketFileURL(remote_url, branch_name='')
+function! s:GitBitbucketFileURL(remote_url, branch_name='')
   " Get the current file's path
   let l:file_path = expand('%:p')
   if empty(l:file_path)
@@ -88,7 +88,7 @@ function! GitBitbucketFileURL(remote_url, branch_name='')
   " [^/]
   let l:remote_url = substitute(l:remote_url, '/\([^/]\+\).git', '/repos/\1', 'n')
   if a:branch_name == ''
-    let l:branch_name = URLEncode(substitute(system('git rev-parse --abbrev-ref HEAD'), "\\n", '', 'g'))
+    let l:branch_name = s:URLEncode(substitute(system('git rev-parse --abbrev-ref HEAD'), "\\n", '', 'g'))
   else
     let l:branch_name = a:branch_name
   endif
@@ -105,7 +105,7 @@ function! GitBitbucketFileURL(remote_url, branch_name='')
 endfunction
 
 
-function! GithubFileURL(remote_url, branch_name='')
+function! s:GithubFileURL(remote_url, branch_name='')
   " Get the current file's path
   let l:file_path = expand('%:p')
   if empty(l:file_path)
@@ -125,7 +125,7 @@ function! GithubFileURL(remote_url, branch_name='')
   let l:remote_url = substitute(l:remote_url, '/\([^/]\+\).git', '/\1', 'n')
   if a:branch_name == ''
     " No branch name was specified, so use the current branch name
-    let l:branch_name = URLEncode(substitute(system('git rev-parse --abbrev-ref HEAD'), "\\n", '', 'g'))
+    let l:branch_name = s:URLEncode(substitute(system('git rev-parse --abbrev-ref HEAD'), "\\n", '', 'g'))
   else
     " Use the branch name that was provided
     let l:branch_name = a:branch_name
@@ -144,7 +144,7 @@ function! GithubFileURL(remote_url, branch_name='')
   return l:url_link
 endfunction
 
-function! GitAWSCodeCommitFileURL(remote_url, remote_name, branch_name='')
+function! s:GitAWSCodeCommitFileURL(remote_url, remote_name, branch_name='')
   " Get the current file's path
   let l:file_path = expand('%:p')
   if empty(l:file_path)
@@ -171,7 +171,7 @@ function! GitAWSCodeCommitFileURL(remote_url, remote_name, branch_name='')
 
   if a:branch_name == ''
     " No branch name was specified, so use the current branch name
-    let l:branch_name = URLEncode(substitute(system('git rev-parse --abbrev-ref HEAD'), "\\n", '', 'g'))
+    let l:branch_name = s:URLEncode(substitute(system('git rev-parse --abbrev-ref HEAD'), "\\n", '', 'g'))
   else
     " Use the branch name that was provided
     let l:branch_name = a:branch_name
@@ -190,7 +190,7 @@ function! GitAWSCodeCommitFileURL(remote_url, remote_name, branch_name='')
   return l:url_link
 endfunction
 
-function! URLEncode(input)
+function! s:URLEncode(input)
   let l:encoded = substitute(a:input, ' ', '%20', 'g')
   let l:encoded = substitute(l:encoded, '!', '%21', 'g')
   let l:encoded = substitute(l:encoded, '"', '%22', 'g')

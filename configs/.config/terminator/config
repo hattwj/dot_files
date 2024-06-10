@@ -4,8 +4,9 @@
   title_transmit_bg_color = "#006906"
   suppress_multiple_term_dialog = True
   title_use_system_font = False
-  title_font = Droid Sans Mono for Powerline 9
+  title_font = DroidSansM Nerd Font 9
 [keybindings]
+  group_all = <Primary><Shift><Super>a
   broadcast_off = <Alt>o
   broadcast_group = <Alt>g
   broadcast_all = <Alt>a
@@ -14,13 +15,13 @@
     background_darkness = 0.91
     background_type = transparent
     cursor_color = "#aaaaaa"
-    font = Ubuntu Mono 10
+    font = DroidSansM Nerd Font 10
     scrollback_lines = 25000
     login_shell = True
     use_system_font = False
   [[Cluster]]
     cursor_color = "#aaaaaa"
-    font = Ubuntu Mono 10
+    font = DroidSansM Nerd Font 10
     use_system_font = False
 [layouts]
   [[default]]

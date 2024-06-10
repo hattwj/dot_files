@@ -7,21 +7,16 @@
       "dest": "{{home}}",
       // Symlink the directory only, do not recurse into these directories
       "dir_only": [
-        "{{git_root}}/configs/.vim/plugged",
-        "{{git_root}}/configs/.vim/after"
       ],
       // Exclude patterns
       "exclude": ["{{git_root}}/configs/nvim"]
     },
-    { "src": "{{git_root}}/configs/.vim/autoload", "dest": "{{home}}/.config/nvim/after/plugin" },
+    { "src": "{{git_root}}/configs/.vim/autoload", "dest": "{{home}}/.config/nvim/plugin" },
     { "src": "{{git_root}}/bin",                   "dest": "{{home}}/bin" }
   ],
   // Non recursive symlinks
   "symlinks": [
-    { "src": "{{git_root}}/install",               "dest": "{{home}}/bin/dot-file-installer" },
-    { "src": "{{git_root}}/configs/.vim/colors",   "dest": "{{home}}/.local/share/nvim/site/colors" },
-    { "src": "{{git_root}}/configs/.vim/autoload", "dest": "{{home}}/.local/share/nvim/site/autoload" },
-    { "src": "{{git_root}}/configs/.vimrc",        "dest": "{{home}}/.config/nvim/init.vim" }
+    { "src": "{{git_root}}/install",               "dest": "{{home}}/bin/dot-file-installer" }
   ],
   // Commands to run at the end of the installation
   "exec": [
