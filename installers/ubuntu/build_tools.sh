@@ -2,11 +2,14 @@
 set -e
 
 sudo apt install \
-  make \
-  git \
-  guake \
-  build-essential \
-  ruby \
-  terminator \
-  libncurses-dev \
-  silversearcher-ag
+	make \
+	git \
+	guake \
+	build-essential \
+	ruby \
+	python3-pip \
+	fd-find \
+	ripgrep \
+	terminator \
+	libncurses-dev \
+	silversearcher-ag

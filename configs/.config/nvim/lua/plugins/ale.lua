@@ -7,6 +7,7 @@ return {
   init = function()
     vim.api.nvim_exec2(
       [[
+
         """
         " Vim ALE Linter Config
         " Always show linter gutter

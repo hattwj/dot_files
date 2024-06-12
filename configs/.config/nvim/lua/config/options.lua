@@ -11,4 +11,11 @@ vim.api.nvim_set_option_value("paste", false, {})
 -- " use system clipboard by default
 vim.api.nvim_set_option_value("clipboard", "unnamed", {})
 
+-- enable mouse support
 vim.api.nvim_set_option_value("mouse", "a", {})
+
+-- Allow case insensitive tab completion on the command ":" bar
+vim.api.nvim_set_option_value("wildignorecase", true, {})
+
+-- Set clipboard for vim to allow copy paste
+vim.api.nvim_set_option_value("clipboard", "unnamed", {})

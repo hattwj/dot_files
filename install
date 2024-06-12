@@ -217,6 +217,18 @@ def symlink_files(src:, dest:, exclude: [], dir_only: [])
       symlink_path(src: source_path, dest: target_path)
     end
   end
+  remove_broken_links(dest: dest)
+end
+
+def remove_broken_links(dest:)
+  return unless File.directory?(dest)
+
+  Dir.chdir(dest) do
+    `find /path/to/search -type l -exec test ! -e {} \; -print`.lines.to_a.each do |target_path|
+      log_delete("unlink #{target_path}")
+      File.delete(target_path) unless $no_op 
+    end    
+  end
 end
 
 def symlink_path(src:, dest:)
