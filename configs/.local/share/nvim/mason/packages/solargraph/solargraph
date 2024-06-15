@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+source $HOME/.rvm/scripts/rvm
+
+export GEM_PATH="/local/home/hatt/.local/share/nvim/mason/packages/solargraph:$GEM_PATH"
+rvm 2.7.5 exec /local/home/hatt/.local/share/nvim/mason/packages/solargraph/bin/solargraph "$@"
+# rvm 3.1.0 exec /local/home/hatt/.local/share/nvim/mason/packages/solargraph/bin/solargraph "$@"
