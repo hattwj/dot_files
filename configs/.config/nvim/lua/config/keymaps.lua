@@ -7,29 +7,65 @@
 vim.api.nvim_set_keymap("n", "<C-Left>", ":BufferLineCyclePrev<CR>", { silent = true, noremap = true })
 vim.api.nvim_set_keymap("n", "<C-Right>", ":BufferLineCycleNext<CR>", { silent = true, noremap = true })
 
--- Close current buffer -- already default
--- vim.api.nvim_set_keymap("n", "<leader>c", ":bd<CR>", { noremap = true, desc = "Close current buffer" })
-
+-- Simple session management
 vim.api.nvim_set_keymap("n", "<F2>", ":mksession! ~/.vim_session <CR>", { desc = "create session" }) -- Quick write session with F2
 vim.api.nvim_set_keymap("n", "<F3>", ":mksession! ~/.vim_session <CR>", { desc = "load session" }) -- And load session with F3
 
 -- Grep search in telescope
 vim.api.nvim_set_keymap("n", "<leader>fa", ":Telescope live_grep<CR>", { desc = "live_grep" })
 
+-- Toggle code comments
+vim.api.nvim_set_keymap("n", "<leader>-", "gcc",{ desc="Toggle code comment", noremap=false})
+vim.api.nvim_set_keymap("v", "<leader>-", "gc",{ desc="Toggle code comment", noremap=false})
+
 -- Find files without git
 vim.api.nvim_set_keymap(
   "n",
   "<leader>ff",
   ":Telescope find_files<CR>",
-  { silent = true, noremap = true, desc = "find files (without git)" }
+  { silent = true, noremap = true, desc = "Find files (without git)" }
 )
 
 vim.api.nvim_set_keymap(
   "n",
   "<leader>fc",
   ":Telescope git_commits<CR>",
-  { silent = true, noremap = true, desc = "find git commits" }
-)
+  { silent = true, noremap = true, desc = "Find git commits" }
+ )
+
+-- Close / delete the current buffer
+vim.api.nvim_set_keymap("n", "<leader>q", "<leader>bd", { silent = true, desc="Close current buffer" })
+
+vim.cmd([[
+  """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+  " => Copy Paste Settings
+  """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+  
+  " map CTRL-E to end-of-line (insert and normal mode)
+  imap <C-e> <esc>$i<right>
+  nmap <C-e> $
+  vmap <C-e> $
+  
+  " map CTRL-A to beginning-of-line (insert and normal mode)
+  imap <C-a> <esc>0i
+  nmap <C-e> 0
+  
+  " Map Shift-A to select all text
+  nmap A ggVG
+  
+  " CTRL-C to copy (visual mode)
+  " vmap <C-c> "+y
+  "<Ctrl-C> -- copy (goto visual mode and copy)
+  imap <C-C> <C-O>vgG
+  vmap <C-c> "+y
+  
+  " CTRL-X to cut (visual mode)
+  vmap <C-x> xi
+  
+  " CTRL-V to paste (insert and visual mode)
+  imap <C-v> <esc>Pi
+  vmap <C-v> <esc>Pi
+]])
 
 -- Open a file browser in the parent of the current file
 --

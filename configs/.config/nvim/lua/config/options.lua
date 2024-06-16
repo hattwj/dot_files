@@ -19,3 +19,10 @@ vim.api.nvim_set_option_value("wildignorecase", true, {})
 
 -- Set clipboard for vim to allow copy paste
 vim.api.nvim_set_option_value("clipboard", "unnamed", {})
+
+-- Enable spell checker
+vim.opt.spell = true
+
+-- Default to not concealing any text, this can happen in markdown
+-- files using nested source code, the ```<format> lines are hidden from view.
+vim.api.nvim_set_option_value("conceallevel", 0, {})
