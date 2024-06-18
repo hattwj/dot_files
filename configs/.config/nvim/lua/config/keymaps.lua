@@ -26,15 +26,32 @@ vim.api.nvim_set_keymap(
   { silent = true, noremap = true, desc = "Find files (without git)" }
 )
 
+vim.api.nvim_set_keymap('n', '<leader>fw', ":lua require'telescope.builtin'.grep_string()<CR>", {silent=true, desc='Find word under cursor'})
+
 vim.api.nvim_set_keymap(
   "n",
   "<leader>fc",
   ":Telescope git_commits<CR>",
   { silent = true, noremap = true, desc = "Find git commits" }
  )
+vim.api.nvim_set_keymap(
+  "n",
+  "<leader>fk",
+  "<leader>sk",
+  { silent = true, noremap = false, desc = "Find key maps" }
+ )
+vim.api.nvim_set_keymap(
+  "n",
+  "<leader>fC",
+  "<leader>sC",
+  { silent = true, noremap = false, desc = "Find vim commands" }
+ )
 
 -- Close / delete the current buffer
 vim.api.nvim_set_keymap("n", "<leader>q", "<leader>bd", { silent = true, desc="Close current buffer" })
+
+-- Open file finder in current file directory, select current file
+vim.api.nvim_set_keymap("n", "<leader>.", ":Neotree reveal_force_cwd %:p<CR>", { silent = true, desc="Open finder here" })
 
 vim.cmd([[
   """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""

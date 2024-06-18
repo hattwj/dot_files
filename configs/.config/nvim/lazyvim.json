@@ -1,5 +1,6 @@
 {
   "extras": [
+    "lazyvim.plugins.extras.dap.core",
     "lazyvim.plugins.extras.lang.json",
     "lazyvim.plugins.extras.lang.markdown",
     "lazyvim.plugins.extras.lang.ruby",
@@ -7,7 +8,8 @@
     "lazyvim.plugins.extras.lang.typescript",
     "lazyvim.plugins.extras.lang.yaml",
     "lazyvim.plugins.extras.ui.treesitter-context",
-    "lazyvim.plugins.extras.util.dot"
+    "lazyvim.plugins.extras.util.dot",
+    "lazyvim.plugins.extras.util.project"
   ],
   "news": {
     "NEWS.md": "6077"
