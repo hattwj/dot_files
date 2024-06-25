@@ -7,6 +7,10 @@
 vim.api.nvim_set_keymap("n", "<C-Left>", ":BufferLineCyclePrev<CR>", { silent = true, noremap = true })
 vim.api.nvim_set_keymap("n", "<C-Right>", ":BufferLineCycleNext<CR>", { silent = true, noremap = true })
 
+-- Map leader arrow to move tabs
+vim.api.nvim_set_keymap("n", "<leader><Left>", ":tabp<CR>", { silent = true, noremap = true })
+vim.api.nvim_set_keymap("n", "<leader><Right>", ":tabn<CR>", { silent = true, noremap = true })
+
 -- Simple session management
 vim.api.nvim_set_keymap("n", "<F2>", ":mksession! ~/.vim_session <CR>", { desc = "create session" }) -- Quick write session with F2
 vim.api.nvim_set_keymap("n", "<F3>", ":mksession! ~/.vim_session <CR>", { desc = "load session" }) -- And load session with F3
@@ -17,6 +21,7 @@ vim.api.nvim_set_keymap("n", "<leader>fa", ":Telescope live_grep<CR>", { desc = 
 -- Toggle code comments
 vim.api.nvim_set_keymap("n", "<leader>-", "gcc",{ desc="Toggle code comment", noremap=false})
 vim.api.nvim_set_keymap("v", "<leader>-", "gc",{ desc="Toggle code comment", noremap=false})
+vim.api.nvim_set_keymap("v", "-", "gc",{ desc="Toggle code comment", noremap=false})
 
 -- Find files without git
 vim.api.nvim_set_keymap(
@@ -51,7 +56,7 @@ vim.api.nvim_set_keymap(
 vim.api.nvim_set_keymap("n", "<leader>q", "<leader>bd", { silent = true, desc="Close current buffer" })
 
 -- Open file finder in current file directory, select current file
-vim.api.nvim_set_keymap("n", "<leader>.", ":Neotree reveal_force_cwd %:p<CR>", { silent = true, desc="Open finder here" })
+vim.api.nvim_set_keymap("n", "-", ":Neotree reveal_force_cwd %:p<CR>", { silent = true, desc="Open finder here" })
 
 vim.cmd([[
   """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
