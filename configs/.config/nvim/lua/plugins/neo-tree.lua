@@ -21,7 +21,7 @@ return {
           hide_gitignored = false,
           hide_by_name = {
             "node_modules",
-            "build",
+            "build"
           },
           never_show = {
             ".DS_Store",
