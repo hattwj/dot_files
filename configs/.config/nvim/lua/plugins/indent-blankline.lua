@@ -1,6 +1,7 @@
 return {
   "lukas-reineke/indent-blankline.nvim",
   main = "ibl",
+  lazy = false,
   config = function()
     local highlight = {
       "CursorColumn",
@@ -15,6 +16,17 @@ return {
           remove_blankline_trail = false,
       },
       scope = { enabled = false },
+      exclude = {
+        filetypes = {
+          "help",
+          "startify",
+          "dashboard",
+          "packer",
+          "neogitstatus",
+          "NvimTree",
+          "Trouble",
+        }
+      }
     }
   end,
 }
