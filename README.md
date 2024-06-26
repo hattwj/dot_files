@@ -1,10 +1,11 @@
 # Dot-files and dot-files installer
 
-## About:
+## About
+
 This project contains the dot-files and misc utilities that I use on the
 command line.
 
-## Install:
+## Install
 
 ```bash
 cd $HOME
@@ -13,8 +14,10 @@ cd dot_files
 ./install
 ```
 
-### Extras:
-#### dvim - Dockerized vim:
+### Extras
+
+#### dvim - Dockerized vim
+
 `./scripts/vimd` is a shell script that is included in the $PATH that will
 run a dockerized version of vim.
 
@@ -26,11 +29,13 @@ of the vimd container. It manages permissions as well.
 `./extras/vimd-build` is a shell script to build a named image for use with the
 other scripts.
 
-#### ackrep - Recursive search and replace:
+#### ackrep - Recursive search and replace
+
 `./scripts/ackrep` is a script to recursively search and replace strings in the
 text files of a project.
 
-## Uninstall:
+## Uninstall
+
 ```bash
 cd $HOME
 cd dot_files

@@ -58,6 +58,10 @@ vim.api.nvim_set_keymap("n", "<leader>q", "<leader>bd", { silent = true, desc="C
 -- Open file finder in current file directory, select current file
 vim.api.nvim_set_keymap("n", "-", ":Neotree reveal_force_cwd %:p<CR>", { silent = true, desc="Open finder here" })
 
+-- Disable diagnostics
+vim.api.nvim_set_keymap("n", "<leader>xd", ":lua vim.diagnostic.disable()<CR>", { silent = true, desc="Disable diagnostics" })
+vim.api.nvim_set_keymap("n", "<leader>xe", ":lua vim.diagnostic.enable()<CR>", { silent = true, desc="Enable diagnostics" })
+
 vim.cmd([[
   """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
   " => Copy Paste Settings
