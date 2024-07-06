@@ -35,31 +35,31 @@ return {
       --   root_dir = lspconfig.util.root_pattern("Gemfile", ".git", "."),
       -- },
       -- metals = false,
-      -- metals = {
-      --   keys = {
-      --     {
-      --       "<leader>me",
-      --       function()
-      --         require("telescope").extensions.metals.commands()
-      --       end,
-      --       desc = "Metals commands",
-      --     },
-      --     {
-      --       "<leader>mc",
-      --       function()
-      --         require("metals").compile_cascade()
-      --       end,
-      --       desc = "Metals compile cascade",
-      --     },
-      --   },
-      --   init_options = {
-      --     statusBarProvider = "off",
-      --   },
-      --   settings = {
-      --     showImplicitArguments = true,
-      --     excludedPackages = { "akka.actor.typed.javadsl", "com.github.swagger.akka.javadsl" },
-      --   },
-      -- },
+      metals = {
+        keys = {
+          {
+            "<leader>me",
+            function()
+              require("telescope").extensions.metals.commands()
+            end,
+            desc = "Metals commands",
+          },
+          {
+            "<leader>mc",
+            function()
+              require("metals").compile_cascade()
+            end,
+            desc = "Metals compile cascade",
+          },
+        },
+        init_options = {
+          statusBarProvider = "off",
+        },
+        settings = {
+          showImplicitArguments = true,
+          excludedPackages = { "akka.actor.typed.javadsl", "com.github.swagger.akka.javadsl" },
+        },
+      },
     },
   },
 }

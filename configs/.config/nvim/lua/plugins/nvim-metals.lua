@@ -13,6 +13,19 @@ return {
     return metals_config
   end,
   config = function(self, metals_config)
+    metals_config.settings = {
+      showImplicitArguments = true,
+      showInferredType = true,
+      excludedPackages = {
+        "akka.actor.typed.javadsl",
+        "com.github.swagger.akka.javadsl",
+        "akka.stream.javadsl",
+      },
+      --fallbackScalaVersion = "2.12.9",
+      serverVersion = "1.3.0",
+    }
+    Metals_config.init_options.statusBarProvider = false
+
     local nvim_metals_group = vim.api.nvim_create_augroup("nvim-metals", { clear = true })
     vim.api.nvim_create_autocmd("FileType", {
       pattern = self.ft,
