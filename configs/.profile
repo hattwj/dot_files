@@ -22,6 +22,6 @@ if [ -d "$HOME/bin" ] ; then
 fi
 
 # >>> JVM picker - set java home based on whatever is in path >>>
-export JAVA_HOME="$(/usr/bin/env java -XshowSettings:properties -version 2>&1 | grep "java.home" | sed -e 's/java.home/JAVA_HOME/;s/ //g;')/"
+export JAVA_HOME="$(/usr/bin/env java -XshowSettings:properties -version 2>&1 | grep "java.home" | sed -e 's/java.home = //;s/ //g;')"
 export PATH="$JAVA_HOME/bin:$PATH"
 # <<< JVM picker <<<

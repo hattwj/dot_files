@@ -13,7 +13,7 @@ return {
         autoformat = false,
         formatting = false,
 
-        cmd = { "solargraph"}
+        cmd = { "solargraph" }
       },
       -- This looks like it disables the lsp,
       -- but as far as I can tell it just prevents
@@ -34,7 +34,7 @@ return {
       --   cmd = { "bundle", "exec", "rubocop", "--lsp" },
       --   root_dir = lspconfig.util.root_pattern("Gemfile", ".git", "."),
       -- },
-      metals = true,
+      -- metals = false,
       -- metals = {
       --   keys = {
       --     {
