@@ -60,7 +60,10 @@ vim.api.nvim_set_keymap("n", "-", ":Neotree reveal_force_cwd %:p<CR>", { silent 
 
 -- Disable diagnostics
 vim.api.nvim_set_keymap("n", "<leader>xd", ":lua vim.diagnostic.disable()<CR>", { silent = true, desc="Disable diagnostics" })
-vim.api.nvim_set_keymap("n", "<leader>xe", ":lua vim.diagnostic.enable()<CR>", { silent = true, desc="Enable diagnostics" })
+vim.api.nvim_set_keymap("n", "<leader>xD", ":lua vim.diagnostic.enable()<CR>", { silent = true, desc="Enable diagnostics" })
+-- Toggle autofix
+vim.api.nvim_set_keymap("n", "<leader>xa", ":lua vim.b.autoformat = false<CR>", { silent = true, desc="Disable autoformat" })
+vim.api.nvim_set_keymap("n", "<leader>xA", ":lua vim.b.autoformat = true<CR>", { silent = true, desc="Enable autoformat" })
 
 vim.cmd([[
   """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
