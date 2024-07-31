@@ -65,6 +65,13 @@ vim.api.nvim_set_keymap("n", "<leader>xD", ":lua vim.diagnostic.enable()<CR>", {
 vim.api.nvim_set_keymap("n", "<leader>xa", ":lua vim.b.autoformat = false<CR>", { silent = true, desc="Disable autoformat" })
 vim.api.nvim_set_keymap("n", "<leader>xA", ":lua vim.b.autoformat = true<CR>", { silent = true, desc="Enable autoformat" })
 
+vim.api.nvim_set_keymap("n" , "<leader>Mc", ':lua require("telescope").extensions.metals.commands()<CR>', { silent = true, desc = 'Commands' })
+vim.api.nvim_set_keymap("n" , "<leader>Mi", ':MetalsInfo<CR>', { silent = true, desc = 'Info' })
+vim.api.nvim_set_keymap("n" , "<leader>Md", ':MetalsRunDoctor<CR>', { silent = true, desc =  'Doctor' })
+vim.api.nvim_set_keymap("n" , "<leader>Mx", ':MetalsDisconnectBuild<CR>', { silent = true, desc =  'DisconnectBuild' })
+vim.api.nvim_set_keymap("n" , "<leader>MX", ':MetalsConnectBuild<CR>',  { silent = true, desc = 'ConnectBuild' })
+vim.api.nvim_set_keymap("n" , "<leader>MC", ':MetalsCompileCascase<CR>',  { silent = true, desc = 'CompileCascade' })
+
 vim.cmd([[
   """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
   " => Copy Paste Settings
