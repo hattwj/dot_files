@@ -16,6 +16,8 @@ vim.api.nvim_set_option_value("mouse", "a", {})
 
 -- Allow case insensitive tab completion on the command ":" bar
 vim.api.nvim_set_option_value("wildignorecase", true, {})
+-- Make double sure that tab completion works without case sensitivity, sometimes it wasn't working
+vim.opt.ignorecase = true
 
 -- Set clipboard for vim to allow copy paste
 vim.api.nvim_set_option_value("clipboard", "unnamed", {})

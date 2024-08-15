@@ -56,7 +56,7 @@ vim.api.nvim_set_keymap(
 vim.api.nvim_set_keymap("n", "<leader>q", "<leader>bd", { silent = true, desc="Close current buffer" })
 
 -- Open file finder in current file directory, select current file
-vim.api.nvim_set_keymap("n", "-", ":Neotree reveal_force_cwd %:p<CR>", { silent = true, desc="Open finder here" })
+vim.api.nvim_set_keymap("n", "-", ":Explore %:p:h<CR>", { silent = true, desc="Open finder here" })
 
 -- Disable diagnostics
 vim.api.nvim_set_keymap("n", "<leader>xd", ":lua vim.diagnostic.disable()<CR>", { silent = true, desc="Disable diagnostics" })
@@ -71,6 +71,10 @@ vim.api.nvim_set_keymap("n" , "<leader>Md", ':MetalsRunDoctor<CR>', { silent = t
 vim.api.nvim_set_keymap("n" , "<leader>Mx", ':MetalsDisconnectBuild<CR>', { silent = true, desc =  'DisconnectBuild' })
 vim.api.nvim_set_keymap("n" , "<leader>MX", ':MetalsConnectBuild<CR>',  { silent = true, desc = 'ConnectBuild' })
 vim.api.nvim_set_keymap("n" , "<leader>MC", ':MetalsCompileCascase<CR>',  { silent = true, desc = 'CompileCascade' })
+
+-- buffer movement
+vim.api.nvim_set_keymap("n", "<leader>b<Left>", ":BufferLineMovePrev<CR>", { silent = true, noremap = true })
+vim.api.nvim_set_keymap("n", "<leader>b<Right>", ":BufferLineMoveNext<CR>", { silent = true, noremap = true })
 
 vim.cmd([[
   """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""

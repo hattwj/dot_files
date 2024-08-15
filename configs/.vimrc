@@ -419,6 +419,7 @@ function! JsonPretty()
   exec('%!jq .')
 endfunction
 
+command! -nargs=0 FindGitRoot call FindGitRoot()
 function! FindGitRoot()
   let l:path = expand('%:p:h')
   if l:path != ''
