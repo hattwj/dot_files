@@ -4,8 +4,8 @@
 -- Add any additional keymaps here
 
 -- Map Control arrow L/R to prev next buffer
-vim.api.nvim_set_keymap("n", "<C-Left>", ":bp<CR>", { silent = true, noremap = true })
-vim.api.nvim_set_keymap("n", "<C-Right>", ":bn<CR>", { silent = true, noremap = true })
+vim.api.nvim_set_keymap("n", "<C-Left>", ":BufferLineCyclePrev<CR>", { silent = true, noremap = true })
+vim.api.nvim_set_keymap("n", "<C-Right>", ":BufferLineCycleNext<CR>", { silent = true, noremap = true })
 
 -- Map leader arrow to move tabs
 vim.api.nvim_set_keymap("n", "<leader><Left>", ":tabp<CR>", { silent = true, noremap = true })
@@ -16,7 +16,7 @@ vim.api.nvim_set_keymap("n", "<F2>", ":mksession! ~/.vim_session <CR>", { desc =
 vim.api.nvim_set_keymap("n", "<F3>", ":mksession! ~/.vim_session <CR>", { desc = "load session" }) -- And load session with F3
 
 -- Grep search in telescope
-vim.api.nvim_set_keymap("n", "<leader>fa", ":ProjectRoot<CR>:Telescope live_grep<CR>", { desc = "live_grep" })
+vim.api.nvim_set_keymap("n", "<leader>fa", ":ProjectRoot2<CR>:Telescope live_grep<CR>", { desc = "live_grep" })
 
 -- Toggle code comments
 vim.api.nvim_set_keymap("n", "<leader>-", "gcc",{ desc="Toggle code comment", noremap=false})
@@ -27,21 +27,21 @@ vim.api.nvim_set_keymap("v", "-", "gc",{ desc="Toggle code comment", noremap=fal
 vim.api.nvim_set_keymap(
   "n",
   "<leader>ff",
-  ":ProjectRoot<CR>:Telescope find_files<CR>",
+  ":ProjectRoot2<CR>:Telescope find_files<CR>",
   { silent = true, noremap = true, desc = "Find files (without git)" }
 )
 
 vim.api.nvim_set_keymap(
   'n',
   '<leader>fw',
-  ":ProjectRoot<CR>:lua require'telescope.builtin'.grep_string()<CR>",
+  ":ProjectRoot2<CR>:lua require'telescope.builtin'.grep_string()<CR>",
   {silent=true, desc='Find word under cursor'}
 )
 
 vim.api.nvim_set_keymap(
   "n",
   "<leader>fc",
-  ":ProjectRoot<CR>:Telescope git_commits<CR>",
+  ":ProjectRoot2<CR>:Telescope git_commits<CR>",
   { silent = true, noremap = true, desc = "Find git commits" }
 )
 
@@ -61,6 +61,9 @@ vim.api.nvim_set_keymap(
 
 -- Close / delete the current buffer
 vim.api.nvim_set_keymap("n", "<leader>q", "<leader>bd", { silent = true, desc="Close current buffer" })
+
+-- Show keybindings
+vim.api.nvim_set_keymap("n", "<leader>k", ":WhichKey<CR>", { silent = true, desc="Show keybindings" })
 
 -- Open file finder in current file directory, select current file
 vim.api.nvim_set_keymap("n", "-", ":Explore %:p:h<CR>", { silent = true, desc="Open finder here" })
@@ -82,6 +85,16 @@ vim.api.nvim_set_keymap("n" , "<leader>MC", ':MetalsCompileCascase<CR>',  { sile
 -- buffer movement
 vim.api.nvim_set_keymap("n", "<leader>b<Left>", ":BufferLineMovePrev<CR>", { silent = true, noremap = true })
 vim.api.nvim_set_keymap("n", "<leader>b<Right>", ":BufferLineMoveNext<CR>", { silent = true, noremap = true })
+
+
+local wk = require("which-key")
+wk.add({
+  { "<leader>m", group = "Monkfish" }, -- group
+  { "<leader>mc", "<cmd>Monkfish chat<cr>", desc = "Monkfish chat", mode = "n" },
+  { "<leader>ma", "<cmd>Monkfish ask<cr>", desc = "Monkfish ask", mode = "n" },
+  { "<leader>mt", "<cmd>Monkfish todo<cr>", desc = "Monkfish todo", mode = "n" },
+})
+
 
 vim.cmd([[
   """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""

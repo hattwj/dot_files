@@ -24,8 +24,8 @@ function! FindGitRoot()
   return system('git ' . l:gitArgs . ' rev-parse --show-toplevel 2> /dev/null')[:-2]
 endfunction
 
-function! GetCurFile()
-  " First attempt to use the current file
+function! GetCurDir()
+  " First attempt to use the current dir
   let l:curfile = expand('%:p:h')
 
   if empty(l:curfile)
@@ -35,13 +35,26 @@ function! GetCurFile()
   return l:curfile
 endfunction
 
+command! -nargs=0 ProjectRoot2 call ProjectRoot2()
+function! ProjectRoot2()
+  if exists("b:netrw_curdir")
+    exec('cd ' . b:netrw_curdir)
+    let l:git_root = FindGitRoot()
+    if !empty(l:git_root)
+      exec('cd ' . l:git_root)
+    endif
+  else
+    exec('ProjectRoot')
+  endif
+endfunction
+
 " Search from git root if possible
 command! -nargs=* Ag call Ag(<q-args>)
 function! Ag(cmd='')
   " Get current git root
   let l:oldwd = getcwd()
 
-  let l:curfile = GetCurFile()
+  let l:curfile = GetCurDir()
 
   exec('cd ' . l:curfile)
   let l:root = FindGitRoot()
