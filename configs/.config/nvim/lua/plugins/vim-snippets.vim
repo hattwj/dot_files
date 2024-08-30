@@ -40,11 +40,12 @@ function! ProjectRoot2()
   if exists("b:netrw_curdir")
     exec('cd ' . b:netrw_curdir)
     let l:git_root = FindGitRoot()
-    if !empty(l:git_root)
-      exec('cd ' . l:git_root)
-    endif
   else
-    exec('ProjectRoot')
+    let l:git_root = FindGitRoot()
+  endif
+
+  if !empty(l:git_root)
+    exec('cd ' . l:git_root)
   endif
 endfunction
 

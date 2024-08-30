@@ -31,3 +31,7 @@ vim.api.nvim_set_option_value("conceallevel", 0, {})
 
 -- Do not autoformat files
 vim.g.autoformat = false
+
+-- Set relative line numbers
+vim.api.nvim_set_option_value('number', true, {})
+vim.api.nvim_set_option_value('relativenumber', true , {})
