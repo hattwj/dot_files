@@ -87,13 +87,6 @@ vim.api.nvim_set_keymap("n", "<leader>b<Left>", ":BufferLineMovePrev<CR>", { sil
 vim.api.nvim_set_keymap("n", "<leader>b<Right>", ":BufferLineMoveNext<CR>", { silent = true, noremap = true })
 
 
-local wk = require("which-key")
-wk.add({
-  { "<leader>m", group = "Monkfish" }, -- group
-  { "<leader>mc", "<cmd>Monkfish chat<cr>", desc = "Monkfish chat", mode = "n" },
-  { "<leader>ma", "<cmd>Monkfish ask<cr>", desc = "Monkfish ask", mode = "n" },
-  { "<leader>mt", "<cmd>Monkfish todo<cr>", desc = "Monkfish todo", mode = "n" },
-})
 
 
 vim.cmd([[

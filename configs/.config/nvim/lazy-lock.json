@@ -1,5 +1,6 @@
 {
   "LazyVim": { "branch": "main", "commit": "12818a6cb499456f4903c5d8e68af43753ebc869" },
+  "NinjaHooks": { "branch": "mainline", "commit": "796520784d532afe993e96a58070c1371cef2afb" },
   "SchemaStore.nvim": { "branch": "main", "commit": "6d3ba6ad250538446b2727e352e15a425d6692ef" },
   "ack.vim": { "branch": "master", "commit": "36e40f9ec91bdbf6f1adf408522a73a6925c3042" },
   "ale": { "branch": "master", "commit": "954682108d21b412561fb32e3fa766c7ee539984" },
