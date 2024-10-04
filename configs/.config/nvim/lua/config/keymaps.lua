@@ -3,6 +3,15 @@
 -- https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
 -- Add any additional keymaps here
 
+-- Map page up down to use <C-U> <C-D>, that way, when we page up it goes to the first line of the file
+-- - Otherwise it will stop when the 1st line scrolls into view, rather than adjusting the current line.
+vim.api.nvim_set_keymap('n', '<PageUp>', '<C-U>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<PageDown>', '<C-D>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('v', '<PageUp>', '<C-U>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('v', '<PageDown>', '<C-D>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('i', '<PageUp>', '<C-O><C-U>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('i', '<PageDown>', '<C-O><C-D>', { noremap = true, silent = true })
+
 -- Map Control arrow L/R to prev next buffer
 vim.api.nvim_set_keymap("n", "<C-Left>", ":BufferLineCyclePrev<CR>", { silent = true, noremap = true })
 vim.api.nvim_set_keymap("n", "<C-Right>", ":BufferLineCycleNext<CR>", { silent = true, noremap = true })
