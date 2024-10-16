@@ -1,0 +1,267 @@
+#!/usr/bin/env python
+
+from copy import deepcopy
+import json
+import datetime
+from dateutil import rrule
+from dateutil.relativedelta import relativedelta
+import argparse
+import readline
+
+FREQUENCIES = [
+    "daily",
+    "weekdays",
+    "weekly",
+    "bi-weekly",
+    "monthly",
+    "yearly",
+    "one-time"
+]
+
+def load_data(filename):
+    try:
+        with open(filename, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {"accounts": {}, "income": [], "expenses": [], "default-expense-account": "", "default-income-account": ""}
+
+def save_data(data, filename):
+    with open(filename, 'w') as f:
+        json.dump(data, f, indent=2)
+
+def add_account(data):
+    name = input("Enter account name: ")
+    balance = float(input("Enter current balance: "))
+    data["accounts"][name] = { "balance": balance }
+    if "default-income-account" not in data or data["default-income-account"] == '':
+        data["default-income-account"] = name
+    else:
+        make_default = input("Make default income account? (y/N)").lower().strip() == 'y'
+        if make_default:
+            data["default-income-account"] = name
+    if "default-expense-account" not in data or data["default-expense-account"] == '':
+        data["default-expense-account"] = name
+    else:
+        make_default = input("Make default expense account? (y/N)").lower().strip() == 'y'
+        if make_default:
+            data["default-expense-account"] = name
+
+def matched_frequency(start_date, end_date, current_date, frequency):
+    if start_date > current_date:
+        return False
+    elif end_date and end_date < current_date:
+        return False
+    elif frequency == 'daily':
+        return True
+    elif frequency == 'weekdays':
+        # 0-4 are Monday-Friday
+        return current_date.weekday() < 5
+    elif frequency == 'weekly':
+        return start_date.weekday() == current_date.weekday()
+    elif frequency == 'bi-weekly':
+        weeks = weeks_between(start_date, current_date)
+        return weeks % 2 == 1 and start_date.weekday() == current_date.weekday()
+    elif frequency == 'monthly':
+        return start_date.day == current_date.day
+    elif frequency == 'yearly':
+        return start_date.month == current_date.month and start_date.day == current_date.day
+    elif frequency == 'one-time':
+        return start_date.month == current_date.month and start_date.day == current_date.day and start_date.year == current_date.year
+    else:
+        raise Exception(f"Unknown frequency {frequency}")
+
+def weeks_between(start_date, end_date):
+    weeks = rrule.rrule(rrule.WEEKLY, dtstart=start_date, until=end_date)
+    return weeks.count()
+
+def calculate_amount(event):
+    if 'transactions' in event:
+        return sum(transaction for transaction in event['transactions'].values())
+    else:
+        return event['amount']
+
+def generate_forecast(data, months):
+    # Update all sub transactions
+    for key in ['income', 'expenses']:
+        for transaction in data[key]:
+            transaction['amount'] = calculate_amount(transaction)
+    data = deepcopy(data)
+    accounts = data["accounts"].copy()
+    start_date = datetime.date.today()
+    end_date = start_date + relativedelta(months=months)
+    current_date = start_date
+    
+    forecast = []
+
+    if 'default-income-account' in data:
+        income_account = data['default-income-account']
+    else:
+        for account_name in accounts.keys():
+            income_account = account_name
+            break
+    
+    if 'default-expense-account' in data:
+        expense_account = data['default-expense-account']
+    else:
+        for account_name in accounts.keys():
+            expense_account = account_name
+            break
+
+    while current_date <= end_date:
+        events = []
+        for income in data["income"]:
+            frequency = income['frequency']
+            next_date = datetime.datetime.strptime(income['next_date'], '%Y-%m-%d').date()
+            last_date = income.get('end_date', '')
+            if last_date != "":
+                last_date = datetime.datetime.strptime(last_date, '%Y-%m-%d').date()
+            else:
+                last_date = None
+            if matched_frequency(next_date, last_date, current_date, frequency):
+                accounts[income_account] += income['amount']
+                events.append({
+                    'type': 'income',
+                    'name': income['name'],
+                    'amount': income['amount'],
+                    'account_name': income_account,
+                    'account_balance': accounts[income_account]
+                })
+
+        for expense in data["expenses"]:
+            frequency = expense['frequency']
+            next_date = datetime.datetime.strptime(expense['next_date'], '%Y-%m-%d').date()
+            last_date = expense.get('end_date', '')
+            if last_date != "":
+                last_date = datetime.datetime.strptime(last_date, '%Y-%m-%d').date()
+            else:
+                last_date = None
+            if matched_frequency(next_date, last_date, current_date, frequency):
+                accounts[expense_account] -= expense['amount']
+                events.append({
+                    'type': 'expense',
+                    'name': expense['name'],
+                    'amount': expense['amount'],
+                    'account_name': expense_account,
+                    'account_balance': accounts[expense_account]
+                })
+
+        forecast.append({"date": current_date.strftime("%Y-%m-%d"), "accounts": deepcopy(accounts), "events": events })
+        current_date += datetime.timedelta(days=1)
+
+    return forecast
+
+def add_transaction(data, type):
+    name = input(f"Enter {type} name: ")
+    amount = float(input(f"Enter {type} amount: "))
+    while True:
+        frequency = input(f"Enter frequency ({'/'.join(FREQUENCIES)}): ").lower().strip()
+        if frequency in FREQUENCIES:
+            break
+        print(f"invalid option: {frequency}")
+
+    next_date = input("Enter next due date (YYYY-MM-DD): ")
+    if frequency == "":
+        end_date = ""
+    else:
+        end_date = input("Enter end date (YYYY-MM-DD) or nothing to repeat indefinitely: ")
+    
+    # Get the list of available accounts
+    account_list = list(data["accounts"].keys())
+    
+    # Display available accounts and prompt for selection
+    print("Available accounts:")
+    for i, account in enumerate(account_list, 1):
+        print(f"{i}. {account}")
+    
+    # Set default account as the first one in the list
+    default_account = account_list[0] if account_list else None
+    
+    while True:
+        account_choice = input(f"Enter the account number for this {type} (default: 1): ")
+        if account_choice == "":
+            selected_account = default_account
+            break
+        try:
+            account_index = int(account_choice) - 1
+            if 0 <= account_index < len(account_list):
+                selected_account = account_list[account_index]
+                break
+            else:
+                print("Invalid account number. Please try again.")
+        except ValueError:
+            print("Please enter a valid number.")
+    
+    # Add the selected account to the transaction data
+    data[type].append({
+        "name": name,
+        "amount": amount,
+        "frequency": frequency,
+        "next_date": next_date,
+        "end_date": end_date,
+        "account": selected_account
+    })
+
+color_red = "\033[0;31m"
+color_cyan = "\033[0;36m"
+color_green = "\033[0;32m"
+color_reset = "\033[0m"
+color_yellow = "\033[0;33m"
+
+# TODO: Ideas
+# - Keep original next_date, don't save over the original value when performing a forecast.
+# - Always 
+def main():
+    parser = argparse.ArgumentParser(description="Financial Forecasting Tool")
+    parser.add_argument("filename", help="JSON file to store data")
+    args = parser.parse_args()
+
+    data = load_data(args.filename)
+
+    while True:
+        print("\n1. Add account")
+        print("2. Add income")
+        print("3. Add expense")
+        print("4. Generate forecast")
+        print("5. Save")
+        print("6. Exit")
+
+        choice = input("Enter your choice: ")
+
+        if choice == "1":
+            add_account(data)
+        elif choice == "2":
+            add_transaction(data, "income")
+        elif choice == "3":
+            add_transaction(data, "expenses")
+        elif choice == "4":
+            months = int(input("Number of months to forecast: "))
+            forecast = generate_forecast(data, months)
+            for day in forecast:
+                if len(day['events']) > 0:
+                    print(f"Date: {day['date']}")
+                for event in day['events']:
+                    account_name = event['account_name']
+                    balance = event['account_balance']
+                    amount = event['amount']
+                    if event['type'] == 'expense':
+                        amount = f"{color_red}{amount}{color_reset}"
+                    else:
+                        amount = f"{color_green}{amount}{color_reset}"
+
+                    name = event['name']
+                
+                    print(f"\t{account_name}\t{balance}\t{event['type']}\t{amount} - {name}") 
+        elif choice == "5":
+            save_data(data, args.filename)
+        elif choice == "6":
+            break
+        elif choice == "9":
+            breakpoint()
+        else:
+            print("Invalid choice. Please try again.")
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass
