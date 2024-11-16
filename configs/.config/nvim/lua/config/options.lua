@@ -37,3 +37,7 @@ vim.api.nvim_set_option_value('number', true, {})
 vim.api.nvim_set_option_value('relativenumber', true , {})
 
 vim.cmd("highlight WinSeparator guifg=orange")
+
+-- Fix compatibility issue between BufferLine plugin and netrw. BufferLine 
+-- would refuse to cycle through buffers when netrw was being used.
+vim.cmd("let g:netrw_bufsettings = 'noma nomod nonu nowrap ro buflisted'")
