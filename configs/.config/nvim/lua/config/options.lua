@@ -38,6 +38,11 @@ vim.api.nvim_set_option_value('relativenumber', true , {})
 
 vim.cmd("highlight WinSeparator guifg=orange")
 
+-- Set line wrap when using arrows.
+-- - Hitting right arrow at end of the
+--   line should jump to the next line.
+vim.cmd("set whichwrap+=<,>,h,l")
+
 -- Fix compatibility issue between BufferLine plugin and netrw. BufferLine 
 -- would refuse to cycle through buffers when netrw was being used.
 vim.cmd("let g:netrw_bufsettings = 'noma nomod nonu nowrap ro buflisted'")

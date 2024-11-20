@@ -81,7 +81,7 @@ return {
       hide_yaml_meta = 1,
       sequence_diagrams = {},
       flowchart_diagrams = {},
-      content_editable = "v:false",
+      content_editable = vim.g.lua_false,
       disable_filename = 0,
     }
 
