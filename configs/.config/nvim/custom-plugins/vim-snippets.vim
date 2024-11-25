@@ -15,6 +15,16 @@ function! JsonPretty()
   exec('%!jq .')
 endfunction
 
+"""
+" Strip trailing whitespaces on the following file types
+command! -nargs=0 WhitespacesStrip call StripTrailingWhitespaces()
+fun! StripTrailingWhitespaces()
+    let l = line(".")
+    let c = col(".")
+    %s/\s\+$//e
+    call cursor(l, c)
+endfun
+
 command! -nargs=0 FindGitRoot echo FindGitRoot()
 function! FindGitRoot()
   let l:path = expand('%:p:h')

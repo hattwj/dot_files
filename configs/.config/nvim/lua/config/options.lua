@@ -38,6 +38,9 @@ vim.api.nvim_set_option_value('relativenumber', true , {})
 
 vim.cmd("highlight WinSeparator guifg=orange")
 
+-- Enable python LSP using pyright
+vim.g.lazyvim_python_lsp = "pyright"
+
 -- Set line wrap when using arrows.
 -- - Hitting right arrow at end of the
 --   line should jump to the next line.
