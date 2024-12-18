@@ -3,6 +3,7 @@
 # A metals installer for systems that have older versions of Java.
 
 set -e 
+set -x 
 
 mkdir -p "$HOME/.cache/nvim/nvim-metals/metals" || exit 1
 

@@ -49,6 +49,13 @@ vim.api.nvim_set_keymap(
 
 vim.api.nvim_set_keymap(
   "n",
+  "<leader>fg",
+  ":ProjectRoot2<CR>:Telescope git_status<CR>",
+  { silent = true, noremap = true, desc = "Git status" }
+)
+
+vim.api.nvim_set_keymap(
+  "n",
   "<leader>fc",
   ":ProjectRoot2<CR>:Telescope git_commits<CR>",
   { silent = true, noremap = true, desc = "Find git commits" }

@@ -1,6 +1,8 @@
 return {
   "neovim/nvim-lspconfig",
   opts = {
+    -- TODO: Add barium: https://w.amazon.com/bin/view/Barium/
+    --
     -- Automatically format on save, this doesn't seem to work
     autoformat = false,
     servers = {
@@ -34,7 +36,6 @@ return {
       --   cmd = { "bundle", "exec", "rubocop", "--lsp" },
       --   root_dir = lspconfig.util.root_pattern("Gemfile", ".git", "."),
       -- },
-      -- metals = false,
       metals = {
         keys = {
           {
@@ -53,11 +54,25 @@ return {
           },
         },
         init_options = {
-          statusBarProvider = "off",
+          buildTool = 'brazil-build',
+          statusBarProvider = "on",
         },
         settings = {
+          metalsBinaryPath = vim.fn.expand("~/.local/share/coursier/bin/metals"),
+          autoImportBuild = "off",
+          defaultBspToBuildTool = true,
+          -- showImplicitConversionsAndClasses = true,
+          superMethodLensesEnabled = true,
+          showInferredType = true,
+          excludedPackages = {
+            "akka.actor.typed.javadsl",
+            "com.github.swagger.akka.javadsl",
+            "akka.stream.javadsl",
+          },
+          --fallbackScalaVersion = "2.12.9",
+          -- JAVA 8
+          serverVersion = "1.3.0",
           showImplicitArguments = true,
-          excludedPackages = { "akka.actor.typed.javadsl", "com.github.swagger.akka.javadsl" },
         },
       },
     },

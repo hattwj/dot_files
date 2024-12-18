@@ -32,7 +32,7 @@ return {
           end,
         },
         find_files = {
-          file_ignore_patterns = { 
+          file_ignore_patterns = {
             "node_modules/",
             ".git/",
             ".venv/",

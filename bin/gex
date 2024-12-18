@@ -1,0 +1,543 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'json'
+require 'mkmf'
+require 'optparse'
+require 'ostruct'
+require 'open3'
+require 'yaml'
+require 'tempfile'
+
+
+CONF_PATH = "#{ENV['HOME']}/.gex.yaml"
+TEMPLATE_CONFIG = '##
+# Gex config examples
+#
+#  ##
+#  # Path to git repository
+#  "/path/to/git/repository": {
+#    # Root directory to use on the local / remote file system
+#    "dest": "/copy/destination",
+#    ##
+#    # Default commands to execute afterwards
+#    exec: [
+#      "1st-command",
+#      "2nd-command"
+#    ],
+#    exclude: [
+#      "_spec.rb$"
+#    ],
+#    include: [
+#      # only include files from these base directories
+#      "^web",
+#      "^config"
+#    ],
+#    ##
+#    # Default hosts to send files to
+#    hosts: [
+#      "first-default-host",
+#      "second-host"
+#    ]
+#
+##'
+
+CONFIG_DEFAULTS = {
+  # Commands to execute after sync
+  'exec' =>  [],
+
+  # Scripts to execute after sync
+  'scripts' => [],
+
+  # Files to exclude if matched
+  'exclude' => ["_spec.rb$", "_test.rb$"],
+
+  # Files in include even if excluded
+  'include' => ["^web", "^config", "^ruby-lib"],
+
+  # Just run the init portion of the script
+  'do_init' =>  false,
+
+  # Logging verbosity
+  'debug' =>  false,
+
+  # Root directory for file copy
+  'dest' =>  nil,
+
+  'diff_commit' =>   nil,
+
+  'git_root' =>  nil,
+
+  'hosts' =>  [],
+
+  'noop' =>  false,
+
+  'no_exec' => false,
+
+  'show_commit' =>  nil,
+
+  'source_path' =>  nil,
+
+  'ssh_user' =>  ENV['USER'],
+
+  'verbosity' =>  0,
+
+  'send_via' => 'rsync'
+}.freeze
+
+def assert_in_path(*cmds)
+  cmds.each do |cmd|
+    unless find_executable0(cmd.to_s)
+      puts "[#{red(:fatal)}] Unable to find command '#{cmd}' in $PATH"
+      exit 1
+    end
+  end
+end
+
+def puts_debug(msg)
+  puts yellow(msg)
+end
+
+def blue(msg)
+  "\033[0;36m#{msg}\033[0m"
+end
+
+def yellow(msg)
+  "\033[0;33m#{msg}\033[0m"
+end
+
+def green(msg)
+  "\033[0;32m#{msg}\033[0m"
+end
+
+def red(msg)
+  "\033[0;31m#{msg}\033[0m"
+end
+
+begin
+  require 'pry'
+rescue LoadError
+  STDERR.puts(yellow("WARNING: Failed to load pry"))
+end
+
+def run_command(cmd, host, print_exit_code = false)
+  # threads = []
+  Open3.popen3(cmd) do |stdin, stdout, stderr, thread|
+    stdin.close
+    Thread.new do
+      stdout.each { |line| puts "[#{green(host)}] #{line}" rescue IOError }
+    end
+    Thread.new do
+      stderr.each { |line| puts "[#{red(host)}] #{line}" rescue IOError }
+    end
+    if print_exit_code
+      puts "[#{blue(host)}] #{thread.value}"
+    end
+    thread.value
+  end
+end
+
+def exec_local(options)
+  options.exec.each do |cmd|
+    puts("[#{blue(:exec)}] " + cmd)
+    run_command(cmd, :localhost, true) unless options.noop
+  end
+end
+
+def should_exclude_file?(file, options)
+  options.exclude.each do |pattern|
+    return true if file.match(Regexp.new(pattern))
+  end
+  return false if options.include.empty?
+  options.include.each do |pattern|
+    return false if file.match(Regexp.new(pattern))
+  end
+  true
+end
+
+def exec_on_hosts(options)
+  options.exec.each do |cmd|
+    threads = []
+    options.hosts.each do |host|
+      thread = Thread.new do
+        port = 22
+        host, port = host.split(':', 2) if host.include?(':')
+        # Build command to send file
+        command = "ssh -p #{port} #{options.ssh_user}@#{host} " \
+                  "'#{cmd}'"
+        if options.noop
+          puts("[#{yellow('noop')}] #{command}")
+        else
+          puts("[#{blue(:exec)}] #{command}")
+          run_command(command, host, true)
+        end
+      end
+      threads.push(thread)
+    end
+    threads.each(&:join)
+  end
+end
+
+def ssh_copy_id(options)
+  options.hosts.each do |host|
+    port = '22'
+    host, port = host.split(':', 2) if host.include?(':')
+    # Build command to send file
+    # --delete-missing-args If a file in the list is missing locally, delete it on remote
+    command = "ssh-copy-id #{options.ssh_user}@#{host} -p #{port}"
+    puts("[#{blue(:exec)}] " + command) if options.verbosity > 1
+    run_command(command, host) unless options.noop
+  end
+end
+
+def send_via_rsync(files, options)
+  Tempfile.create('gex-') do |temp|
+    Dir.chdir(options.git_root) do
+      files.each do |fname|
+        if should_exclude_file?(fname, options)
+          puts "[#{yellow('i')}] #{yellow(fname)}"
+          next
+        elsif File.exist?(fname)
+          puts "[#{green('+')}] #{fname}"
+        else
+          puts "[#{red('-')}] #{fname}"
+        end
+        temp.puts fname
+      end
+      temp.flush
+      options.hosts.each do |host|
+        port = 22
+        host, port = host.split(':', 2) if host.include?(':')
+        remote_uri = "#{options.ssh_user}@#{host}:#{options.dest}"
+        # Build command to send file
+        # --delete-missing-args If a file in the list is missing locally, delete it on remote
+        command = "rsync --quiet --delete-missing-args -ave ssh --port #{port} --files-from=#{temp.path} . #{remote_uri}"
+        puts("[#{blue(:exec)}] " + command) if options.verbosity > 1
+        run_command(command, host) unless options.noop
+      end
+    end
+  end
+end
+
+def send_via_scp(files, options)
+  Dir.chdir(options.git_root) do
+    files.each do |fname|
+      fpath = "#{options.git_root}/#{fname}"
+      exists = File.exist?(fpath)
+      is_dir = File.directory?(fpath)
+
+      if should_exclude_file?(fname, options)
+        puts "[#{yellow('i')}] #{yellow(fname)}"
+        next
+      elsif File.exist?(fname)
+        puts "[#{green('+')}] #{fname}"
+      else
+        puts "[#{red('-')}] #{fname}"
+      end
+
+      if options.hosts.any? && exists
+        send_to_hosts(fname, options, is_dir)
+      elsif options.hosts.any?
+        rm_from_hosts(fname, options)
+      elsif exists
+        send_local(fname, options, is_dir)
+      else
+        rm_local(fname, options)
+      end
+    end
+  end
+end
+
+def send_via_local(files, options)
+  Dir.chdir(options.git_root) do
+    files.each do |fname|
+      fpath = "#{options.git_root}/#{fname}"
+      exists = File.exist?(fpath)
+      is_dir = File.directory?(fpath)
+
+      if should_exclude_file?(fname, options)
+        puts "[#{yellow('i')}] #{yellow(fname)}"
+        next
+      elsif File.exist?(fname)
+        puts "[#{green('+')}] #{fname}"
+      else
+        puts "[#{red('-')}] #{fname}"
+      end
+
+      if exists
+        send_local(fname, options, is_dir)
+      else
+        rm_local(fname, options)
+      end
+      puts red("[error] #{fname}") unless $?.exitstatus.zero?
+    end
+  end
+end
+
+def send_to_hosts(fname, options, is_dir)
+  options.hosts.each do |host|
+    port = 22
+    host, port = host.split(':', 2) if host.include?(':')
+    remote_uri = "#{options.ssh_user}@#{host}:#{File.join(options.dest, fname)}"
+    # Build command to send file
+    command = "scp -P #{port} " \
+              "#{File.join(options.git_root, fname)} #{remote_uri}"
+    if is_dir
+      command = "ssh -p #{port} #{options.ssh_user}@#{host} " \
+                "'mkdir -p #{File.join(options.dest, fname)}'"
+    end
+
+    puts("[#{yellow(:cmd)}] " + command) if options.verbosity > 1
+    run_command(command, host) unless options.noop
+  end
+end
+
+def rm_from_hosts(fname, options)
+  options.hosts.each do |host|
+    port = 22
+    host, port = host.split(':', 2) if host.include?(':')
+    # Build command to delete file. Do not error if the file does not exist.
+    command = "ssh -p #{port} #{options.ssh_user}@#{host} " \
+              "'rm -f #{File.join(options.dest, fname)}'"
+    # Exec
+    puts("[#{yellow(:cmd)}] " + command) if options.verbosity > 1
+    run_command(command, host) unless options.noop
+  end
+end
+
+def rm_local(fname, options)
+  fpath = File.join(options.dest, fname)
+  # -f to not error if the file does not exist
+  command = "'rm -f #{fpath}'"
+  # Exec
+  puts("[#{yellow(:cmd)}] " + command) if options.verbosity > 1
+  run_command(command, :localhost) unless options.noop
+end
+
+def send_local(file, options, is_dir)
+  source = File.join(options.git_root, file)
+  dest = File.join(options.dest, file)
+  dirname = File.dirname(dest)
+  command = ''
+  command = "mkdir -p #{dirname};" if !is_dir && !Dir.exist?(dirname)
+  command += "cp #{source} #{dest}"
+  puts("[#{yellow(:cmd)}] " + command) if options.verbosity > 1
+  run_command(command, :localhost) unless options.noop
+end
+
+def load_config(opts = {})
+  git_root = opts.fetch(:git_root)
+  conf_path = opts.fetch(:conf_path, CONF_PATH)
+  conf_path = File.expand_path(conf_path)
+  return {} unless File.exist?(conf_path)
+  data = File.read(conf_path)
+  YAML.load(data).fetch(git_root, {})
+rescue StandardError => e
+  puts '[Error] ' + red(e)
+  puts "[Backtrace] \n\t" + red(e.backtrace.join("\n\t"))
+  {}
+end
+
+def save_config_options(opts = {})
+  dest = opts.fetch(:dest)
+  git_root = opts.fetch(:git_root)
+  conf_path = opts.fetch(:conf_path, CONF_PATH)
+  conf_path = File.expand_path(conf_path)
+  config = YAML.load_file(conf_path) if File.exist?(conf_path)
+  unless config.is_a?(Hash)
+    puts red('Error reading config file')
+    config = {}
+  end
+  config[git_root] = { 'dest' => dest }
+  File.open(conf_path, 'w') do |f|
+    f.puts(TEMPLATE_CONFIG)
+    f.puts(YAML.dump(config))
+  end
+  puts "[#{blue(:update)}] Changed config file #{conf_path}"
+end
+
+
+assert_in_path(:rsync, :ssh, :git)
+
+git_root = `git rev-parse --show-toplevel`.chomp
+config = load_config(git_root: git_root)
+config = CONFIG_DEFAULTS.merge(config)
+
+options = OpenStruct.new(config)
+options.git_root = git_root
+
+parser = OptionParser.new do |opts|
+  opts.banner = "gex [options] [host(:port)] [host(:port)]\n" \
+                'Default behavior is to send staged changes'
+
+  opts.on '-c', '--commit GitSHA', 'Send changed files from a commit / ' \
+                                   'commit range' do |commit|
+    options.show_commit = commit
+  end
+
+  opts.on '--cp PATH', 'Send file / directory' do |path|
+    options.source_path = path
+  end
+
+  opts.on '-d', '--diff name', 'Send files that have ' \
+                               'changed since commit ' \
+                               '+ currently staged changes' do |commit|
+    options.diff_commit = commit
+  end
+
+  opts.on '-n', '--noop', 'Do not actually do anything, just print out what ' \
+                          'actions would be taken' do
+    options.noop = true
+    options.debug = true
+    options.verbosity += 1
+  end
+
+  opts.on '-e', '--exec COMMAND', 'Execute command on host after sync' do |cmd|
+    options.exec << cmd
+  end
+
+  opts.on '-s', '--script NAME', 'Execute named script from the config file' do |name|
+    options.scripts << name
+  end
+
+  opts.on '--init DIR', 'Destination to send the files, ' \
+          "default is #{options.dest}" do |dest|
+    options.do_init = true
+    options.dest = dest
+  end
+
+  opts.on '--include PATTERN', 'Ignore files that don\'t match this pattern' do |pattern|
+    options.include << pattern
+  end
+
+  opts.on '--exclude PATTERN', 'Ignore files that match this pattern' do |pattern|
+    options.exclude << pattern
+  end
+
+  opts.on '-v', '--verbose', 'Increase logging verbosity' do
+    options.debug = true
+    options.verbosity += 1
+  end
+
+  opts.on '--dest PATH', 'Destination to copy files to' do |path|
+    options.dest = path
+  end
+
+  opts.on '--no-exec', 'Do not execute any commands' do
+    options.no_exec = true
+  end
+
+  opts.on '--scp', 'Use scp instead of rsync to send files' do
+    options.send_via = 'scp'
+  end
+end
+
+begin
+  parser.parse!(ARGV)
+rescue OptionParser::ParseError => e
+  puts e
+  exit 1
+end
+
+`git rev-parse --is-inside-work-tree 2> /dev/null`
+unless $?.exitstatus.zero?
+  puts "[#{red(:fatal)}] this is not a git repository"
+  exit 1
+end
+
+options.command
+
+options.hosts = ARGV
+if options.verbosity > 1
+  puts_debug 'Configuration:'
+  puts_debug JSON.pretty_generate(options.to_h)
+end
+
+more_than_one = [
+  options.show_commit,
+  options.diff_commit,
+  options.source_path
+].compact.count > 1
+
+if more_than_one
+  puts "[#{red(:fatal)}] the -s, -c and -d options cannot be used together"
+  exit 1
+end
+
+if options.noop && options.do_init
+  puts "[#{red(:fatal)}] the --init option cannot be used with --noop"
+  exit 1
+end
+
+if options.dest.nil?
+  puts options.inspect
+  puts "[#{red(:fatal)}] run '#{File.basename(__FILE__)} --init " \
+       "/some/dest' to generate a config for this git repo"
+  exit 1
+end
+
+if options.dest && options.do_init
+  save_config_options(dest: options.dest,
+                      git_root: options.git_root)
+  exit 0
+end
+
+if options.diff_commit
+  command_desc = 'All files that have changed since this commit ' \
+                 '+ staged changes'
+  command = "git diff --no-commit-id --no-renames --name-only -r #{options.diff_commit};"
+  files = `#{command}`.each_line.map(&:chomp).uniq
+elsif options.show_commit
+  command_desc = 'All files that were changed in a single commit'
+  command = "git show --pretty=format: --no-renames --name-only #{options.show_commit}"
+  files = `#{command}`.each_line.map(&:chomp).uniq
+elsif options.source_path
+  files = [options.source_path]
+  if File.directory?(options.source_path)
+    files = Dir["#{options.source_path}/**/*"].sort
+  end
+  files.map! { |path| File.expand_path(path).sub(options.git_root + '/', '') }
+else
+  command_desc = 'Default, only files staged for commit'
+  command = 'git diff --cached --name-only --no-renames'
+  files = `#{command}`.each_line.map(&:chomp).uniq
+end
+
+exit 1 unless $?.exitstatus.zero?
+
+puts "[#{blue(:info)}] Dest: #{options.dest}"
+puts "[#{blue(:hosts)}] #{options.hosts}" if options.hosts.any?
+if options.verbosity > 1
+  puts_debug "Desc:\n\t#{command_desc}\nCommand:\n\t#{command}"
+  puts_debug('Files:')
+  puts_debug("\t" + files.join("\n\t"))
+end
+
+puts yellow('[noop] ') + 'Starting dry run' if options.noop
+
+if options.hosts.any?
+  if options.send_via == 'rsync'
+    ssh_copy_id(options)
+    send_via_rsync(files, options)
+  elsif options.send_via == 'scp'
+    ssh_copy_id(options)
+    send_via_scp(files, options)
+  else
+    raise "Do not know how to send via #{options.send_via.inspect}"
+  end
+else
+  send_via_local(files, options)
+end
+
+unless options.no_exec
+  if options.exec && options.hosts.any?
+    exec_on_hosts(options)
+  elsif options.exec.any?
+    exec_local(options)
+  end
+end
+
+puts "[#{blue(:hosts)}] #{options.hosts}" if options.hosts.any?
+puts "[#{blue(:source)}] #{options.git_root}"
+puts "[#{blue(:dest)}] #{options.dest}"
+puts yellow('[noop] ') + 'Dry run complete' if options.noop

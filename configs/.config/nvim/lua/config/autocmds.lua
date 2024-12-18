@@ -6,6 +6,26 @@
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "markdown",
   callback = function()
-    vim.diagnostic.disable(0)  -- 0 means current buffer
+    vim.diagnostic.enable(false)  -- 0 means current buffer
+  end,
+})
+
+
+-- When entering Insert mode
+vim.api.nvim_create_autocmd("InsertEnter", {
+  callback = function()
+    -- disable inlay hints
+    -- Inlay hints are the class and type hints you get in strictly typed languages
+    -- from the LSP. When they are present it is very difficult to type and keep
+    -- track of where the cursor is.
+    vim.lsp.inlay_hint.enable(false)
+  end,
+})
+
+-- when leaving Insert mode
+vim.api.nvim_create_autocmd("InsertLeave", {
+  callback = function()
+    -- Re-enable inlay hints
+    vim.lsp.inlay_hint.enable(true)
   end,
 })

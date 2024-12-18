@@ -74,7 +74,10 @@ return {
     vim.g.mkdp_preview_options = {
       mkit = {},
       katex = {},
-      uml = {},
+      -- The docker container for plantuml must be running in order to generate plantuml diagrams
+      -- TODO: Make this automatic, if docker is installed and running etc...
+      -- docker run -d -p 127.0.0.1:8080:8080  --name plantuml-tomcat plantuml/plantuml-server:tomcat
+      uml = { server = "http://localhost:8080" },
       maid = {},
       disable_sync_scroll = 0,
       sync_scroll_type = "middle",
@@ -99,7 +102,7 @@ return {
     --
     -- " recognized filetypes
     -- " these filetypes will have MarkdownPreview... commands
-    vim.g.mkdp_filetypes = { "markdown" }
+    vim.g.mkdp_filetypes = { "markdown", "uml", "plantuml" }
 
     -- " set to 1, nvim will open the preview window after entering the markdown buffer
     -- " default: 0

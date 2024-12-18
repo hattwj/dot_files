@@ -2,7 +2,7 @@ return {
   "folke/which-key.nvim",
   event = "VeryLazy",
   opts = {
-    spec = {
+    defaults = {
       ["<leader>M"] = { name = "+Metals" },
     },
   },

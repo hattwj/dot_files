@@ -49,3 +49,6 @@ vim.cmd("set whichwrap+=<,>,h,l")
 -- Fix compatibility issue between BufferLine plugin and netrw. BufferLine 
 -- would refuse to cycle through buffers when netrw was being used.
 vim.cmd("let g:netrw_bufsettings = 'noma nomod nonu nowrap ro buflisted'")
+
+-- Set line length markers at 80 and 120 characters
+vim.api.nvim_set_option_value('colorcolumn', '80,120', {})
