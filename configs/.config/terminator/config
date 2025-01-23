@@ -7,6 +7,9 @@
   title_use_system_font = False
   title_font = DroidSansM Nerd Font 9
 [keybindings]
+  zoom_normal_all = <Primary>parenright
+  close_term = ""
+  close_window = ""
   group_all = <Primary><Shift><Super>a
   broadcast_off = <Alt>o
   broadcast_group = <Alt>g

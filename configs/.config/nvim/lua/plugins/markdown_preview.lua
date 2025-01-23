@@ -1,8 +1,13 @@
 return {
   "iamcco/markdown-preview.nvim",
-  ft = "markdown",
-  -- build = "cd app && yarn install",
-  build = ":call mkdp#util#install()",
+  cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
+  build = function()
+    require("lazy").load({ plugins = { "markdown-preview.nvim" } })
+    -- build = "cd app && yarn install",
+    vim.fn["mkdp#util#install"]()
+  end,
+  ft = { "markdown", "plantuml", "puml" },
+  --build = ":call mkdp#util#install()",
   init = function()
     -- """
     -- " Vim-markdown preview configuration
@@ -74,17 +79,23 @@ return {
     vim.g.mkdp_preview_options = {
       mkit = {},
       katex = {},
-      -- The docker container for plantuml must be running in order to generate plantuml diagrams
-      -- TODO: Make this automatic, if docker is installed and running etc...
-      -- docker run -d -p 127.0.0.1:8080:8080  --name plantuml-tomcat plantuml/plantuml-server:tomcat
-      uml = { server = "http://localhost:8080" },
+      uml = {
+        -- TODO: https://github.com/iamcco/markdown-preview.nvim has a PR up to add better mermaid support
+        --       - Fork the repo, pull in the change and get the new version of mermaid
+        -- The MarkdownPreview plugin by default will reach out to the plantuml.com website,
+        -- which is something that we don't want. Instead, we need to run our own server and 
+        -- connect to it.
+        -- ssh some-remote-machine -L 8080:localhost:8080
+        -- docker run -d -p 127.0.0.2:8080:8080  --name plantuml-tomcat plantuml/plantuml-server:tomcat
+        server = 'http://127.0.0.2:8080',
+      },
       maid = {},
       disable_sync_scroll = 0,
       sync_scroll_type = "middle",
       hide_yaml_meta = 1,
       sequence_diagrams = {},
       flowchart_diagrams = {},
-      content_editable = vim.g.lua_false,
+      content_editable = 0,
       disable_filename = 0,
     }
 
@@ -102,7 +113,7 @@ return {
     --
     -- " recognized filetypes
     -- " these filetypes will have MarkdownPreview... commands
-    vim.g.mkdp_filetypes = { "markdown", "uml", "plantuml" }
+    vim.g.mkdp_filetypes = { "markdown", "plantuml", "puml" }
 
     -- " set to 1, nvim will open the preview window after entering the markdown buffer
     -- " default: 0
