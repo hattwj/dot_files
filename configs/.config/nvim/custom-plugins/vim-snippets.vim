@@ -77,3 +77,32 @@ function! Ag(cmd='')
   exec('Ack! '. a:cmd)
   exec('cd ' . l:oldwd)
 endfunction
+
+
+function! GotoFileWithLineNumber()
+    let l:line = getline('.')
+    let l:file = expand('<cfile>')
+    
+    " Handle markdown link syntax
+    let l:markdown_link = matchlist(l:line, '\[.*\](\([^)]\+\))')
+    if len(l:markdown_link) > 1
+        let l:file = l:markdown_link[1]
+    endif
+    
+    " Extract line number range if present
+    let l:range = matchlist(l:file, '#L\(\d\+\)\(-L\(\d\+\)\)\?')
+    let l:file = substitute(l:file, '#L\d\+\(-L\d\+\)\?$', '', '')
+    
+    " Open the file
+    execute "edit " . l:file
+    
+    " Jump to line number if specified
+    if len(l:range) > 1
+        execute l:range[1]
+        if len(l:range) > 3 && l:range[3] != ''
+            execute "normal! V" . l:range[3] . "G"
+        endif
+    endif
+endfunction
+" Modify the default "gf" to be line number aware
+autocmd FileType * nnoremap <buffer> gf :call GotoFileWithLineNumber()<CR>
