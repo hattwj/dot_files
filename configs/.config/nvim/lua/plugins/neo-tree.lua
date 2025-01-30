@@ -14,6 +14,10 @@ return {
       buffers = {
         follow_current_file = { enabled = true },
       },
+      filtered_items = {
+        visible = true,
+        hide_dotfiles = false,
+      },
       filesystem = {
         hijack_netrw_behavior = "disabled",
         follow_current_file = { enabled = true },
@@ -34,30 +38,38 @@ return {
   end,
   keys = function()
     return {
-      {
-        "<leader>fe",
-        function()
-          -- Check with netrw for git root
-          vim.api.nvim_call_function('ProjectRoot2', {})
-          require("neo-tree.command").execute({ toggle = true, dir = LazyVim.root() })
-        end,
-        desc = "Explorer NeoTree (Root Dir)",
-      },
-      { "<leader>e", "<leader>fe", desc = "Explorer NeoTree (Root Dir)", remap = true },
-      {
-        "<leader>ge",
-        function()
-          require("neo-tree.command").execute({ source = "git_status", toggle = true })
-        end,
-        desc = "Git Explorer",
-      },
-      {
-        "<leader>be",
-        function()
-          require("neo-tree.command").execute({ source = "buffers", toggle = true })
-        end,
-        desc = "Buffer Explorer",
-      },
+      -- show the current buffer, don't prompt about changing dir toggle closed if already open
+      { "<leader>e", "<cmd>ProjectRoot2<cr><cmd>Neotree reveal reveal_force_cwd toggle<cr>" },
+      -- {
+      --   "<leader>fe",
+      --   function()
+      --     require("neo-tree.command").execute({ toggle = true, dir = LazyVim.root() })
+      --   end,
+      --   desc = "Explorer NeoTree (Root Dir)",
+      -- },
+      -- {
+      --   "<leader>fE",
+      --   function()
+      --     require("neo-tree.command").execute({ toggle = true, dir = vim.uv.cwd() })
+      --   end,
+      --   desc = "Explorer NeoTree (cwd)",
+      -- },
+      -- { "<leader>e", "<leader>fe", desc = "Explorer NeoTree (Root Dir)", remap = true },
+      -- { "<leader>E", "<leader>fE", desc = "Explorer NeoTree (cwd)", remap = true },
+      -- {
+      --   "<leader>ge",
+      --   function()
+      --     require("neo-tree.command").execute({ source = "git_status", toggle = true })
+      --   end,
+      --   desc = "Git Explorer",
+      -- },
+      -- {
+      --   "<leader>be",
+      --   function()
+      --     require("neo-tree.command").execute({ source = "buffers", toggle = true })
+      --   end,
+      --   desc = "Buffer Explorer",
+      -- },
     }
   end,
 }

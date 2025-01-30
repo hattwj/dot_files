@@ -6,7 +6,7 @@ import datetime
 from dateutil import rrule
 from dateutil.relativedelta import relativedelta
 import argparse
-import readline
+# import readline
 
 FREQUENCIES = [
     "daily",
@@ -96,16 +96,12 @@ def generate_forecast(data, months):
     if 'default-income-account' in data:
         income_account = data['default-income-account']
     else:
-        for account_name in accounts.keys():
-            income_account = account_name
-            break
+        income_account = list(accounts.keys())[0]
     
     if 'default-expense-account' in data:
         expense_account = data['default-expense-account']
     else:
-        for account_name in accounts.keys():
-            expense_account = account_name
-            break
+        expense_account = list(accounts.keys())[0]
 
     while current_date <= end_date:
         events = []
@@ -234,6 +230,10 @@ def main():
         elif choice == "3":
             add_transaction(data, "expenses")
         elif choice == "4":
+            balance_low = 0
+            balance_high = 0
+            date_low = None
+            date_high = None
             months = int(input("Number of months to forecast: "))
             forecast = generate_forecast(data, months)
             for day in forecast:
@@ -243,6 +243,12 @@ def main():
                     account_name = event['account_name']
                     balance = event['account_balance']
                     amount = event['amount']
+                    if balance_low == 0 or balance_low > balance:
+                        balance_low = balance
+                        date_low = day['date']
+                    if balance_high == 0 or balance_high < balance:
+                        balance_high = balance
+                        date_high = day['date']
                     if event['type'] == 'expense':
                         amount = f"{color_red}{amount}{color_reset}"
                     else:
@@ -251,6 +257,8 @@ def main():
                     name = event['name']
                 
                     print(f"\t{account_name}\t{balance}\t{event['type']}\t{amount} - {name}") 
+            print(f'High: {balance_high} - {date_high}')
+            print(f'Low: {balance_low} - {date_low}')
         elif choice == "5":
             save_data(data, args.filename)
         elif choice == "6":

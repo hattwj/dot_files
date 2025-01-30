@@ -25,7 +25,8 @@ return {
             ".metals/",
             ".bloop/",
             "target/",
-            ".brazil/"
+            ".brazil/",
+            "__snapshots__/"
           },
           additional_args = function(_)
             return { "--hidden" }
@@ -41,7 +42,8 @@ return {
             ".metals/",
             ".bloop/",
             "target/",
-            ".brazil/"
+            ".brazil/",
+            "__snapshots__/"
           },
           hidden = true,
         },

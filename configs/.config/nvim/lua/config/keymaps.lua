@@ -103,6 +103,7 @@ vim.api.nvim_set_keymap("n", "<leader>b<Left>", ":BufferLineMovePrev<CR>", { sil
 vim.api.nvim_set_keymap("n", "<leader>b<Right>", ":BufferLineMoveNext<CR>", { silent = true, noremap = true })
 
 
+-- vim.keymap.set("n", "<leader>e", ":Neotree reveal<CR>", {silent = true, desc="Explorer NeoTree - (from current buffer path)"})
 
 
 vim.cmd([[

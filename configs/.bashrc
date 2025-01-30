@@ -23,13 +23,6 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # ./bashrc_$OSName_$ARCH
 # ./bashrc_$hostname_md5
 
-## Hidden hostname?
-# Hard to manage
-# Easy to hack
-# Not worth it
-# hostname_md5=`lsb_release -si`-`hostname`-`uname -m` | md5sum | awk '{print $1}'
-# Touch file if it does not exist
-
 pf1="$DIR/.bashrc_"$(uname)
 pf2="$DIR/.bashrc_"$(uname)'_'$(hostname)
 pf3="$HOME/.bash_custom"
@@ -51,6 +44,14 @@ pf3="$HOME/.bash_custom"
 
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
 
+
+if [ -d "$HOME/.rbenv/bin" ]; then 
+  export PATH=$HOME/.rbenv/bin:$PATH
+  eval "$(rbenv init -)"
+fi
+
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                   # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
+. "$HOME/.cargo/env"
+eval "$(~/bin/mise activate bash)"

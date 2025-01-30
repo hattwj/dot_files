@@ -1,3 +1,4 @@
+# vim: filetype=ruby
 begin
   Pry.config.history.file = "~/.irb_history"
 rescue NoMethodError
