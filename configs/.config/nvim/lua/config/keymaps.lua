@@ -103,6 +103,17 @@ vim.api.nvim_set_keymap("n", "<leader>b<Left>", ":BufferLineMovePrev<CR>", { sil
 vim.api.nvim_set_keymap("n", "<leader>b<Right>", ":BufferLineMoveNext<CR>", { silent = true, noremap = true })
 
 
+------
+--- when in command mode, allow using arrows for navigating dropdown options.
+---
+-- Use <C-j> and <C-k> to navigate the completion list:
+vim.api.nvim_set_keymap('c', '<C-j>', 'pumvisible() ? "\\<C-n>" : "\\<C-j>"', { expr = true, noremap = true })
+vim.api.nvim_set_keymap('c', '<C-k>', 'pumvisible() ? "\\<C-p>" : "\\<C-k>"', { expr = true, noremap = true })
+-- Use arrow keys to navigate the completion list:
+vim.api.nvim_set_keymap('c', '<Down>', 'pumvisible() ? "\\<C-n>" : "\\<Down>"', { expr = true, noremap = true })
+vim.api.nvim_set_keymap('c', '<Up>', 'pumvisible() ? "\\<C-p>" : "\\<Up>"', { expr = true, noremap = true })
+------
+
 -- vim.keymap.set("n", "<leader>e", ":Neotree reveal<CR>", {silent = true, desc="Explorer NeoTree - (from current buffer path)"})
 
 
