@@ -44,14 +44,17 @@ pf3="$HOME/.bash_custom"
 
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
 
+<<<<<<< HEAD
 
 if [ -d "$HOME/.rbenv/bin" ]; then 
   export PATH=$HOME/.rbenv/bin:$PATH
   eval "$(rbenv init -)"
 fi
 
-export NVM_DIR="$HOME/.nvm"
+[[ -s "$HOME/.local/bin/mise" ]] && eval "$($HOME/.local/bin/mise activate bash)"
+
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                   # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
-. "$HOME/.cargo/env"
-eval "$(~/bin/mise activate bash)"
+
+export PATH=$HOME/.toolbox/bin:$PATH
+>>>>>>> d31ca0d (From pull)

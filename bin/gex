@@ -2,7 +2,6 @@
 # frozen_string_literal: true
 
 require 'json'
-require 'mkmf'
 require 'optparse'
 require 'ostruct'
 require 'open3'
@@ -87,11 +86,19 @@ CONFIG_DEFAULTS = {
 
 def assert_in_path(*cmds)
   cmds.each do |cmd|
-    unless find_executable0(cmd.to_s)
+    unless command_exists?(cmd.to_s)
       puts "[#{red(:fatal)}] Unable to find command '#{cmd}' in $PATH"
       exit 1
     end
   end
+end
+
+def command_exists?(cmd)
+  ENV['PATH'].split(File::PATH_SEPARATOR).each do |path|
+    full_path = File.join(path, cmd)
+    return true if File.executable?(full_path) && !File.directory?(full_path)
+  end
+  false
 end
 
 def puts_debug(msg)
