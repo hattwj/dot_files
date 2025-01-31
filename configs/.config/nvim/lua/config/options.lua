@@ -44,7 +44,7 @@ vim.g.lazyvim_python_lsp = "pyright"
 -- Set line wrap when using arrows.
 -- - Hitting right arrow at end of the
 --   line should jump to the next line.
-vim.cmd("set whichwrap+=<,>,h,l")
+vim.cmd("set whichwrap+=<,>,h,l,[,]")
 
 -- Fix compatibility issue between BufferLine plugin and netrw. BufferLine 
 -- would refuse to cycle through buffers when netrw was being used.

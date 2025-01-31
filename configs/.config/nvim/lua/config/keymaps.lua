@@ -114,10 +114,6 @@ vim.api.nvim_set_keymap('c', '<Down>', 'pumvisible() ? "\\<C-n>" : "\\<Down>"', 
 vim.api.nvim_set_keymap('c', '<Up>', 'pumvisible() ? "\\<C-p>" : "\\<Up>"', { expr = true, noremap = true })
 ------
 
--- Allow arrow keys to wrap around end and start of line when in "insert" mode.
-vim.api.nvim_set_keymap('i', '<Left>', [[pumvisible() ? "<Left>" : "\<C-\>\<C-G>U<Left>"]], {expr = true, noremap = true})
-vim.api.nvim_set_keymap('i', '<Right>', [[pumvisible() ? "<Right>" : "\<C-\>\<C-G>U<Right>"]], {expr = true, noremap = true})
-
 -- vim.keymap.set("n", "<leader>e", ":Neotree reveal<CR>", {silent = true, desc="Explorer NeoTree - (from current buffer path)"})
 
 
