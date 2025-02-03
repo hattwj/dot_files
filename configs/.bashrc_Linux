@@ -111,9 +111,9 @@ fi
 
 DIR="$(cd "$(dirname "$(readlink -f ${BASH_SOURCE[0]})")" && pwd -P)"
 
-[ -d "$HOME/bin" ] && PATH="$PATH:$HOME/bin"
-[ -d "$HOME/.bin" ] && PATH="$PATH:$HOME/.bin"
-[ -d "$HOME/.local/bin" ] && PATH="$PATH:$HOME/.local/bin"
+[ -d "$HOME/bin" ] && PATH="$HOME/bin:$PATH"
+[ -d "$HOME/.bin" ] && PATH="$HOME/.bin:$PATH"
+[ -d "$HOME/.local/bin" ] && PATH="$HOME/.local/bin:$PATH"
 
 # Add cargo env if it exists, for rust
 [ -e "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"

@@ -1,15 +1,5 @@
 #!/usr/bin/env bash
 
-# mkdir ~/Downloads
-# mkdir ~/.bin
-# pushd ~/Downloads && \
-#   wget https://github.com/neovim/neovim/releases/download/v0.10.0/nvim.appimage -O nvim && \
-#   chmod ugo+x ./nvim && \
-#   mv ./nvim ~/.bin/nvim && \
-#   sudo /usr/bin/yum -y install fuse && \
-#   echo yay || echo boo
-
-#!/usr/bin/env bash
 sudo yum groups install -y Development\ tools
 sudo yum install -y cmake
 sudo yum install -y python34-{devel,pip}
