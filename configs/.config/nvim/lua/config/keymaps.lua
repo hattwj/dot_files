@@ -114,7 +114,8 @@ vim.api.nvim_set_keymap('c', '<Down>', 'pumvisible() ? "\\<C-n>" : "\\<Down>"', 
 vim.api.nvim_set_keymap('c', '<Up>', 'pumvisible() ? "\\<C-p>" : "\\<Up>"', { expr = true, noremap = true })
 ------
 
--- vim.keymap.set("n", "<leader>e", ":Neotree reveal<CR>", {silent = true, desc="Explorer NeoTree - (from current buffer path)"})
+-- keymap to Exit terminal mode, and enter normal mode 
+vim.keymap.set('t', '<leader><ESC>', '<C-\\><C-n>', { noremap = true, silent = true })
 
 
 vim.cmd([[

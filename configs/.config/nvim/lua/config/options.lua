@@ -52,3 +52,26 @@ vim.cmd("let g:netrw_bufsettings = 'noma nomod nonu nowrap ro buflisted'")
 
 -- Set line length markers at 80 and 120 characters
 vim.api.nvim_set_option_value('colorcolumn', '80,120', {})
+
+if vim.g.neovide then
+  vim.g.gui_font = "DroidSansM Nerd Font"
+  vim.g.gui_fontsize = 10
+  vim.opt.clipboard:append("unnamedplus")
+  vim.g.neovide_transparency = 0.9
+  vim.g.neovide_scale_factor = 0.8
+
+  -- ctrl +- to alter font size
+  local function adjust_font_size(amount)
+      vim.g.gui_fontsize = vim.g.gui_fontsize + amount
+      vim.o.guifont = vim.g.gui_font .. ":h" .. vim.g.gui_fontsize
+  end
+  vim.keymap.set('n', '<C-+>', function() adjust_font_size(1) end, { noremap = true, silent = true })
+  vim.keymap.set('n', '<C-->', function() adjust_font_size(-1) end, { noremap = true, silent = true })
+
+  -- In neovide we are able to use the ALT key for keymaps, so we use it here for window navigation.
+  -- This is similar to the keymap used in terminator to switch between terminals
+  vim.keymap.set({'n', 'i', 't', 'v'}, '<A-Up>', '<C-\\><C-n><C-w><Up><CR>', { noremap = true, silent = true })
+  vim.keymap.set({'n', 'i', 't', 'v'}, '<A-Down>', '<C-\\><C-n><C-w><Down><CR>', { noremap = true, silent = true })
+  vim.keymap.set({'n', 'i', 't', 'v'}, '<A-Left>', '<C-\\><C-n><C-w><Left><CR>', { noremap = true, silent = true })
+  vim.keymap.set({'n', 'i', 't', 'v'}, '<A-Right>', '<C-\\><C-n><C-w><Right><CR>', { noremap = true, silent = true })
+end
