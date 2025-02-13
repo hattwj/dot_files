@@ -1,0 +1,158 @@
+#!/usr/bin/env python3
+import os
+import argparse
+import shutil
+import subprocess
+from pathlib import Path
+import glob
+
+# Afterwards Run gt4-update-icon-cache
+# Or update-icon-caches ~/.icons
+
+class LauncherManager:
+    def __init__(self):
+        self.home = str(Path.home())
+        self.applications_dir = os.path.join(self.home, '.local/share/applications')
+        os.makedirs(self.applications_dir, exist_ok=True)
+
+    def create_launcher(self, name, exec_path, icon_path=None, description=None):
+        desktop_entry = [
+            '[Desktop Entry]',
+            'Version=1.0',
+            'Type=Application',
+            f'Name={name}',
+            f'Exec={exec_path}',
+            'Terminal=false',
+        ]
+
+        if description:
+            desktop_entry.append(f'Comment={description}')
+        if icon_path:
+            desktop_entry.append(f'Icon={icon_path}')
+
+        launcher_path = os.path.join(self.applications_dir, f'{name.lower().replace(" ", "-")}.desktop')
+
+        with open(launcher_path, 'w') as f:
+            f.write('\n'.join(desktop_entry))
+
+        os.chmod(launcher_path, 0o755)
+        self.update_desktop_database()
+        return launcher_path
+
+    def list_launchers(self):
+        launchers = []
+        for desktop_file in glob.glob(os.path.join(self.applications_dir, '*.desktop')):
+            with open(desktop_file, 'r') as f:
+                content = f.read()
+                name = None
+                exec_path = None
+                for line in content.split('\n'):
+                    if line.startswith('Name='):
+                        name = line.split('=')[1]
+                    elif line.startswith('Exec='):
+                        exec_path = line.split('=')[1]
+                if name and exec_path:
+                    launchers.append({
+                        'name': name,
+                        'exec_path': exec_path,
+                        'file_path': desktop_file
+                    })
+        return launchers
+
+    def delete_launcher(self, name):
+        launcher_path = os.path.join(self.applications_dir, f'{name.lower().replace(" ", "-")}.desktop')
+        if os.path.exists(launcher_path):
+            os.remove(launcher_path)
+            self.update_desktop_database()
+            return True
+        return False
+
+    def update_desktop_database(self):
+        try:
+            # Update application cache
+            subprocess.run(['update-desktop-database', self.applications_dir], check=True)
+
+            # Restart GNOME Shell if running in GNOME
+            if os.environ.get('DESKTOP_SESSION', '').lower().find('gnome') != -1:
+                try:
+                    subprocess.run(['killall', '-SIGTERM', 'gnome-shell'], check=False)
+                except subprocess.CalledProcessError:
+                    # If the command fails, try using dbus-send
+                    subprocess.run([
+                        'dbus-send',
+                        '--session',
+                        '--type=method_call',
+                        '--dest=org.gnome.Shell',
+                        '/org/gnome/Shell',
+                        'org.gnome.Shell.Eval',
+                        'string:"global.reexec_self();"'
+                    ], check=False)
+        except subprocess.CalledProcessError as e:
+            print(f"Warning: Failed to update desktop database: {e}")
+
+def main():
+    parser = argparse.ArgumentParser(description='Manage desktop launchers for applications')
+    subparsers = parser.add_subparsers(dest='command', help='Commands')
+
+    # Create command
+    create_parser = subparsers.add_parser('create', help='Create a new launcher')
+    create_parser.add_argument('name', help='Name of the application')
+    create_parser.add_argument('exec_path', help='Path to the executable')
+    create_parser.add_argument('--icon', help='Path to the icon file (optional)')
+    create_parser.add_argument('--description', help='Application description (optional)')
+
+    # List command
+    subparsers.add_parser('list', help='List all created launchers')
+
+    # Delete command
+    delete_parser = subparsers.add_parser('delete', help='Delete a launcher')
+    delete_parser.add_argument('name', help='Name of the application to delete')
+
+    # Update command
+    subparsers.add_parser('update', help='Update desktop database and refresh GNOME Shell')
+
+    args = parser.parse_args()
+    manager = LauncherManager()
+
+    try:
+        if args.command == 'create':
+            launcher_path = manager.create_launcher(
+                args.name,
+                args.exec_path,
+                args.icon,
+                args.description
+            )
+            print(f"Launcher created successfully at: {launcher_path}")
+
+        elif args.command == 'list':
+            launchers = manager.list_launchers()
+            if launchers:
+                print("\nInstalled launchers:")
+                print("-" * 50)
+                for launcher in launchers:
+                    print(f"Name: {launcher['name']}")
+                    print(f"Executable: {launcher['exec_path']}")
+                    print(f"File: {launcher['file_path']}")
+                    print("-" * 50)
+            else:
+                print("No launchers found.")
+
+        elif args.command == 'delete':
+            if manager.delete_launcher(args.name):
+                print(f"Successfully deleted launcher for: {args.name}")
+            else:
+                print(f"No launcher found for: {args.name}")
+
+        elif args.command == 'update':
+            manager.update_desktop_database()
+            print("Desktop database updated and GNOME Shell refreshed")
+
+        else:
+            parser.print_help()
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        exit(1)
+
+if __name__ == "__main__":
+    main()

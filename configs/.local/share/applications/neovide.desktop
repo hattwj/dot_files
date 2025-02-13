@@ -1,0 +1,7 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Neovide
+Exec=/bin/sh -c '$HOME/bin/neovide'
+Terminal=false
+Icon=neovide
