@@ -56,7 +56,7 @@ vim.api.nvim_set_option_value('colorcolumn', '80,120', {})
 if vim.g.neovide then
   vim.g.gui_font = "DroidSansM Nerd Font"
   vim.g.gui_fontsize = 10
-  vim.opt.clipboard:append("unnamedplus")
+  vim.api.nvim_set_option_value("clipboard", "unnamedplus", {})
   vim.g.neovide_transparency = 0.9
   vim.g.neovide_scale_factor = 0.8
 
@@ -74,4 +74,9 @@ if vim.g.neovide then
   vim.keymap.set({'n', 'i', 't', 'v'}, '<A-Down>', '<C-\\><C-n><C-w><Down><CR>', { noremap = true, silent = true })
   vim.keymap.set({'n', 'i', 't', 'v'}, '<A-Left>', '<C-\\><C-n><C-w><Left><CR>', { noremap = true, silent = true })
   vim.keymap.set({'n', 'i', 't', 'v'}, '<A-Right>', '<C-\\><C-n><C-w><Right><CR>', { noremap = true, silent = true })
+
+  -- Ctrl-V to paste into command from system clipboard
+  -- Silent false appears to be important, otherwise you have to press an arrow key
+  -- to get it to refresh.
+  vim.api.nvim_set_keymap( "c", "<C-v>", "<C-r>+<Right>", { silent = false, noremap = true })
 end
