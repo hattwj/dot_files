@@ -103,6 +103,7 @@ vim.api.nvim_set_keymap("n", "<leader>b<Left>", ":BufferLineMovePrev<CR>", { sil
 vim.api.nvim_set_keymap("n", "<leader>b<Right>", ":BufferLineMoveNext<CR>", { silent = true, noremap = true })
 
 
+
 ------
 --- when in command mode, allow using arrows for navigating dropdown options.
 ---
@@ -117,6 +118,9 @@ vim.api.nvim_set_keymap('c', '<Up>', 'pumvisible() ? "\\<C-p>" : "\\<Up>"', { ex
 -- keymap to Exit terminal mode, and enter normal mode 
 vim.keymap.set('t', '<leader><ESC>', '<C-\\><C-n>', { noremap = true, silent = true })
 
+
+-- Ctrl-a to get to beginning of line in command mode
+vim.api.nvim_set_keymap( "c", "<C-a>", "<Home>", { silent = false, noremap = true })
 
 vim.cmd([[
   """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
