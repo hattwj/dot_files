@@ -46,7 +46,7 @@ vim.g.lazyvim_python_lsp = "pyright"
 --   line should jump to the next line.
 vim.cmd("set whichwrap+=<,>,h,l,[,]")
 
--- Fix compatibility issue between BufferLine plugin and netrw. BufferLine 
+-- Fix compatibility issue between BufferLine plugin and netrw. BufferLine
 -- would refuse to cycle through buffers when netrw was being used.
 vim.cmd("let g:netrw_bufsettings = 'noma nomod nonu nowrap ro buflisted'")
 
@@ -64,7 +64,12 @@ if vim.g.neovide then
   local function adjust_font_size(amount)
       vim.g.gui_fontsize = vim.g.gui_fontsize + amount
       vim.o.guifont = vim.g.gui_font .. ":h" .. vim.g.gui_fontsize
+      print("Font Size: ".. vim.g.gui_fontsize)
   end
+
+  vim.keymap.set('n', '<C-kPlus>', function() adjust_font_size(1) end, { noremap = true, silent = true })
+  vim.keymap.set('n', '<C-kMinus>', function() adjust_font_size(-1) end, { noremap = true, silent = true })
+
   vim.keymap.set('n', '<C-+>', function() adjust_font_size(1) end, { noremap = true, silent = true })
   vim.keymap.set('n', '<C-->', function() adjust_font_size(-1) end, { noremap = true, silent = true })
 
