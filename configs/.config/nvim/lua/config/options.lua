@@ -84,4 +84,30 @@ if vim.g.neovide then
   -- Silent false appears to be important, otherwise you have to press an arrow key
   -- to get it to refresh.
   vim.api.nvim_set_keymap( "c", "<C-v>", "<C-r>+<Right>", { silent = false, noremap = true })
+  
+  -- ctrl +- to alter font size
+  local function zoom_with_resize()
+    Snacks.zen.zoom()
+    if vim.g.neovide_scale_factor > 1 then
+        vim.g.neovide_scale_factor = 0.8
+    else
+        vim.g.neovide_scale_factor = 1.25
+    end
+  end
+
+  -- Zoom with resize in scaling
+  vim.keymap.set('n', '<C-S-z>', function() zoom_with_resize() end, { noremap = true, silent = true })
+  vim.keymap.set('i', '<C-S-z>', function() zoom_with_resize() end, { noremap = true, silent = true })
+  vim.keymap.set('v', '<C-S-z>', function() zoom_with_resize() end, { noremap = true, silent = true })
+  vim.keymap.set('t', '<C-S-z>', function()
+    vim.cmd[[stopinsert]]
+    zoom_with_resize()
+    vim.cmd[[startinsert]]
+    end, { noremap = true, silent = true })
+
+  -- Zoom with no resize in scaling
+  vim.api.nvim_set_keymap('n', '<C-S-x>', '<cmd>lua Snacks.zen.zoom()<CR>', { noremap = true, silent = true })
+  vim.api.nvim_set_keymap('i', '<C-S-x>', '<cmd>lua Snacks.zen.zoom()<CR>', { noremap = true, silent = true })
+  vim.api.nvim_set_keymap('v', '<C-S-x>', '<cmd>lua Snacks.zen.zoom()<CR>', { noremap = true, silent = true })
+  vim.keymap.set('t', '<C-S-x>', function() Snacks.zen.zoom() end, { noremap = true, silent = true })
 end
