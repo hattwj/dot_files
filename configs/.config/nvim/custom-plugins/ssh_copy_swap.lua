@@ -60,7 +60,11 @@ end
 
 function M.xcopy()
   ensure_local_dir()
-  local clipboard = vim.fn.getreg('*')
+  if is_ssh() then
+    local clipboard = vim.fn.getreg('"')
+  else
+    local clipboard = vim.fn.getreg('*')
+  end
   local local_path = os.getenv("HOME") .. "/.local/.nvim_xcopy"
   local remote_path = "~/.local/.nvim_xpaste"
 
@@ -111,7 +115,11 @@ function M.xpaste()
   local lines = vim.split(data, "\n")
 
   -- Load the data into clipboard for later use
-  vim.fn.setreg('*', data)
+  if is_ssh() then
+    vim.fn.setreg('"', data)
+  else
+    vim.fn.setreg('*', data)
+  end
 
   -- Insert the lines at the current cursor position
   local row, col = unpack(vim.api.nvim_win_get_cursor(0))
