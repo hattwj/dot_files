@@ -60,11 +60,7 @@ end
 
 function M.xcopy()
   ensure_local_dir()
-  if is_ssh() then
-    local clipboard = vim.fn.getreg('"')
-  else
-    local clipboard = vim.fn.getreg('*')
-  end
+  local clipboard = is_ssh() and vim.fn.getreg('"') or vim.fn.getreg('*')
   local local_path = os.getenv("HOME") .. "/.local/.nvim_xcopy"
   local remote_path = "~/.local/.nvim_xpaste"
 
