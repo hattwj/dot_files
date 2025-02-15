@@ -16,6 +16,7 @@ local function get_remote_hosts()
 
   local hosts = {}
   for host in result:gmatch("[^\r\n]+") do
+    print("sshCopy - Found host: " .. host)
     table.insert(hosts, host)
   end
   return hosts
@@ -40,6 +41,7 @@ local function rsync_file(local_path, remote_host, remote_path, direction)
   else
     cmd = string.format("timeout 5 rsync -ave ssh %s:%s %s", remote_host, remote_path, local_path)
   end
+  print('sshCopy - Running command: ' .. cmd)
   local exit_code = os.execute(cmd)
   if exit_code ~= 0 then
     error("Rsync operation failed or timed out")
