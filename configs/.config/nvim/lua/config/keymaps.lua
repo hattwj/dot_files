@@ -17,8 +17,8 @@ vim.api.nvim_set_keymap("n", "<C-Left>", ":BufferLineCyclePrev<CR>", { silent = 
 vim.api.nvim_set_keymap("n", "<C-Right>", ":BufferLineCycleNext<CR>", { silent = true, noremap = true })
 
 -- Map leader arrow to move tabs
-vim.api.nvim_set_keymap("n", "<leader><Left>", ":tabp<CR>", { silent = true, noremap = true })
-vim.api.nvim_set_keymap("n", "<leader><Right>", ":tabn<CR>", { silent = true, noremap = true })
+vim.keymap.set({"n"}, "<leader><Left>", ":tabp<CR>", { silent = true, noremap = true })
+vim.keymap.set({"n"}, "<leader><Right>", ":tabn<CR>", { silent = true, noremap = true })
 
 -- Simple session management
 vim.api.nvim_set_keymap("n", "<F2>", ":mksession! ~/.vim_session <CR>", { desc = "create session" }) -- Quick write session with F2
@@ -26,6 +26,9 @@ vim.api.nvim_set_keymap("n", "<F3>", ":mksession! ~/.vim_session <CR>", { desc =
 
 -- Grep search in telescope
 vim.api.nvim_set_keymap("n", "<leader>fa", ":ProjectRoot2<CR>:Telescope live_grep<CR>", { desc = "live_grep" })
+
+-- List projects
+vim.api.nvim_set_keymap("n", "<C-p>", ":Telescope projects<CR>", { desc = "live_grep" })
 
 -- Toggle code comments
 vim.api.nvim_set_keymap("n", "<leader>-", "gcc",{ desc="Toggle code comment", noremap=false})
@@ -121,6 +124,48 @@ vim.keymap.set('t', '<leader><ESC>', '<C-\\><C-n>', { noremap = true, silent = t
 
 -- Ctrl-a to get to beginning of line in command mode
 vim.api.nvim_set_keymap( "c", "<C-a>", "<Home>", { silent = false, noremap = true })
+
+local function open_float_term()
+    -- Get the dimensions of the main Neovim window
+    local width = vim.api.nvim_get_option_value("columns", {})
+    local height = vim.api.nvim_get_option_value("lines", {})
+
+    -- Calculate the width and height of the floating window
+    local win_height = math.ceil(height * 0.8 - 4)
+    local win_width = math.ceil(width * 0.6)
+
+    -- Calculate the starting position of the floating window
+    local row = math.ceil((height - win_height) / 2 - 1)
+    local col = math.ceil((width - win_width) / 2)
+
+    -- Set up the options for the floating window
+    local opts = {
+        style = "minimal",
+        relative = "editor",
+        width = win_width,
+        height = win_height,
+        row = row,
+        col = col,
+        border = "rounded"
+    }
+
+    -- Create the floating window
+    local buf = vim.api.nvim_create_buf(false, true)
+    local win = vim.api.nvim_open_win(buf, true, opts)
+
+    -- Open a terminal in the new buffer
+    vim.fn.termopen(vim.o.shell, {
+        on_exit = function()
+            vim.api.nvim_win_close(win, true)
+        end
+    })
+    -- Press esc to close the terminal
+    vim.keymap.set({'n', 'i', 't', 'v'}, '<Esc>', '<cmd>:q<cr>', {noremap = true, silent = true, buffer=buf})
+    -- Enter insert mode
+    vim.cmd[[startinsert]]
+end
+-- CTRL-SHIFT-T to open floating terminal
+vim.keymap.set({'n', 'i', 'v'}, '<C-S-t>', function() open_float_term() end, {noremap = true, silent = true})
 
 vim.cmd([[
   """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""

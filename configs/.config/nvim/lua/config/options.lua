@@ -58,7 +58,14 @@ if vim.g.neovide then
   vim.g.gui_fontsize = 10
   vim.api.nvim_set_option_value("clipboard", "unnamedplus", {})
   vim.g.neovide_transparency = 0.9
+  vim.g.neovide_normal_opacity = 0.9
   vim.g.neovide_scale_factor = 0.8
+  vim.g.neovide_floating_blur_amount_x = 3.0
+  vim.g.neovide_floating_blur_amount_y = 3.0
+  vim.g.neovide_window_blurred = true
+
+  -- Summons a cat that causes the mouse to disappear while typing
+  vim.g.neovide_hide_mouse_when_typing = true
 
   -- ctrl +- to alter font size
   local function adjust_font_size(amount)
@@ -84,7 +91,7 @@ if vim.g.neovide then
   -- Silent false appears to be important, otherwise you have to press an arrow key
   -- to get it to refresh.
   vim.api.nvim_set_keymap( "c", "<C-v>", "<C-r>+<Right>", { silent = false, noremap = true })
-  
+
   -- ctrl +- to alter font size
   local function zoom_with_resize()
     Snacks.zen.zoom()
@@ -110,4 +117,7 @@ if vim.g.neovide then
   vim.api.nvim_set_keymap('i', '<C-S-x>', '<cmd>lua Snacks.zen.zoom()<CR>', { noremap = true, silent = true })
   vim.api.nvim_set_keymap('v', '<C-S-x>', '<cmd>lua Snacks.zen.zoom()<CR>', { noremap = true, silent = true })
   vim.keymap.set('t', '<C-S-x>', function() Snacks.zen.zoom() end, { noremap = true, silent = true })
+
+  -- Mouse control left click to open url under cursor
+  vim.keymap.set({'n', 'i', 't', 'v'}, '<C-LeftMouse>', function() vim.cmd.normal[[gx]] end, { noremap = true, silent = true })
 end
