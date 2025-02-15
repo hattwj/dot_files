@@ -60,11 +60,11 @@ end
 
 function M.xcopy()
   ensure_local_dir()
-  local clipboard = vim.fn.getreg('"')
+  local clipboard = vim.fn.getreg('*')
   local local_path = os.getenv("HOME") .. "/.local/.nvim_xcopy"
   local remote_path = "~/.local/.nvim_xpaste"
 
-  local file = io.open(local_path, "w")
+  local file = io.open(local_path,"w+")
   file:write(clipboard)
   file:close()
 
