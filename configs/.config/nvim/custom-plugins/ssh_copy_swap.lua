@@ -95,7 +95,15 @@ function M.xpaste()
   local file = assert(io.open(local_path, "rb"))
   local data = file:read("*all")
   file:close()
+  -- Split the string into lines
+  local lines = vim.split(data, "\n")
+
+  -- Load the data into clipboard for later use
   vim.fn.setreg('*', data)
+
+  -- Insert the lines at the current cursor position
+  local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+  vim.api.nvim_buf_set_text(0, row - 1, col, row - 1, col, lines)
 end
 
 -- Set up commands
