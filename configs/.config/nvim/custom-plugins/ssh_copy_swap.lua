@@ -41,9 +41,9 @@ end
 local function rsync_file(local_path, remote_host, remote_path, direction)
   local cmd
   if direction == "push" then
-    cmd = string.format("timeout 5 rsync -ave ssh %s %s:%s", local_path, remote_host, remote_path)
+    cmd = string.format("timeout 9 rsync -ave ssh %s %s:%s", local_path, remote_host, remote_path)
   else
-    cmd = string.format("timeout 5 rsync -ave ssh %s:%s %s", remote_host, remote_path, local_path)
+    cmd = string.format("timeout 9 rsync -ave ssh %s:%s %s", remote_host, remote_path, local_path)
   end
   print('sshCopySwap - Running command: ' .. cmd)
   local exit_code = os.execute(cmd)
@@ -92,10 +92,10 @@ function M.xpaste()
     end
   end
 
-  local clipboard = vim.fn.getreg('"')
-  local file = io.open(local_path, "w")
-  file:write(clipboard)
+  local file = assert(io.open(local_path, "rb"))
+  local data = file:read("*all")
   file:close()
+  vim.fn.setreg('*', data)
 end
 
 -- Set up commands
