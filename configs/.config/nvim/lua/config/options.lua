@@ -8,9 +8,6 @@ vim.api.nvim_set_option_value("shell", "/usr/bin/bash", {})
 -- " vim managed pastes
 vim.api.nvim_set_option_value("paste", false, {})
 
--- " use system clipboard by default
-vim.api.nvim_set_option_value("clipboard", "unnamed", {})
-
 -- enable mouse support
 vim.api.nvim_set_option_value("mouse", "a", {})
 
@@ -18,9 +15,6 @@ vim.api.nvim_set_option_value("mouse", "a", {})
 vim.api.nvim_set_option_value("wildignorecase", true, {})
 -- Make double sure that tab completion works without case sensitivity, sometimes it wasn't working
 vim.opt.ignorecase = true
-
--- Set clipboard for vim to allow copy paste
-vim.api.nvim_set_option_value("clipboard", "unnamed", {})
 
 -- Enable spell checker
 vim.opt.spell = true
@@ -53,10 +47,10 @@ vim.cmd("let g:netrw_bufsettings = 'noma nomod nonu nowrap ro buflisted'")
 -- Set line length markers at 80 and 120 characters
 vim.api.nvim_set_option_value('colorcolumn', '80,120', {})
 
+vim.api.nvim_set_option_value("clipboard", "unnamedplus", {})
 if vim.g.neovide then
   vim.g.gui_font = "DroidSansM Nerd Font"
   vim.g.gui_fontsize = 10
-  vim.api.nvim_set_option_value("clipboard", "unnamedplus", {})
   vim.g.neovide_transparency = 0.9
   vim.g.neovide_normal_opacity = 0.9
   vim.g.neovide_scale_factor = 0.8

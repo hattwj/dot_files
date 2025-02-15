@@ -126,8 +126,8 @@ end
 vim.api.nvim_create_user_command('XCopy', M.xcopy, {})
 vim.api.nvim_create_user_command('XPaste', M.xpaste, {})
 
--- Set up key mappings for command mode
--- vim.api.nvim_set_keymap('c', '<C-y>', '<cmd>XCopy<CR>', {noremap = true, silent = true})
--- vim.api.nvim_set_keymap('c', '<C-p>', '<cmd>XPaste<CR>', {noremap = true, silent = true})
+-- Set up key mappings for normal and visual mode
+vim.keymap.set({'n', 'v'}, '<C-y>', '<cmd>XCopy<CR>', {noremap = true, silent = true})
+vim.keymap.set({'n', 'v'}, '<C-p>', '<cmd>XPaste<CR>', {noremap = true, silent = true})
 
 return M

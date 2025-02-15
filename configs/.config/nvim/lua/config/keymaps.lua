@@ -28,7 +28,7 @@ vim.api.nvim_set_keymap("n", "<F3>", ":mksession! ~/.vim_session <CR>", { desc =
 vim.api.nvim_set_keymap("n", "<leader>fa", ":ProjectRoot2<CR>:Telescope live_grep<CR>", { desc = "live_grep" })
 
 -- List projects
-vim.api.nvim_set_keymap("n", "<C-p>", ":Telescope projects<CR>", { desc = "live_grep" })
+vim.api.nvim_set_keymap("n", "<C-S-p>", ":Telescope projects<CR>", { desc = "live_grep" })
 
 -- Toggle code comments
 vim.api.nvim_set_keymap("n", "<leader>-", "gcc",{ desc="Toggle code comment", noremap=false})

@@ -34,3 +34,9 @@ vim.api.nvim_create_autocmd("InsertLeave", {
 vim.api.nvim_command("autocmd TermOpen * startinsert")             -- starts in insert mode
 vim.api.nvim_command("autocmd TermOpen * setlocal nonumber norelativenumber")       -- no numbers
 vim.api.nvim_command("autocmd TermEnter * setlocal signcolumn=no") -- no sign column
+
+-- Open the dashboard for new tabs.
+-- TODO: This will also trigger the dashboard when `:tabnew filename.txt` is used. Make it not do that.
+vim.api.nvim_create_autocmd("TabNewEntered", {
+  command = "lua Snacks.dashboard()",
+})
