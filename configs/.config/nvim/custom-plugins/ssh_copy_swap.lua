@@ -117,9 +117,8 @@ function M.xpaste()
     vim.fn.setreg('*', data)
   end
 
-  -- Insert the lines at the current cursor position
-  local row, col = unpack(vim.api.nvim_win_get_cursor(0))
-  vim.api.nvim_buf_set_text(0, row - 1, col, row - 1, col, lines)
+  -- Paste the results
+  vim.cmd[[p]]
 end
 
 -- Set up commands
