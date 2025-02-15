@@ -1,7 +1,11 @@
+---
+--- Copy things over ssh between nvim instances. They both need to have this plugin installed.
+---
+
 local M = {}
 
 local function is_ssh()
-  return os.getenv("SSH_CLIENT") ~= nil
+  return vim.env.SSH_TTY ~= nil
 end
 
 local function ensure_local_dir()
@@ -16,7 +20,7 @@ local function get_remote_hosts()
 
   local hosts = {}
   for host in result:gmatch("[^\r\n]+") do
-    print("sshCopy - Found host: " .. host)
+    print("sshCopySwap - Found host: " .. host)
     table.insert(hosts, host)
   end
   return hosts
@@ -41,7 +45,7 @@ local function rsync_file(local_path, remote_host, remote_path, direction)
   else
     cmd = string.format("timeout 5 rsync -ave ssh %s:%s %s", remote_host, remote_path, local_path)
   end
-  print('sshCopy - Running command: ' .. cmd)
+  print('sshCopySwap - Running command: ' .. cmd)
   local exit_code = os.execute(cmd)
   if exit_code ~= 0 then
     error("Rsync operation failed or timed out")
@@ -52,6 +56,7 @@ function M.xcopy()
   ensure_local_dir()
   local clipboard = vim.fn.getreg('"')
   local local_path = os.getenv("HOME") .. "/.local/.nvim_xcopy"
+  local remote_path = "~/.local/.nvim_xpaste"
 
   local file = io.open(local_path, "w")
   file:write(clipboard)
@@ -65,7 +70,7 @@ function M.xcopy()
     end
     local selected_host = select_host(hosts)
     if selected_host then
-      pcall(rsync_file, local_path, selected_host, local_path, "push")
+      pcall(rsync_file, local_path, selected_host, remote_path, "push")
     end
   end
 end
@@ -73,6 +78,7 @@ end
 function M.xpaste()
   ensure_local_dir()
   local local_path = os.getenv("HOME") .. "/.local/.nvim_xpaste"
+  local remote_path = "~/.local/.nvim_xcopy"
 
   if not is_ssh() then
     local hosts = get_remote_hosts()
@@ -82,7 +88,7 @@ function M.xpaste()
     end
     local selected_host = select_host(hosts)
     if selected_host then
-      pcall(rsync_file, local_path, selected_host, local_path, "pull")
+      pcall(rsync_file, local_path, selected_host, remote_path, "pull")
     end
   end
 
@@ -97,7 +103,7 @@ vim.api.nvim_create_user_command('XCopy', M.xcopy, {})
 vim.api.nvim_create_user_command('XPaste', M.xpaste, {})
 
 -- Set up key mappings for command mode
-vim.api.nvim_set_keymap('c', '<C-y>', '<cmd>XCopy<CR>', {noremap = true, silent = true})
-vim.api.nvim_set_keymap('c', '<C-p>', '<cmd>XPaste<CR>', {noremap = true, silent = true})
+-- vim.api.nvim_set_keymap('c', '<C-y>', '<cmd>XCopy<CR>', {noremap = true, silent = true})
+-- vim.api.nvim_set_keymap('c', '<C-p>', '<cmd>XPaste<CR>', {noremap = true, silent = true})
 
 return M
