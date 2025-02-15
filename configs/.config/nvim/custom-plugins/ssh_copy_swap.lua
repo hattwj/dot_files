@@ -116,9 +116,6 @@ function M.xpaste()
   else
     vim.fn.setreg('*', data)
   end
-
-  -- Paste the results
-  vim.cmd[[p]]
 end
 
 -- Set up commands
@@ -127,7 +124,7 @@ vim.api.nvim_create_user_command('XPaste', M.xpaste, {})
 
 -- Set up key mappings for normal and visual mode
 vim.keymap.set({'n'}, '<C-y>', '<cmd>XCopy<CR>', {noremap = true, silent = true})
-vim.keymap.set({'n'}, '<C-p>', '<cmd>XPaste<CR>', {noremap = true, silent = true})
+vim.keymap.set({'n'}, '<C-p>', '<cmd>XPaste<CR>p', {noremap = true, silent = true})
 
 --  In visual mode, yank the current selection, and then copy it to the remote machine
 vim.keymap.set({'v'}, '<C-y>', 'y<cmd>XCopy<CR>', {noremap = true, silent = true})
