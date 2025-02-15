@@ -46,10 +46,16 @@ local function rsync_file(local_path, remote_host, remote_path, direction)
     cmd = string.format("timeout 9 rsync -ave ssh %s:%s %s", remote_host, remote_path, local_path)
   end
   print('sshCopySwap - Running command: ' .. cmd)
-  local exit_code = os.execute(cmd)
+  -- runs command on a sub-process.
+  local handle = io.popen(cmd)
+  -- reads command output.
+  local output = handle:read('*a')
+  local exit_code = handle:close()
   if exit_code ~= 0 then
     error("Rsync operation failed or timed out")
+    error(output)
   end
+  return exit_code
 end
 
 function M.xcopy()
@@ -70,7 +76,10 @@ function M.xcopy()
     end
     local selected_host = select_host(hosts)
     if selected_host then
-      pcall(rsync_file, local_path, selected_host, remote_path, "push")
+      local exit_code = pcall(rsync_file, local_path, selected_host, remote_path, "push")
+      if exit_code == 0 then
+        return
+      end
     end
   end
 end
@@ -88,7 +97,10 @@ function M.xpaste()
     end
     local selected_host = select_host(hosts)
     if selected_host then
-      pcall(rsync_file, local_path, selected_host, remote_path, "pull")
+      local exit_code = pcall(rsync_file, local_path, selected_host, remote_path, "pull")
+      if exit_code == 0 then
+        return
+      end
     end
   end
 
