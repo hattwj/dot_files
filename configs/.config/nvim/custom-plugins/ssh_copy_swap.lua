@@ -127,7 +127,12 @@ vim.api.nvim_create_user_command('XCopy', M.xcopy, {})
 vim.api.nvim_create_user_command('XPaste', M.xpaste, {})
 
 -- Set up key mappings for normal and visual mode
-vim.keymap.set({'n', 'v'}, '<C-y>', '<cmd>XCopy<CR>', {noremap = true, silent = true})
-vim.keymap.set({'n', 'v'}, '<C-p>', '<cmd>XPaste<CR>', {noremap = true, silent = true})
+vim.keymap.set({'n'}, '<C-y>', '<cmd>XCopy<CR>', {noremap = true, silent = true})
+vim.keymap.set({'n'}, '<C-p>', '<cmd>XPaste<CR>', {noremap = true, silent = true})
+
+--  In visual mode, yank the current selection, and then copy it to the remote machine
+vim.keymap.set({'v'}, '<C-y>', 'y<cmd>XCopy<CR>', {noremap = true, silent = true})
+-- In visual mode, delete the current selection, and then copy the data from the remote machine
+vim.keymap.set({'v'}, '<C-p>', 'x<cmd>XPaste<CR>', {noremap = true, silent = true})
 
 return M
