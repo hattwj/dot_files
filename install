@@ -207,7 +207,7 @@ def symlink_files(src:, dest:, exclude: [], dir_only: [])
       end
 
       # If the filename is a directory, create it if it doesn't exist, in the target directory
-      unless File.exists?(target_path)
+      unless File.exist?(target_path)
         log_create(target_path)
         FileUtils.mkdir_p(target_path) unless $no_op
       end
@@ -237,13 +237,13 @@ def symlink_path(src:, dest:)
   backup_path = src.sub(git_root, backups_dir)
 
   # Source file missing?
-  if !File.exists?(src)
+  if !File.exist?(src)
     puts "[#{"Missing".red }] #{src}"
     exit 1
   end
 
   # Broken symlink?
-  if !File.exists?(dest) && File.symlink?(dest)
+  if !File.exist?(dest) && File.symlink?(dest)
     log_delete("Broken symlink #{dest}")
     File.delete(dest) unless $no_op
   end
@@ -256,7 +256,7 @@ def symlink_path(src:, dest:)
     FileUtils.mkdir_p(dest_parent) unless $no_op
   end
 
-  if File.exists?(dest)
+  if File.exist?(dest)
     if !File.symlink?(dest)
       log_backup "#{dest} to #{backup_path}"
       FileUtils.mkdir_p(File.dirname(backup_path))
@@ -294,7 +294,7 @@ def main(args)
     exit 0
   end
 
-  unless File.exists?(opts[:config_path])
+  unless File.exist?(opts[:config_path])
     log_error("Config file not found: #{opts[:config_path]}")
     exit 1
   end

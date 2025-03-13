@@ -2,6 +2,10 @@
 -- Default options that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/options.lua
 -- Add any additional options here
 
+-- Show the title in the terminal header for the current buffer.
+vim.opt.title = true
+vim.opt.titlestring = '%F'
+
 -- Set the default shell to bash
 vim.api.nvim_set_option_value("shell", "/usr/bin/bash", {})
 
