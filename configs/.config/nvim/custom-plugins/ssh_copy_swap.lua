@@ -25,18 +25,6 @@ local function get_remote_hosts()
   return hosts
 end
 
-local function select_host(hosts)
-  if #hosts == 1 then
-    return hosts[1]
-  elseif #hosts > 1 then
-    local selected = vim.fn.inputlist(vim.list_extend({"Select a remote host:"}, hosts))
-    if selected > 0 and selected <= #hosts then
-      return hosts[selected]
-    end
-  end
-  return nil
-end
-
 local function rsync_file(local_path, remote_host, remote_path, direction)
   local cmd
   if direction == "push" then
@@ -44,7 +32,7 @@ local function rsync_file(local_path, remote_host, remote_path, direction)
   else
     cmd = string.format("timeout 9 rsync -ave ssh %s:%s %s", remote_host, remote_path, local_path)
   end
-  vim.api.nvim_notify("sshCopySwap running command: " .. cmd, 1, {})
+  vim.notify("sshCopySwap running command: " .. cmd, nil, {})
   -- runs command on a sub-process.
   local handle = io.popen(cmd)
   if handle ~= nil then
@@ -83,7 +71,7 @@ end
 local function pasteToHost(local_path, remote_path, selected_host, args)
   local exit_code = pcall(rsync_file, local_path, selected_host, remote_path, "pull")
   if exit_code == 0 then
-    vim.api.nvim_notify("XPaste failed: rsync error", 4, {})
+    vim.notify("XPaste failed: rsync error", 4, {})
     return
   end
   fileToClipboard(local_path, args)
@@ -92,7 +80,7 @@ end
 local function copyToHost(local_path, remote_path, selected_host)
   local exit_code = pcall(rsync_file, local_path, selected_host, remote_path, "push")
   if exit_code == 0 then
-    vim.api.nvim_notify("XCopy failed: rsync error", 4, {})
+    vim.notify("XCopy failed: rsync error", 4, {})
     return
   end
 end
@@ -107,25 +95,29 @@ function M.xcopy()
   file:write(clipboard)
   file:close()
 
+  local line_count = select(2, clipboard:gsub('\n', '\n'))
   if is_ssh() then
     -- Nothing left to do
+    vim.notify("XCopy: " .. line_count .. " lines copied to " .. local_path, nil, {})
     return
   end
 
   local hosts = get_remote_hosts()
   if #hosts == 0 then
-    vim.api.nvim_notify("XCopy: No active SSH connections found", 4, {})
+    vim.notify("XCopy: No active SSH connections found", 4, {})
     return
   end
 
   if #hosts == 1 then
     copyToHost(local_path, remote_path, hosts[1])
+    vim.notify("XCopy: " .. line_count .. " lines copied to " .. hosts[1] .. ':' .. remote_path, nil, {})
     return
   end
 
   vim.ui.select(hosts, {prompt="xCopy: select target host"}, function(selected_host)
     if selected_host then
       copyToHost(local_path, remote_path, selected_host)
+      vim.notify("XCopy: " .. line_count .. " lines copied to " .. selected_host .. ':' .. remote_path, nil, {})
     end
   end)
 end
@@ -142,18 +134,20 @@ function M.xpaste(opts)
 
   local hosts = get_remote_hosts()
   if #hosts == 0 then
-    vim.api.nvim_notify("XPaste: No active SSH connections found", 4, {})
+    vim.notify("XPaste: No active SSH connections found", 4, {})
     return
   end
 
   if #hosts == 1 then
     pasteToHost(local_path, remote_path, hosts[1], opts.args)
+    vim.notify("XPaste: clipboard contents from " .. local_path .. " sent to " .. hosts[1] .. ':' .. remote_path, nil, {})
     return
   end
 
   vim.ui.select(hosts, {prompt="xPaste: select target host"}, function(selected_host)
     if selected_host then
       pasteToHost(local_path, remote_path, selected_host, opts.args)
+      vim.notify("XPaste: clipboard contents from " .. local_path .. " sent to " .. selected_host .. ':' .. remote_path, nil, {})
     end
   end)
 end

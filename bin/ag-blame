@@ -1,0 +1,14 @@
+#!/bin/bash
+
+if [ $# -lt 1 ]; then
+  echo "Usage: ag-blame <pattern> [ag options]"
+  exit 1
+fi
+
+# Run ag to find matches
+ag --column "$@" | while IFS=: read -r file line rest; do
+  echo -e "\n\033[1;36m$file:$line\033[0m"
+  git blame -L "$line,$line" "$file" | sed 's/^/  /'
+
+  echo ""
+done
