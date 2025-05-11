@@ -118,8 +118,6 @@ vim.api.nvim_set_keymap('c', '<Down>', 'pumvisible() ? "\\<C-n>" : "\\<Down>"', 
 vim.api.nvim_set_keymap('c', '<Up>', 'pumvisible() ? "\\<C-p>" : "\\<Up>"', { expr = true, noremap = true })
 ------
 
--- keymap to Exit terminal mode, and enter normal mode 
-vim.keymap.set('t', '<leader><ESC>', '<C-\\><C-n>', { noremap = true, silent = true })
 
 
 -- Ctrl-a to get to beginning of line in command mode
@@ -169,6 +167,8 @@ vim.keymap.set({'n', 'i', 'v'}, '<C-S-t>', function() open_float_term() end, {no
 
 -- Press CTRL-ESC to exit from terminal mode
 vim.keymap.set({'t'},'<C-ESC>', '<C-\\><C-n>', { noremap=true, silent=true })
+-- Two ways are better than one, keymap to Exit terminal mode, and enter normal mode 
+vim.keymap.set('t', '<leader><ESC>', '<C-\\><C-n>', { noremap = true, silent = true })
 
 
 vim.cmd([[

@@ -85,6 +85,12 @@ if vim.g.neovide then
   vim.keymap.set({'n', 'i', 't', 'v'}, '<A-Left>', '<C-\\><C-n><C-w><Left><CR>', { noremap = true, silent = true })
   vim.keymap.set({'n', 'i', 't', 'v'}, '<A-Right>', '<C-\\><C-n><C-w><Right><CR>', { noremap = true, silent = true })
 
+  -- Resize windows with CTRL-SHIFT <arrow>, just like terminator
+  vim.keymap.set({'n', 'i', 't', 'v'}, '<C-S-Up>', '<C-w>+', { noremap = true, silent = true })
+  vim.keymap.set({'n', 'i', 't', 'v'}, '<C-S-Down>',  '<C-w>-', { noremap = true, silent = true })
+  vim.keymap.set({'n', 'i', 't', 'v'}, '<C-S-Left>',  '<C-w>>', { noremap = true, silent = true })
+  vim.keymap.set({'n', 'i', 't', 'v'}, '<C-S-Right>', '<C-w><', { noremap = true, silent = true })
+  
   -- Ctrl-V to paste into command from system clipboard
   -- Silent false appears to be important, otherwise you have to press an arrow key
   -- to get it to refresh.
