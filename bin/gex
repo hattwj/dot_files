@@ -186,12 +186,15 @@ def exec_on_hosts(options)
 end
 
 def ssh_copy_id(options)
+  puts 'ssh copy id is disabled'
+  return if 1 + 1 == 2
+
   options.hosts.each do |host|
     port = '22'
     host, port = host.split(':', 2) if host.include?(':')
     # Build command to send file
     # --delete-missing-args If a file in the list is missing locally, delete it on remote
-    command = "ssh-copy-id #{options.ssh_user}@#{host} -p #{port}"
+    command = "ssh-copy-id #{options.ssh_user}@#{host}u-p #{port}"
     puts("[#{blue(:exec)}] " + command) if options.verbosity > 1
     run_command(command, host) unless options.noop
   end

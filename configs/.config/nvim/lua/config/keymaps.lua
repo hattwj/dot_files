@@ -167,6 +167,10 @@ end
 -- CTRL-SHIFT-T to open floating terminal
 vim.keymap.set({'n', 'i', 'v'}, '<C-S-t>', function() open_float_term() end, {noremap = true, silent = true})
 
+-- Press CTRL-ESC to exit from terminal mode
+vim.keymap.set({'t'},'<C-ESC>', '<C-\\><C-n>', { noremap=true, silent=true })
+
+
 vim.cmd([[
   """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
   " => Copy Paste Settings
