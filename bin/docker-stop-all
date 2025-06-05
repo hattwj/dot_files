@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+# Stop all docker processes
+
+docker stop $(docker ps -a -q)

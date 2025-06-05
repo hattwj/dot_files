@@ -41,3 +41,12 @@ vim.api.nvim_command("autocmd TermEnter * setlocal signcolumn=no") -- no sign co
 vim.api.nvim_create_autocmd("TabNewEntered", {
   command = "lua Snacks.dashboard()",
 })
+
+-- For init.lua
+vim.api.nvim_create_autocmd({"BufRead", "BufNewFile"}, {
+  pattern = {"*ees-interactive-repl/prompts/prompt*.txt"},
+  callback = function()
+    vim.bo.filetype = "markdown"
+  end,
+  desc = "Set filetype to markdown for EES interactive REPL prompt files"
+})

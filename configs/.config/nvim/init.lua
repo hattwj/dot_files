@@ -18,6 +18,9 @@ local function source_files(directory, extension)
     end
 end
 
+-- Source all .vim files in the plugin directory
+source_files(vim.fn.stdpath("config") .. '/plugin', 'vim')
+
 -- Source all .vim files in the custom-plugins directory
 source_files(vim.fn.stdpath("config") .. '/custom-plugins', 'vim')
 

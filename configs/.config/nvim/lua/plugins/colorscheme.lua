@@ -27,6 +27,7 @@ return {
     transparent = true,
     on_colors = function(colors)
       -- colors.border = "#5f87d7" -- blue
+      colors.hint = "#FFAA11"
       colors.border = "orange"
     end,
   },

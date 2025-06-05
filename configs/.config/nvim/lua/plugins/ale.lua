@@ -5,19 +5,21 @@ return {
     "rhysd/vim-lsp-ale",
   },
   init = function()
+    -- TODO: Convert this whole thing into a lua script instead of using vimscript
     vim.api.nvim_exec2(
       [[
 
+        let g:ale_use_neovim_diagnostics_api = 1
         """
         " Vim ALE Linter Config
         " Always show linter gutter
         let g:ale_sign_column_always = 1
         " Disable linting on text change, will only lint on save instead
         "let g:ale_lint_on_text_changed = 'never'
-        
+
         " Lint on save
         let g:ale_lint_on_save = 1
-        
+
         " Set this. Airline will handle the rest.
         let g:airline#extensions#ale#enabled = 1
         " Require vim restart to run linters that are not installed
@@ -30,7 +32,7 @@ return {
               \   'scala': [ 'scalafmt' ],
               \   'yaml': [ 'prettier' ]
               \ }
-        
+
         " Specify ruby linters, you'll likely want others enabled
         "      \ 'scala': [ 'scalatest']
         "      \ 'scala': [ 'metals' ]
@@ -38,7 +40,7 @@ return {
               \ 'ruby': ['solargraph', 'rubocop', 'reek', 'ruby'],
               \ 'scala': ['scalatest', 'scalafmt', 'metals']
               \ }
-        
+
         if executable('bb_scalafmt')
           let g:ale_scala_scalafmt_executable = 'bb_scalafmt'
         endif

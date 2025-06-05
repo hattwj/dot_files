@@ -90,14 +90,14 @@ def generate_forecast(data, months):
     start_date = datetime.date.today()
     end_date = start_date + relativedelta(months=months)
     current_date = start_date
-    
+
     forecast = []
 
     if 'default-income-account' in data:
         income_account = data['default-income-account']
     else:
         income_account = list(accounts.keys())[0]
-    
+
     if 'default-expense-account' in data:
         expense_account = data['default-expense-account']
     else:
@@ -160,18 +160,18 @@ def add_transaction(data, type):
         end_date = ""
     else:
         end_date = input("Enter end date (YYYY-MM-DD) or nothing to repeat indefinitely: ")
-    
+
     # Get the list of available accounts
     account_list = list(data["accounts"].keys())
-    
+
     # Display available accounts and prompt for selection
     print("Available accounts:")
     for i, account in enumerate(account_list, 1):
         print(f"{i}. {account}")
-    
+
     # Set default account as the first one in the list
     default_account = account_list[0] if account_list else None
-    
+
     while True:
         account_choice = input(f"Enter the account number for this {type} (default: 1): ")
         if account_choice == "":
@@ -186,7 +186,7 @@ def add_transaction(data, type):
                 print("Invalid account number. Please try again.")
         except ValueError:
             print("Please enter a valid number.")
-    
+
     # Add the selected account to the transaction data
     data[type].append({
         "name": name,
@@ -205,7 +205,7 @@ color_yellow = "\033[0;33m"
 
 # TODO: Ideas
 # - Keep original next_date, don't save over the original value when performing a forecast.
-# - Always 
+# - Always
 def main():
     parser = argparse.ArgumentParser(description="Financial Forecasting Tool")
     parser.add_argument("filename", help="JSON file to store data")
@@ -230,19 +230,31 @@ def main():
         elif choice == "3":
             add_transaction(data, "expenses")
         elif choice == "4":
+            balance_end = 0 
+            balance_start = 0 
             balance_low = 0
             balance_high = 0
             date_low = None
             date_high = None
+            date_start = None
+            date_end = None
+            balance = 0
             months = int(input("Number of months to forecast: "))
             forecast = generate_forecast(data, months)
             for day in forecast:
+                date_end = day['date']
+                # For each day that an event is expected to happen
                 if len(day['events']) > 0:
                     print(f"Date: {day['date']}")
                 for event in day['events']:
+                    # For each event in that day
                     account_name = event['account_name']
                     balance = event['account_balance']
+                    balance_end = balance
                     amount = event['amount']
+                    if balance_start == 0:
+                        balance_start = balance
+                        date_start = day['date']
                     if balance_low == 0 or balance_low > balance:
                         balance_low = balance
                         date_low = day['date']
@@ -255,10 +267,12 @@ def main():
                         amount = f"{color_green}{amount}{color_reset}"
 
                     name = event['name']
-                
-                    print(f"\t{account_name}\t{balance}\t{event['type']}\t{amount} - {name}") 
+                    print(f"\t{account_name}\t{balance}\t{event['type']}\t{amount} - {name}")
+            print(f'Start: {balance_start} - {date_start}')
+            print(f'End: {balance_end} - {date_end}')
             print(f'High: {balance_high} - {date_high}')
             print(f'Low: {balance_low} - {date_low}')
+            print(f'Rate: $dollars/month {(balance - balance_start) / months}')
         elif choice == "5":
             save_data(data, args.filename)
         elif choice == "6":

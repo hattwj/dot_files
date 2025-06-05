@@ -35,6 +35,15 @@ require("lazy").setup({
     enabled = false, -- check for plugin updates periodically
     notify = false, -- notify on update
   }, -- automatically check for plugin updates
+  dev = {
+    -- Directory where you store your local plugin projects. If a function is used,
+    -- the plugin directory (e.g. `~/projects/plugin-name`) must be returned.
+    -- @type string | fun(plugin: LazyPlugin): string
+    path = "~/.config/nvim/projects",
+    -- @type string[] plugins that match these patterns will use your local versions instead of being fetched from GitHub
+    patterns = { "hello-world", "monk", "basil" }, -- For example {"folke"}
+    fallback = false, -- Fallback to git when local plugin doesn't exist
+  },
   performance = {
     rtp = {
       -- disable some rtp plugins

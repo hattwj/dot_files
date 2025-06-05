@@ -8,14 +8,14 @@ return {
     cmdline = {
       view = "cmdline",
     },
-    routes = {
-      { -- When a message is more than 40 characters wide, show it as a custom message 
-        -- with custom rules.
-        -- view = "virtualtext",
-        view = "mini",
-        filter = { event = "msg_show", min_width = 40 },
-      },
-    },
+    -- routes = {
+    --   { -- When a message is more than 40 characters wide, show it as a custom message 
+    --     -- with custom rules.
+    --     -- view = "virtualtext",
+    --     view = "mini",
+    --     filter = { event = "msg_show", min_width = 40 },
+    --   },
+    -- },
   },
   config = function(_, opts)
     -- HACK: noice shows messages from before it was enabled,
