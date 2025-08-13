@@ -9,7 +9,8 @@ sudo pip-3.4 install neovim --upgrade
   cd ~/source || exit 1
   [ ! -d "neovim" ] &&  git clone https://github.com/neovim/neovim.git
   cd neovim || exit 1
-  git checkout release-0.11
+  git fetch --all
+  git checkout tags/v0.11.2 || (echo branch not found && exit 1)
   git pull
   # make CMAKE_BUILD_TYPE=Release
   make CMAKE_BUILD_TYPE=RelWithDebInfo

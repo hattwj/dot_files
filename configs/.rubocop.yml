@@ -1,0 +1,49 @@
+# Metrics/LineLength:
+#   Max: 100
+# Metrics/MethodLength:
+#   Max: 20
+# Metrics/ModuleLength:
+#   Max: 200
+# Documentation:
+#   Enabled: false # principally for the top-level class docs
+# Style/WordArray:
+#   Enabled: false
+# Style/SymbolArray:
+#   Enabled: false
+# Style/MutableConstant:
+#   Enabled: false
+# Style/NumericLiterals:
+#   Enabled: false
+# Style/FrozenStringLiteralComment:
+#   Enabled: false
+# Metrics/BlockLength:
+#   Exclude:
+#     - '/**/*_spec.rb'
+# Style/StringLiterals:
+#   # Don't enforce rules related to single vs double quoted strings
+#   Enabled: false
+
+AllCops:
+  Exclude:
+    - 'build/**/*'
+    - 'build/*'
+  TargetRubyVersion: 2.7
+  DisplayCopNames: true
+  ExtraDetails: true
+
+# error all cops with the highest severity level
+Lint/AmbiguousRegexpLiteral:
+  Enabled: true
+  Severity: error
+
+Lint/AmbiguousBlockAssociation:
+  Enabled: true
+  Severity: error
+
+Lint/BooleanSymbol:
+  Enabled: true
+  Severity: error
+
+Lint/DeprecatedConstants:
+  Enabled: true
+  Severity: error
