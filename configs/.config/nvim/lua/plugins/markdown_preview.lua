@@ -33,7 +33,7 @@ return {
     vim.g.mkdp_open_to_the_world = 0
     --
     -- " preview server port
-    vim.g.mkdp_port = 9000
+    vim.g.mkdp_port = 9001
     --
     -- " use custom IP to open preview page
     -- " useful when you work in remote vim and preview on local browser

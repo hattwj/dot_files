@@ -6,6 +6,7 @@
   suppress_multiple_term_dialog = True
   title_use_system_font = False
   title_font = DroidSansM Nerd Font 9
+  case_sensitive = False
 [keybindings]
   zoom_normal_all = <Primary>parenright
   close_term = ""
