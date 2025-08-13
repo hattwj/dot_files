@@ -8,9 +8,11 @@ require 'open3'
 require 'yaml'
 require 'tempfile'
 
+Thread.report_on_exception = false
 
 CONF_PATH = "#{ENV['HOME']}/.gex.yaml"
 TEMPLATE_CONFIG = '##
+# Default host (used when no host is specified): default_host: host-name
 # Gex config examples
 #
 #  ##
@@ -43,22 +45,22 @@ TEMPLATE_CONFIG = '##
 
 CONFIG_DEFAULTS = {
   # Commands to execute after sync
-  'exec' =>  [],
+  'exec' => [],
 
   # Scripts to execute after sync
   'scripts' => [],
 
   # Files to exclude if matched
-  'exclude' => ["_spec.rb$", "_test.rb$"],
+  'exclude' => ["build"],
 
   # Files in include even if excluded
-  'include' => ["^web", "^config", "^ruby-lib"],
+  'include' => [],
 
   # Just run the init portion of the script
   'do_init' =>  false,
 
   # Logging verbosity
-  'debug' =>  false,
+  'debug'   =>  false,
 
   # Root directory for file copy
   'dest' =>  nil,
@@ -81,7 +83,10 @@ CONFIG_DEFAULTS = {
 
   'verbosity' =>  0,
 
-  'send_via' => 'rsync'
+  'send_via' => 'rsync',
+
+  # Default host to use if none specified
+  'default_host' => nil
 }.freeze
 
 def assert_in_path(*cmds)
@@ -119,12 +124,6 @@ end
 
 def red(msg)
   "\033[0;31m#{msg}\033[0m"
-end
-
-begin
-  require 'pry'
-rescue LoadError
-  STDERR.puts(yellow("WARNING: Failed to load pry"))
 end
 
 def run_command(cmd, host, print_exit_code = false)
@@ -171,7 +170,7 @@ def exec_on_hosts(options)
         host, port = host.split(':', 2) if host.include?(':')
         # Build command to send file
         command = "ssh -p #{port} #{options.ssh_user}@#{host} " \
-                  "'#{cmd}'"
+                  "'cd #{options['dest']}; #{cmd}'"
         if options.noop
           puts("[#{yellow('noop')}] #{command}")
         else
@@ -337,11 +336,28 @@ end
 
 def load_config(opts = {})
   git_root = opts.fetch(:git_root)
+  home_path = ENV['HOME']
   conf_path = opts.fetch(:conf_path, CONF_PATH)
   conf_path = File.expand_path(conf_path)
   return {} unless File.exist?(conf_path)
+
   data = File.read(conf_path)
-  YAML.load(data).fetch(git_root, {})
+  yaml_config = YAML.load(data)
+
+  # Try direct path match first
+  config = yaml_config.fetch(git_root, {})
+
+  # If no direct match, try with $HOME substitution
+  if config.empty? && git_root.start_with?(home_path)
+    normalized_path = git_root.sub(home_path, '$HOME')
+    config = yaml_config.fetch(normalized_path, {})
+  end
+
+  # Also look for a global default_host setting
+  if yaml_config.key?('default_host') && !config.key?('default_host')
+    config['default_host'] = yaml_config['default_host']
+  end
+  config
 rescue StandardError => e
   puts '[Error] ' + red(e)
   puts "[Backtrace] \n\t" + red(e.backtrace.join("\n\t"))
@@ -352,6 +368,8 @@ def save_config_options(opts = {})
   dest = opts.fetch(:dest)
   git_root = opts.fetch(:git_root)
   conf_path = opts.fetch(:conf_path, CONF_PATH)
+  home_path = ENV['HOME']
+  normalized_git_root = git_root.start_with?(home_path) ? git_root.sub(home_path, '$HOME') : git_root
   conf_path = File.expand_path(conf_path)
   config = YAML.load_file(conf_path) if File.exist?(conf_path)
   unless config.is_a?(Hash)
@@ -359,6 +377,7 @@ def save_config_options(opts = {})
     config = {}
   end
   config[git_root] = { 'dest' => dest }
+  config[normalized_git_root] = { 'dest' => dest } if normalized_git_root != git_root
   File.open(conf_path, 'w') do |f|
     f.puts(TEMPLATE_CONFIG)
     f.puts(YAML.dump(config))
@@ -457,7 +476,16 @@ end
 
 options.command
 
-options.hosts = ARGV
+# Use ARGV hosts if provided, otherwise use default host from config
+options.hosts = if ARGV.empty? && options.default_host
+                  [options.default_host]
+                else
+                  ARGV
+                end
+
+# localhost means local file copy.
+options.hosts = [] if options.hosts == ['localhost']
+
 if options.verbosity > 1
   puts_debug 'Configuration:'
   puts_debug JSON.pretty_generate(options.to_h)
@@ -547,7 +575,12 @@ unless options.no_exec
   end
 end
 
-puts "[#{blue(:hosts)}] #{options.hosts}" if options.hosts.any?
+if options.hosts.any?
+  puts "[#{blue(:hosts)}] #{options.hosts}"
+else
+  puts "[#{blue(:hosts)}] [localhost]"
+end
+
 puts "[#{blue(:source)}] #{options.git_root}"
 puts "[#{blue(:dest)}] #{options.dest}"
 puts yellow('[noop] ') + 'Dry run complete' if options.noop
