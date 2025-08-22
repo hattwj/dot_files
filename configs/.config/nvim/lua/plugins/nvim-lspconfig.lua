@@ -60,6 +60,7 @@ return {
         settings = {
           metalsBinaryPath = vim.fn.expand("~/.local/share/coursier/bin/metals"),
           autoImportBuild = "off",
+          sbtScript = "brazil-build -Dsbt.override.build.repos=false -Dsbt.offline=false -Dbloop=true",
           defaultBspToBuildTool = true,
           -- showImplicitConversionsAndClasses = true,
           superMethodLensesEnabled = true,
