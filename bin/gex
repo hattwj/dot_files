@@ -56,9 +56,6 @@ CONFIG_DEFAULTS = {
   # Files in include even if excluded
   'include' => [],
 
-  # Just run the init portion of the script
-  'do_init' =>  false,
-
   # Logging verbosity
   'debug'   =>  false,
 
@@ -337,20 +334,27 @@ end
 def load_config(opts = {})
   git_root = opts.fetch(:git_root)
   home_path = ENV['HOME']
+
+  normalized_git_root = git_root.start_with?(home_path) ? git_root.sub(home_path, '$HOME') : git_root
   conf_path = opts.fetch(:conf_path, CONF_PATH)
   conf_path = File.expand_path(conf_path)
+
   return {} unless File.exist?(conf_path)
 
   data = File.read(conf_path)
   yaml_config = YAML.load(data)
 
   # Try direct path match first
-  config = yaml_config.fetch(git_root, {})
+  config = yaml_config.fetch(git_root, yaml_config.fetch(normalized_git_root, {}))
 
   # If no direct match, try with $HOME substitution
-  if config.empty? && git_root.start_with?(home_path)
-    normalized_path = git_root.sub(home_path, '$HOME')
-    config = yaml_config.fetch(normalized_path, {})
+  # if config.empty? && git_root.start_with?(home_path)
+  #   normalized_path = git_root.sub(home_path, '$HOME')
+  #   config = yaml_config.fetch(normalized_path, {})
+  # end
+  if config.empty?
+    save_config_options(dest: normalized_git_root, git_root: normalized_git_root)
+    puts "[#{blue(:info)}] Auto-initialized configuration for #{normalized_git_root}"
   end
 
   # Also look for a global default_host setting
@@ -429,12 +433,6 @@ parser = OptionParser.new do |opts|
     options.scripts << name
   end
 
-  opts.on '--init DIR', 'Destination to send the files, ' \
-          "default is #{options.dest}" do |dest|
-    options.do_init = true
-    options.dest = dest
-  end
-
   opts.on '--include PATTERN', 'Ignore files that don\'t match this pattern' do |pattern|
     options.include << pattern
   end
@@ -502,22 +500,11 @@ if more_than_one
   exit 1
 end
 
-if options.noop && options.do_init
-  puts "[#{red(:fatal)}] the --init option cannot be used with --noop"
-  exit 1
-end
-
 if options.dest.nil?
   puts options.inspect
   puts "[#{red(:fatal)}] run '#{File.basename(__FILE__)} --init " \
        "/some/dest' to generate a config for this git repo"
   exit 1
-end
-
-if options.dest && options.do_init
-  save_config_options(dest: options.dest,
-                      git_root: options.git_root)
-  exit 0
 end
 
 if options.diff_commit
