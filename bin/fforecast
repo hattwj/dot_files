@@ -18,6 +18,7 @@ FREQUENCIES = [
     "one-time"
 ]
 
+
 def load_data(filename):
     try:
         with open(filename, 'r') as f:
@@ -25,9 +26,11 @@ def load_data(filename):
     except FileNotFoundError:
         return {"accounts": {}, "income": [], "expenses": [], "default-expense-account": "", "default-income-account": ""}
 
+
 def save_data(data, filename):
     with open(filename, 'w') as f:
         json.dump(data, f, indent=2)
+
 
 def add_account(data):
     name = input("Enter account name: ")
@@ -45,6 +48,7 @@ def add_account(data):
         make_default = input("Make default expense account? (y/N)").lower().strip() == 'y'
         if make_default:
             data["default-expense-account"] = name
+
 
 def matched_frequency(start_date, end_date, current_date, frequency):
     if start_date > current_date:
@@ -70,15 +74,18 @@ def matched_frequency(start_date, end_date, current_date, frequency):
     else:
         raise Exception(f"Unknown frequency {frequency}")
 
+
 def weeks_between(start_date, end_date):
     weeks = rrule.rrule(rrule.WEEKLY, dtstart=start_date, until=end_date)
     return weeks.count()
+
 
 def calculate_amount(event):
     if 'transactions' in event:
         return sum(transaction for transaction in event['transactions'].values())
     else:
         return event['amount']
+
 
 def generate_forecast(data, months):
     # Update all sub transactions
@@ -146,6 +153,7 @@ def generate_forecast(data, months):
 
     return forecast
 
+
 def add_transaction(data, type):
     name = input(f"Enter {type} name: ")
     amount = float(input(f"Enter {type} amount: "))
@@ -197,15 +205,17 @@ def add_transaction(data, type):
         "account": selected_account
     })
 
+
 color_red = "\033[0;31m"
 color_cyan = "\033[0;36m"
 color_green = "\033[0;32m"
 color_reset = "\033[0m"
 color_yellow = "\033[0;33m"
 
+
 # TODO: Ideas
 # - Keep original next_date, don't save over the original value when performing a forecast.
-# - Always
+# - Similar to above, allow saving forecasts so that we can compare over time
 def main():
     parser = argparse.ArgumentParser(description="Financial Forecasting Tool")
     parser.add_argument("filename", help="JSON file to store data")
@@ -230,8 +240,8 @@ def main():
         elif choice == "3":
             add_transaction(data, "expenses")
         elif choice == "4":
-            balance_end = 0 
-            balance_start = 0 
+            balance_end = 0
+            balance_start = 0
             balance_low = 0
             balance_high = 0
             date_low = None

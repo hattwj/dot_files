@@ -33,7 +33,12 @@ return {
     vim.g.mkdp_open_to_the_world = 0
     --
     -- " preview server port
-    vim.g.mkdp_port = 9001
+    -- Set port based on SSH connection: 9000 for SSH, 9001 for local
+    if os.getenv("SSH_CONNECTION") then
+      vim.g.mkdp_port = 9000
+    else
+      vim.g.mkdp_port = 9001
+    end
     --
     -- " use custom IP to open preview page
     -- " useful when you work in remote vim and preview on local browser

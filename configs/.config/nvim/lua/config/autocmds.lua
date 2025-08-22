@@ -42,6 +42,11 @@ vim.api.nvim_create_autocmd("TabNewEntered", {
   command = "lua Snacks.dashboard()",
 })
 
+vim.api.nvim_create_autocmd({'BufRead', 'BufNewFile'}, {
+  pattern = '.flake8',
+  command = 'setf ini'
+})
+
 -- For init.lua
 vim.api.nvim_create_autocmd({"BufRead", "BufNewFile"}, {
   pattern = {"*ees-interactive-repl/prompts/prompt*.txt"},
