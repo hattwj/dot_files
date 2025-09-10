@@ -17,6 +17,6 @@ return {
       {'<leader>fc', false},
       {'<leader>gd', false}
     }
-  }
+  },
   -- { "folke/noice.nvim", enabled = false },
 }

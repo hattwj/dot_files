@@ -36,11 +36,11 @@ vim.api.nvim_command("autocmd TermOpen * startinsert")             -- starts in 
 vim.api.nvim_command("autocmd TermOpen * setlocal nonumber norelativenumber")       -- no numbers
 vim.api.nvim_command("autocmd TermEnter * setlocal signcolumn=no") -- no sign column
 
--- Open the dashboard for new tabs.
--- TODO: This will also trigger the dashboard when `:tabnew filename.txt` is used. Make it not do that.
-vim.api.nvim_create_autocmd("TabNewEntered", {
-  command = "lua Snacks.dashboard()",
-})
+-- -- Open the dashboard for new tabs.
+-- -- TODO: This will also trigger the dashboard when `:tabnew filename.txt` is used. Make it not do that.
+-- vim.api.nvim_create_autocmd("TabNewEntered", {
+--   command = "lua Snacks.dashboard()",
+-- })
 
 vim.api.nvim_create_autocmd({'BufRead', 'BufNewFile'}, {
   pattern = '.flake8',

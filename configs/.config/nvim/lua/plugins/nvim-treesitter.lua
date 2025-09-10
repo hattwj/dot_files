@@ -4,6 +4,7 @@ return {
   opts = {
     ensure_installed = {
       "bash",
+      "embedded_template",
       "html",
       "javascript",
       "json",

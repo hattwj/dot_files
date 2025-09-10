@@ -78,6 +78,10 @@ vim.api.nvim_set_keymap(
   { silent = true, noremap = false, desc = "Find vim commands" }
 )
 
+-- Git commands 
+vim.api.nvim_set_keymap("n", "<leader>gd", ":Git diff HEAD<CR>", { silent = true, desc="git diff HEAD" })
+vim.api.nvim_set_keymap("n", "<leader>gv", ":Gvdiffsplit<CR>", { silent = true, desc="git diff vsplit" })
+
 -- Close / delete the current buffer
 vim.api.nvim_set_keymap("n", "<leader>q", "<leader>bd", { silent = true, desc="Close current buffer" })
 

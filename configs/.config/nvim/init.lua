@@ -7,7 +7,6 @@ local function source_files(directory, extension)
     local files = vim.fn.glob(directory .. '/*.' .. extension, false, true)
     -- Iterate through each file and source it
     for _, file in ipairs(files) do
-        
         if extension == 'vim' then
             -- Source Vim script files using vim.cmd
             vim.cmd('source ' .. file)

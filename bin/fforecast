@@ -259,9 +259,9 @@ def main():
                 for event in day['events']:
                     # For each event in that day
                     account_name = event['account_name']
-                    balance = event['account_balance']
+                    balance = round(event['account_balance'], 2)
                     balance_end = balance
-                    amount = event['amount']
+                    amount = round(event['amount'], 2)
                     if balance_start == 0:
                         balance_start = balance
                         date_start = day['date']
