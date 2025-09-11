@@ -1,11 +1,16 @@
+local util = require 'lspconfig.util'
+
 return {
   "neovim/nvim-lspconfig",
   opts = {
+
     -- TODO: Add barium: https://w.amazon.com/bin/view/Barium/
     --
     -- Automatically format on save, this doesn't seem to work
     autoformat = false,
+
     servers = {
+      harper_ls = {},
       bashls = {
         filetypes = { "sh", "zsh" },
       },
@@ -19,23 +24,29 @@ return {
       },
       -- This looks like it disables the lsp,
       -- but as far as I can tell it just prevents
-      -- installing it, otherwise still used. 
+      -- installing it, otherwise still used.
       -- Allowing manual installation
       ruff_lsp = false,
-      -- ruff_lsp = {
-      --   cmd = { "ruff-lsp" }
-      -- },
-      -- ruby_lsp = {
-      --   cmd = { "rvm use 3.1.0 && ruby-lsp" },
-      --   init_options = {
-      --     formatter = "auto",
-      --   },
-      -- },
-      -- rubocop = {
-      --   -- See: https://docs.rubocop.org/rubocop/usage/lsp.html
-      --   cmd = { "bundle", "exec", "rubocop", "--lsp" },
-      --   root_dir = lspconfig.util.root_pattern("Gemfile", ".git", "."),
-      -- },
+      --
+      -- Ruby 
+      --
+
+      sorbet = {enabled = false},
+
+      typeprof = {enabled = true },
+
+      ruby_lsp = {
+        capabilities = {
+          offsetEncoding = { "utf-16" },
+        },
+        init_options = {
+          formatter = "auto",
+        },
+      },
+      rubocop = {
+        root_dir = util.root_pattern("Gemfile", ".git", "."),
+      },
+      -- Scala 
       metals = {
         keys = {
           {

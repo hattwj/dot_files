@@ -14,14 +14,14 @@
 #   Enabled: false
 # Style/NumericLiterals:
 #   Enabled: false
-# Style/FrozenStringLiteralComment:
-#   Enabled: false
+Style/FrozenStringLiteralComment:
+  Enabled: false
 # Metrics/BlockLength:
 #   Exclude:
 #     - '/**/*_spec.rb'
-# Style/StringLiterals:
-#   # Don't enforce rules related to single vs double quoted strings
-#   Enabled: false
+Style/StringLiterals:
+  # Don't enforce rules related to single vs double quoted strings
+  Enabled: false
 
 AllCops:
   Exclude:

@@ -42,14 +42,14 @@ pf3="$HOME/.bash_custom"
 # Not entirely sure, but I dont think this is needed
 #PATH=$PATH:$HOME/.rvm/bin # Add RVM to PATH for scripting
 
-[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
+# [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
 
-if [ -d "$HOME/.rbenv/bin" ]; then 
-  export PATH=$HOME/.rbenv/bin:$PATH
-  eval "$(rbenv init -)"
-fi
+# if [ -d "$HOME/.rbenv/bin" ]; then 
+#   export PATH=$HOME/.rbenv/bin:$PATH
+#   eval "$(rbenv init -)"
+# fi
 
-[[ -s "$HOME/.local/bin/mise" ]] && eval "$($HOME/.local/bin/mise activate bash)"
+command -v "mise" > /dev/null 2>&1 && source "$HOME/.bash_activate_mise.sh"
 
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                   # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
