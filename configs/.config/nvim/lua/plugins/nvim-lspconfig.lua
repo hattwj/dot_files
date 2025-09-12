@@ -10,7 +10,61 @@ return {
     autoformat = false,
 
     servers = {
-      harper_ls = {},
+      -- Harper Language Server - Comprehensive Configuration
+      harper_ls = {
+        -- File types to enable harper-ls for
+        filetypes = {
+          "markdown", "text", "txt", "gitcommit",
+          "latex", "tex", "rst", "asciidoc", "org"
+        },
+
+        -- Server settings passed to harper-ls
+        settings = {
+          ["harper-ls"] = {
+            -- Linting and diagnostics settings
+            linters = {
+              spell_check = true,
+              long_sentences = true,
+              repeated_words = true,
+              spaces = true,
+              sentence_capitalization = true,
+              unclosed_quotes = true,
+              wrong_quotes = true,
+              linking_verbs = true,
+              avoid_curses = false,
+            },
+
+            -- Code actions settings
+            codeActions = {
+              forceStable = true,
+            },
+
+            -- Diagnostics configuration
+            diagnostics = {
+              -- Enable/disable specific diagnostic types
+              enable = true,
+              -- Severity levels: "error", "warning", "information", "hint"
+              severity = "information",
+              -- Update frequency
+              update_on_insert = false,
+              update_on_save = true,
+            },
+
+            -- Dictionary and language settings
+            dictionary = {
+              -- Path to custom dictionary file
+              path = vim.fn.expand("~/.config/harper-ls/dictionary.txt"),
+              -- Language code (en, es, fr, etc.)
+              language = "en",
+            },
+
+            -- Performance settings
+            performance = {
+              max_file_size = 1000000,  -- 1MB limit
+            },
+          },
+        },
+      },
       bashls = {
         filetypes = { "sh", "zsh" },
       },

@@ -30,5 +30,9 @@ return {
       colors.hint = "#FFAA11"
       colors.border = "orange"
     end,
+    on_highlights = function(highlights, colors)
+      -- Make comments brighter
+      highlights.Comment = { fg = "#7a88df" } -- Adjust this color to your preference
+    end,
   },
 }
