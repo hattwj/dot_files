@@ -90,6 +90,7 @@ return {
       typeprof = {enabled = true },
 
       ruby_lsp = {
+        filetypes = { "rb" },
         capabilities = {
           offsetEncoding = { "utf-16" },
         },
