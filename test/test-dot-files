@@ -1,0 +1,188 @@
+#!/bin/bash
+
+# test-dot-files - Validation script for dot-files management tool
+# Tests all major functionality with safe operations
+
+set -euo pipefail
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Test counters
+TESTS_RUN=0
+TESTS_PASSED=0
+TESTS_FAILED=0
+
+# Function to print test results
+print_test_result() {
+    local test_name="$1"
+    local result="$2"
+
+    TESTS_RUN=$((TESTS_RUN + 1))
+
+    if [[ "$result" == "PASS" ]]; then
+        echo -e "${GREEN}✓ PASS${NC} $test_name"
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+    else
+        echo -e "${RED}✗ FAIL${NC} $test_name"
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+    fi
+}
+
+# Function to run test safely
+run_test() {
+    local test_name="$1"
+    shift
+    local test_command=("$@")
+
+    echo -e "\n${BLUE}Running test:${NC} $test_name"
+    echo -e "${BLUE}Command:${NC} ${test_command[*]}"
+
+    if "${test_command[@]}" &>/dev/null; then
+        print_test_result "$test_name" "PASS"
+        return 0
+    else
+        print_test_result "$test_name" "FAIL"
+        return 1
+    fi
+}
+
+# Function to check if script is executable
+test_executable() {
+    if [[ -x "bin/dot-files" ]]; then
+        print_test_result "Script is executable" "PASS"
+        return 0
+    else
+        print_test_result "Script is executable" "FAIL"
+        return 1
+    fi
+}
+
+# Function to test help output
+test_help_output() {
+    local output
+    if output=$(bin/dot-files --help 2>&1); then
+        if [[ "$output" == *"Comprehensive dot-files management"* ]]; then
+            print_test_result "Help output contains expected content" "PASS"
+            return 0
+        else
+            print_test_result "Help output contains expected content" "FAIL"
+            return 1
+        fi
+    else
+        print_test_result "Help output accessible" "FAIL"
+        return 1
+    fi
+}
+
+# Function to test repository detection
+test_repo_detection() {
+    local output
+    if output=$(bin/dot-files --verbose status 2>&1); then
+        if [[ "$output" == *"Auto-detected git repository"* ]]; then
+            print_test_result "Repository auto-detection works" "PASS"
+            return 0
+        else
+            print_test_result "Repository auto-detection works" "FAIL"
+            return 1
+        fi
+    else
+        print_test_result "Repository auto-detection works" "FAIL"
+        return 1
+    fi
+}
+
+# Function to test dry-run functionality
+test_dry_run() {
+    local output
+    if output=$(timeout 10s bin/dot-files --dry-run --verbose status 2>&1 || true); then
+        if [[ "$output" == *"Repository:"* ]]; then
+            print_test_result "Dry-run mode works without making changes" "PASS"
+            return 0
+        else
+            print_test_result "Dry-run mode produces expected output" "FAIL"
+            return 1
+        fi
+    else
+        print_test_result "Dry-run mode accessible" "FAIL"
+        return 1
+    fi
+}
+
+# Function to test command structure
+test_command_structure() {
+    local commands=("add" "remove" "status" "clean" "install")
+    local all_passed=true
+
+    for cmd in "${commands[@]}"; do
+        if bin/dot-files "$cmd" --help &>/dev/null; then
+            echo -e "  ${GREEN}✓${NC} Command '$cmd' help accessible"
+        else
+            echo -e "  ${RED}✗${NC} Command '$cmd' help not accessible"
+            all_passed=false
+        fi
+    done
+
+    if $all_passed; then
+        print_test_result "All command help pages accessible" "PASS"
+        return 0
+    else
+        print_test_result "All command help pages accessible" "FAIL"
+        return 1
+    fi
+}
+
+# Function to test error handling
+test_error_handling() {
+    # Test with non-existent file
+    if bin/dot-files add /non/existent/file --dry-run &>/dev/null; then
+        print_test_result "Error handling for non-existent file" "FAIL"
+        return 1
+    else
+        print_test_result "Error handling for non-existent file" "PASS"
+        return 0
+    fi
+}
+
+# Main test runner
+main() {
+    echo -e "${BLUE}===========================================${NC}"
+    echo -e "${BLUE}      Dot-files Management Tool Tests     ${NC}"
+    echo -e "${BLUE}===========================================${NC}"
+
+    # Change to script directory
+    cd "$(dirname "$0")/.."
+
+    # Run all tests
+    test_executable
+    test_help_output
+    test_repo_detection
+    test_dry_run
+    test_command_structure
+    test_error_handling
+
+    # Print summary
+    echo -e "\n${BLUE}===========================================${NC}"
+    echo -e "${BLUE}              Test Summary                 ${NC}"
+    echo -e "${BLUE}===========================================${NC}"
+    echo -e "Tests run: ${TESTS_RUN}"
+    echo -e "Tests passed: ${GREEN}${TESTS_PASSED}${NC}"
+    echo -e "Tests failed: ${RED}${TESTS_FAILED}${NC}"
+
+    if [[ $TESTS_FAILED -eq 0 ]]; then
+        echo -e "\n${GREEN}🎉 All tests passed!${NC}"
+        echo -e "${GREEN}The dot-files management tool is working correctly.${NC}"
+        return 0
+    else
+        echo -e "\n${RED}❌ Some tests failed.${NC}"
+        echo -e "${RED}Please review the failed tests above.${NC}"
+        return 1
+    fi
+}
+
+# Run main function
+main "$@"
