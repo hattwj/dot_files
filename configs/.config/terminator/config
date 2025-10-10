@@ -22,6 +22,7 @@
     cursor_color = "#aaaaaa"
     font = DroidSansM Nerd Font 10
     foreground_color = "#ffffff"
+    show_titlebar = False
     scrollback_lines = 25000
     palette = "#000000:#cc0000:#4e9a06:#c4a000:#3465a4:#75507b:#06989a:#d3d7cf:#555753:#ef2929:#8ae234:#fce94f:#729fcf:#ad7fa8:#34e2e2:#eeeeec"
     login_shell = True
@@ -56,6 +57,7 @@
       group = Conductor
       profile = default
       uuid = 4fe2e7f7-620d-4a0b-8ffd-5250a5bea37d
+      command = TE=tm-left bash
     [[[child3]]]
       type = VPaned
       parent = child1
@@ -69,6 +71,7 @@
       group = Conductor
       profile = default
       uuid = 592df2a7-1589-445d-8815-646714c4eb41
+      command = TE=tm-right1 bash
     [[[child5]]]
       type = VPaned
       parent = child3
@@ -82,6 +85,7 @@
       group = Conductor
       profile = default
       uuid = 11315fa1-32ea-4e80-8cda-340136d87f10
+      command = TE=tm-right2 bash
     [[[terminal7]]]
       type = Terminal
       parent = child5
@@ -89,6 +93,7 @@
       group = Conductor
       profile = default
       uuid = 2b461bf2-2563-4ff8-b18f-2b8b41d2476f
+      command = TE=tm-right3 bash
   [[Cluster]]
     [[[child0]]]
       fullscreen = False
