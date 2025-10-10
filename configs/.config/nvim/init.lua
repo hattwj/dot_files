@@ -1,5 +1,9 @@
 -- bootstrap lazy.nvim, LazyVim and your plugins
 require("config.lazy")
+require("lazy").setup({
+  {"nvim-treesitter/nvim-treesitter", branch = 'master', lazy = false, build = ":TSUpdate"}
+})
+
 
 -- Function to source all files with a specific extension in a directory
 local function source_files(directory, extension)
