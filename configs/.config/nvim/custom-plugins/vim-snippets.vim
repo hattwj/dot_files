@@ -45,8 +45,8 @@ function! GetCurDir()
   return l:curfile
 endfunction
 
-command! -nargs=0 ProjectRoot2 call ProjectRoot2()
-function! ProjectRoot2()
+command! -nargs=* ProjectRoot2 call ProjectRoot2(<q-args>)
+function! ProjectRoot2(...)
   if exists("b:netrw_curdir")
     exec('cd ' . b:netrw_curdir)
     let l:git_root = FindGitRoot()
@@ -54,9 +54,26 @@ function! ProjectRoot2()
     let l:git_root = FindGitRoot()
   endif
 
+  " Call ProjectRoot2("x") to scope of results
+  " - Helps with Telescope to limit results to a subdirectory
+  if a:0 > 0 && a:1 != ''
+    if a:1 == '--clear'
+      let g:projectRootSubDir = ''
+    else 
+      let g:projectRootSubDir = a:1
+    endif
+  endif
+
+  if exists("g:projectRootSubDir") && !empty(l:git_root)
+    if isdirectory(l:git_root . '/' . g:projectRootSubDir)
+      let l:git_root = l:git_root . '/' . g:projectRootSubDir
+    endif 
+  endif 
+  
   if !empty(l:git_root)
     exec('cd ' . l:git_root)
   endif
+  return l:git_root
 endfunction
 
 " Search from git root if possible

@@ -25,6 +25,8 @@ return {
             ".metals/",
             ".bloop/",
             "target/",
+            "tmp/",
+            "bower_components/",
             ".brazil/",
             "__snapshots__/"
           },
@@ -41,6 +43,8 @@ return {
             ".bsp/",
             ".metals/",
             ".bloop/",
+            "tmp/",
+            "bower_components/",
             "target/",
             ".brazil/",
             "__snapshots__/"
