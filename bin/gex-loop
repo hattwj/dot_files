@@ -344,7 +344,6 @@ class GexLoop:
                     if line and len(line) > 0 and 'Setting up watches' not in line and 'Watches established.' not in line:
                         # File change detected
                         print()
-                        self.info(f"line -- {len(line)} -- '{repr(line)}'")
                         self.sync_in_progress = True
                         self.info("Changes detected, auto-syncing...")
                         if self.rsync_push(delete=True):
