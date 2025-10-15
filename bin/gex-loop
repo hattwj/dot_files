@@ -14,6 +14,7 @@ Arguments:
 Options:
   -h, --help                  Show this help message
   -e, --exclude PATTERN       Exclude pattern for rsync (can be used multiple times)
+  -s, --skip-push             Skip push syncs (initial push and post-pull push)
   -v, --verbose               Verbose output
 
 Interactive Controls:
@@ -26,6 +27,7 @@ Examples:
   gex-loop foo@bar.com:./baz
   gex-loop myuser@dev-server.com:/var/www/app
   gex-loop -e '.git/' -e '*.swp' user@host:./project
+  gex-loop -s user@host:./project  # Skip initial push sync
 
 Description:
   Watches the current directory for file changes (modify, create, delete, move)
@@ -33,6 +35,10 @@ Description:
   Uses inotifywait for efficient file watching.
 
   Interactive menu allows manual push/pull operations at any time.
+
+  The --skip-push flag prevents:
+    1. Initial push sync at startup
+    2. Automatic push sync after manual pull operations
 """
 
 import argparse
@@ -62,9 +68,10 @@ class Colors:
 class GexLoop:
     """File watcher with interactive sync controls"""
 
-    def __init__(self, remote_spec: str, exclude_patterns: List[str], verbose: bool = False):
+    def __init__(self, remote_spec: str, exclude_patterns: List[str], skip_push: bool = False, verbose: bool = False):
         self.remote_spec = remote_spec
         self.exclude_patterns = exclude_patterns
+        self.skip_push = skip_push
         self.verbose = verbose
         self.local_dir = os.getcwd()
         self.running = True
@@ -185,15 +192,18 @@ class GexLoop:
             self.error(f"Pull sync failed: {e}")
             return False
 
-    def initial_sync(self) -> bool:
-        """Perform initial push sync"""
+    def initial_sync(self) -> None:
+        """Perform initial push sync if not skipped"""
+        if self.skip_push:
+            self.info("Skipping initial push sync (--skip-push enabled)")
+            return
+
         self.info("Performing initial push sync...")
         if self.rsync_push():
             self.success("Initial sync completed")
-            return True
         else:
             self.error("Initial push sync failed")
-            return False
+            self.error("Continuing anyway - use manual push (p) if needed")
 
     def show_menu(self) -> None:
         """Display interactive menu"""
@@ -260,6 +270,16 @@ class GexLoop:
             print(f"\n{Colors.YELLOW}[manual]{Colors.NC} Triggering manual PULL sync...")
             if self.rsync_pull():
                 self.success(f"Manual pull completed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+                # Optionally push after pull unless --skip-push is set
+                if not self.skip_push:
+                    print(f"{Colors.YELLOW}[auto]{Colors.NC} Pushing local changes after pull...")
+                    if self.rsync_push(delete=True):
+                        self.success("Post-pull push completed")
+                    else:
+                        self.error("Post-pull push failed")
+                else:
+                    self.debug("Skipping post-pull push (--skip-push enabled)")
             else:
                 self.error("Manual pull failed")
             self.sync_in_progress = False
@@ -283,6 +303,7 @@ class GexLoop:
         ]
 
         self.info("Watching for changes... (Press 'p' to push, 'y' to pull, 'q' to quit, '?' for help)")
+        self.show_menu()
 
         try:
             # Start inotifywait in background
@@ -320,9 +341,10 @@ class GexLoop:
                 rlist, _, _ = select.select([process.stdout], [], [], 0.1)
                 if rlist:
                     line = process.stdout.readline()
-                    if line:
+                    if line and len(line) > 0 and 'Setting up watches' not in line and 'Watches established.' not in line:
                         # File change detected
                         print()
+                        self.info(f"line -- {len(line)} -- '{repr(line)}'")
                         self.sync_in_progress = True
                         self.info("Changes detected, auto-syncing...")
                         if self.rsync_push(delete=True):
@@ -360,12 +382,14 @@ class GexLoop:
         self.info(f"Local directory: {self.local_dir}")
         self.info(f"Remote destination: {self.remote_spec}")
 
+        if self.skip_push:
+            self.info(f"{Colors.YELLOW}Skip-push mode enabled{Colors.NC} - no automatic push syncs")
+
         if self.verbose:
             self.debug(f"Exclude patterns: {', '.join(self.exclude_patterns)}")
 
-        # Initial sync
-        if not self.initial_sync():
-            return 1
+        # Initial sync (skipped if --skip-push)
+        self.initial_sync()
 
         # Start watching
         self.watch_and_sync()
@@ -389,6 +413,7 @@ Examples:
   gex-loop foo@bar.com:./baz
   gex-loop myuser@dev-server.com:/var/www/app
   gex-loop -e '.git/' -e '*.swp' user@host:./project
+  gex-loop -s user@host:./project  # Skip initial and post-pull push syncs
         """
     )
 
@@ -403,6 +428,12 @@ Examples:
         dest='exclude_patterns',
         default=[],
         help='Exclude pattern for rsync (can be used multiple times)'
+    )
+
+    parser.add_argument(
+        '-s', '--skip-push',
+        action='store_true',
+        help='Skip push syncs (initial push at startup and post-pull push)'
     )
 
     parser.add_argument(
@@ -426,6 +457,7 @@ Examples:
     gex = GexLoop(
         remote_spec=args.remote_spec,
         exclude_patterns=args.exclude_patterns,
+        skip_push=args.skip_push,
         verbose=args.verbose
     )
 
