@@ -343,6 +343,15 @@ class GexLoop:
                     line = process.stdout.readline()
                     if line and len(line) > 0 and 'Setting up watches' not in line and 'Watches established.' not in line:
                         # File change detected
+                        skip_event = False
+                        for pattern in self.exclude_patterns:
+                            if pattern in line: 
+                                self.debug(f"Skipping change in excluded pattern {line}")
+                                skip_event = True 
+                                break
+                        if skip_event:
+                            continue 
+                        # Add blank line to break up log and signal that an event has occurred
                         print()
                         self.sync_in_progress = True
                         self.info("Changes detected, auto-syncing...")
