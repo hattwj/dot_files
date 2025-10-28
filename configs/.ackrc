@@ -1,1 +1,1 @@
---ignore-dir=cache  --ignore-dir=build --ignore-dir=node_modules
+--ignore-dir=cache  --ignore-dir=build --ignore-dir=node_modules --hidden

@@ -1,3 +1,12 @@
+
+local cmd_config = {
+  view = "cmdline"
+}
+
+if vim.g.neovide then
+  cmd_config = {}
+end
+
 return {
   "folke/noice.nvim",
   event = "VeryLazy",
@@ -5,9 +14,7 @@ return {
     views = {
       mini = { timeout = 8500, },
     },
-    cmdline = {
-      view = "cmdline",
-    },
+    cmdline = cmd_config,
     -- routes = {
     --   { -- When a message is more than 40 characters wide, show it as a custom message 
     --     -- with custom rules.

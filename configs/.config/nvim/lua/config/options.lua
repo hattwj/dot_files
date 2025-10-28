@@ -51,6 +51,25 @@ vim.cmd("let g:netrw_bufsettings = 'noma nomod nonu nowrap ro buflisted'")
 -- Set line length markers at 80 and 120 characters
 vim.api.nvim_set_option_value('colorcolumn', '80,120', {})
 
+vim.api.nvim_set_option_value("backspace", "indent,eol,start", {})
+
+-- ctrl +- to alter font size
+local function zoom_with_resize()
+  Snacks.zen.zoom()
+  if vim.g.neovide_scale_factor > 1 then
+      vim.g.neovide_scale_factor = 0.8
+  else
+      vim.g.neovide_scale_factor = 1.25
+  end
+end
+
+-- ctrl +- to alter font size
+local function adjust_font_size(amount)
+    vim.g.gui_fontsize = vim.g.gui_fontsize + amount
+    vim.o.guifont = vim.g.gui_font .. ":h" .. vim.g.gui_fontsize
+    print("Font Size: ".. vim.g.gui_fontsize)
+end
+
 vim.api.nvim_set_option_value("clipboard", "unnamedplus", {})
 if vim.g.neovide then
   vim.g.gui_font = "DroidSansM Nerd Font"
@@ -65,21 +84,13 @@ if vim.g.neovide then
   -- Summons a cat that causes the mouse to disappear while typing
   vim.g.neovide_hide_mouse_when_typing = true
 
-  -- ctrl +- to alter font size
-  local function adjust_font_size(amount)
-      vim.g.gui_fontsize = vim.g.gui_fontsize + amount
-      vim.o.guifont = vim.g.gui_font .. ":h" .. vim.g.gui_fontsize
-      print("Font Size: ".. vim.g.gui_fontsize)
-  end
-
   vim.keymap.set('n', '<C-kPlus>', function() adjust_font_size(1) end, { noremap = true, silent = true })
   vim.keymap.set('n', '<C-kMinus>', function() adjust_font_size(-1) end, { noremap = true, silent = true })
 
   vim.keymap.set('n', '<C-+>', function() adjust_font_size(1) end, { noremap = true, silent = true })
   vim.keymap.set('n', '<C-->', function() adjust_font_size(-1) end, { noremap = true, silent = true })
 
-  -- In neovide we are able to use the ALT key for keymaps, so we use it here for window navigation.
-  -- This is similar to the keymap used in terminator to switch between terminals
+  -- Window navigation
   vim.keymap.set({'n', 'i', 't', 'v'}, '<A-Up>', '<C-\\><C-n><C-w><Up><CR>', { noremap = true, silent = true })
   vim.keymap.set({'n', 'i', 't', 'v'}, '<A-Down>', '<C-\\><C-n><C-w><Down><CR>', { noremap = true, silent = true })
   vim.keymap.set({'n', 'i', 't', 'v'}, '<A-Left>', '<C-\\><C-n><C-w><Left><CR>', { noremap = true, silent = true })
@@ -90,21 +101,12 @@ if vim.g.neovide then
   vim.keymap.set({'n', 'i', 't', 'v'}, '<C-S-Down>',  '<C-w>-', { noremap = true, silent = true })
   vim.keymap.set({'n', 'i', 't', 'v'}, '<C-S-Left>',  '<C-w>>', { noremap = true, silent = true })
   vim.keymap.set({'n', 'i', 't', 'v'}, '<C-S-Right>', '<C-w><', { noremap = true, silent = true })
-  
+
   -- Ctrl-V to paste into command from system clipboard
   -- Silent false appears to be important, otherwise you have to press an arrow key
   -- to get it to refresh.
   vim.api.nvim_set_keymap( "c", "<C-v>", "<C-r>+<Right>", { silent = false, noremap = true })
 
-  -- ctrl +- to alter font size
-  local function zoom_with_resize()
-    Snacks.zen.zoom()
-    if vim.g.neovide_scale_factor > 1 then
-        vim.g.neovide_scale_factor = 0.8
-    else
-        vim.g.neovide_scale_factor = 1.25
-    end
-  end
 
   -- Zoom with resize in scaling
   vim.keymap.set('n', '<C-S-z>', function() zoom_with_resize() end, { noremap = true, silent = true })
@@ -124,4 +126,23 @@ if vim.g.neovide then
 
   -- Mouse control left click to open url under cursor
   vim.keymap.set({'n', 'i', 't', 'v'}, '<C-LeftMouse>', function() vim.cmd.normal[[gx]] end, { noremap = true, silent = true })
+else
+
+  -- Window navigation
+  vim.keymap.set({'n', 'i', 't', 'v'}, '<S-A-Up>', '<C-\\><C-n><C-w><Up><CR>', { noremap = true, silent = true })
+  vim.keymap.set({'n', 'i', 't', 'v'}, '<S-A-Down>', '<C-\\><C-n><C-w><Down><CR>', { noremap = true, silent = true })
+  vim.keymap.set({'n', 'i', 't', 'v'}, '<S-A-Left>', '<C-\\><C-n><C-w><Left><CR>', { noremap = true, silent = true })
+  vim.keymap.set({'n', 'i', 't', 'v'}, '<S-A-Right>', '<C-\\><C-n><C-w><Right><CR>', { noremap = true, silent = true })
+
+  -- Zoom with (scaling resize not possible in a terminal)
+  vim.api.nvim_set_keymap('n', '<S-A-z>', '<cmd>lua Snacks.zen.zoom()<CR>', { noremap = true, silent = true })
+  vim.api.nvim_set_keymap('i', '<S-A-z>', '<cmd>lua Snacks.zen.zoom()<CR>', { noremap = true, silent = true })
+  vim.api.nvim_set_keymap('v', '<S-A-z>', '<cmd>lua Snacks.zen.zoom()<CR>', { noremap = true, silent = true })
+  vim.keymap.set('t', '<S-A-z>', function() Snacks.zen.zoom() end, { noremap = true, silent = true })
+
+  -- Zoom with (scaling resize not possible in a terminal)
+  vim.api.nvim_set_keymap('n', '<S-A-x>', '<cmd>lua Snacks.zen.zoom()<CR>', { noremap = true, silent = true })
+  vim.api.nvim_set_keymap('i', '<S-A-x>', '<cmd>lua Snacks.zen.zoom()<CR>', { noremap = true, silent = true })
+  vim.api.nvim_set_keymap('v', '<S-A-x>', '<cmd>lua Snacks.zen.zoom()<CR>', { noremap = true, silent = true })
+  vim.keymap.set('t', '<S-A-x>', function() Snacks.zen.zoom() end, { noremap = true, silent = true })
 end

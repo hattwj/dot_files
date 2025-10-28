@@ -25,7 +25,7 @@ return {
       },
       {
         "<leader>aw",
-        function() require("term-popup").toggle("wasabi --thinking-token-budget 12000 --enhance --no-markdown --auto-accept-edits") end,
+        function() require("term-popup").toggle("wasabi --no-markdown --auto-accept-edits") end,
         desc = "Toggle Wasabi",
         mode = {"n", "v"}
       },

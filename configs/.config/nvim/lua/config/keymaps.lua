@@ -30,6 +30,9 @@ vim.api.nvim_set_keymap("n", "<leader>fa", ":ProjectRoot2<CR>:Telescope live_gre
 -- List projects
 vim.api.nvim_set_keymap("n", "<C-S-p>", ":Telescope projects<CR>", { desc = "live_grep" })
 
+-- Search buffers
+vim.api.nvim_set_keymap("n", "<leader>sb", ":Telescope buffers<CR>", { desc = "Search buffers" })
+
 -- Toggle code comments
 vim.api.nvim_set_keymap("n", "<leader>-", "gcc",{ desc="Toggle code comment", noremap=false})
 vim.api.nvim_set_keymap("v", "<leader>-", "gc",{ desc="Toggle code comment", noremap=false})
