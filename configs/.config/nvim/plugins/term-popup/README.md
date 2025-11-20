@@ -1,95 +1,54 @@
 # term-popup.nvim
 
-A persistent floating terminal popup plugin for Neovim with LazyVim integration.
+A multi-position terminal plugin for Neovim with runtime mode switching and persistent terminal sessions.
 
 ## Features
 
-- **Persistent terminal sessions** - Terminal state is maintained across open/close cycles
-- **Floating window** - Clean, centered popup with configurable size and border
-- **Universal keybinding** - Same key combination to open and close from any mode
-- **LazyVim integration** - Proper plugin structure and configuration
+- **5 Display Modes**: bottom split, top split, right split, left split, float (popover)
+- **Runtime Mode Switching**: Change terminal positions on-the-fly without restarting
+- **Persistent Sessions**: Terminal state maintained across open/close cycles
+- **Unique Terminals**: Each command gets its own terminal instance
+- **Non-Immersive Splits**: Split modes don't trigger terminal title changes
+- **Multiple Terminals**: Run different commands simultaneously in different positions
 
-## Installation
+## Quick Start
 
-This plugin is already installed in your LazyVim setup via the local plugin system.
+**Default Usage:**
+```
+<leader>th    → Toggle htop in current mode (default: bottom split)
+<leader>tm    → Cycle modes: bottom → right → float → bottom
+:PopupTerminalMode right    → Switch to right split mode
+```
 
-## Usage
+## Keybindings
 
-### Default Keybinding
-- `<Esc><Esc>` - Toggle the persistent terminal from normal, insert, or visual mode
-- `<Esc><Esc>` - Close the terminal from within terminal mode
+### Terminal Commands
+- `<leader>th` - Toggle htop terminal
+- `<leader>td` - Toggle docker stats terminal
+- `<leader>aw` - Toggle Wasabi terminal
+- `<leader>t<Esc>` - Toggle default terminal
+- `<leader><Esc>` - Close focused terminal
 
-### API Functions
+### Mode Switching
+- `<leader>tm` - Cycle through modes
+- `<leader>tmb` - Set mode to bottom
+- `<leader>tmt` - Set mode to top
+- `<leader>tmr` - Set mode to right
+- `<leader>tml` - Set mode to left
+- `<leader>tmf` - Set mode to float
+- `<leader>tca` - Close all terminals
 
-```lua
-local term_popup = require("term-popup")
+## Vim Command
 
--- Toggle terminal visibility
-term_popup.toggle()
-
--- Open terminal (if not already open)
-term_popup.open()
-
--- Close terminal (if open)
-term_popup.close()
-
--- Check if terminal is currently open
-if term_popup.is_open() then
-  print("Terminal is open!")
-end
-
--- Get the terminal buffer ID
-local buf_id = term_popup.get_buf()
+```vim
+:PopupTerminalMode          " Show current mode
+:PopupTerminalMode bottom   " Set mode to bottom
+:PopupTerminalMode<Tab>     " Tab completion
 ```
 
 ## Configuration
 
-The plugin can be configured in your LazyVim plugin spec:
-
-```lua
-return {
-  {
-    dir = vim.fn.stdpath("config") .. "/plugins/term-popup",
-    name = "term-popup",
-    config = function()
-      require("term-popup").setup({
-        size = {
-          width = 0.9,   -- 90% of screen width
-          height = 0.7,  -- 70% of screen height
-        },
-        border = "single",  -- "single", "double", "rounded", "solid", "shadow"
-        shell = "/bin/bash",  -- Custom shell (defaults to vim.o.shell)
-        keymaps = {
-          toggle = "<C-t>",  -- Custom toggle key
-        }
-      })
-    end
-  }
-}
-```
-
-### Default Configuration
-
-```lua
-{
-  size = {
-    width = 0.8,   -- 80% of screen width
-    height = 0.8,  -- 80% of screen height
-  },
-  border = "rounded",
-  shell = nil,  -- Uses vim.o.shell
-  keymaps = {
-    toggle = "<Esc><Esc>",
-  }
-}
-```
-
-## How It Works
-
-1. **First toggle**: Creates a new terminal buffer and floating window
-2. **Subsequent closes**: Only closes the window, keeping the terminal process alive
-3. **Subsequent opens**: Reopens the same terminal session with all history intact
-4. **Process persistence**: Running commands, directory changes, and shell history are all maintained
+See `lua/plugins/term-popup.lua` for full configuration options.
 
 ## License
 

@@ -5,19 +5,36 @@ local terminals = {}
 local default_terminal = {
   buf = nil,
   win = nil,
+  current_mode = nil,
 }
-
--- Track which terminal is currently open
-local current_open_terminal = nil
 
 -- Default configuration
 M.config = {
+  mode = "bottom",  -- Default: "bottom", "top", "right", "left", "float"
+
+  -- Split dimensions
+  split_height = 15,  -- For bottom/top splits (in lines)
+  split_width = 80,   -- For right/left splits (in columns, or 0.0-1.0 for percentage)
+
+  -- Float dimensions
   size = {
     width = 0.8,  -- 80% of screen width
     height = 0.8, -- 80% of screen height
   },
   border = "rounded",
   shell = nil, -- uses vim.o.shell by default
+
+  -- Mode cycle order for toggle_mode()
+  mode_cycle = {"bottom", "right", "float"},
+}
+
+-- Valid modes
+local VALID_MODES = {
+  bottom = true,
+  top = true,
+  right = true,
+  left = true,
+  float = true,
 }
 
 -- Get terminal state for a given command (or default)
@@ -28,6 +45,7 @@ local function get_terminal_state(command)
         buf = nil,
         win = nil,
         command = command,
+        current_mode = nil,
       }
     end
     return terminals[command]
@@ -36,19 +54,12 @@ local function get_terminal_state(command)
   end
 end
 
--- Close any currently open terminal
-local function close_current_terminal()
-  if current_open_terminal then
-    local state = get_terminal_state(current_open_terminal)
-    if state.win and vim.api.nvim_win_is_valid(state.win) then
-      vim.api.nvim_win_close(state.win, false)
-      state.win = nil
-    end
-    current_open_terminal = nil
-  elseif default_terminal.win and vim.api.nvim_win_is_valid(default_terminal.win) then
-    vim.api.nvim_win_close(default_terminal.win, false)
-    default_terminal.win = nil
-    current_open_terminal = nil
+-- Close a specific terminal window
+local function close_terminal_window(state)
+  if state.win and vim.api.nvim_win_is_valid(state.win) then
+    vim.api.nvim_win_close(state.win, false)
+    state.win = nil
+    state.current_mode = nil
   end
 end
 
@@ -82,10 +93,8 @@ local function create_floating_window(command)
     -- Start terminal in the buffer
     vim.api.nvim_buf_call(state.buf, function()
       if command then
-        -- For command-specific terminals, start with the command
         vim.fn.termopen(command)
       else
-        -- For default terminal, use configured shell
         vim.fn.termopen(M.config.shell or vim.o.shell)
       end
     end)
@@ -100,38 +109,283 @@ local function create_floating_window(command)
 
   -- Create the floating window
   state.win = vim.api.nvim_open_win(state.buf, true, opts)
-
-  -- Update current open terminal tracker
-  current_open_terminal = command
+  state.current_mode = "float"
 
   -- Enter terminal mode
   vim.cmd('startinsert')
 end
 
--- Unified toggle function - this is the main function now
-function M.toggle(command)
-  -- Determine if the requested terminal is currently open
-  local requested_state = get_terminal_state(command)
-  local is_requested_open = requested_state.win and vim.api.nvim_win_is_valid(requested_state.win)
+-- Create bottom split terminal window
+local function create_bottom_split(command)
+  local state = get_terminal_state(command)
 
-  if is_requested_open then
-    -- If the requested terminal is already open, close it
-    close_current_terminal()
-  else
-    -- Close any other open terminal first
-    close_current_terminal()
-    -- Then open the requested terminal
+  -- Create buffer if it doesn't exist or is invalid
+  if not state.buf or not vim.api.nvim_buf_is_valid(state.buf) then
+    state.buf = vim.api.nvim_create_buf(false, true)
+
+    -- Start terminal in the buffer
+    vim.api.nvim_buf_call(state.buf, function()
+      if command then
+        vim.fn.termopen(command)
+      else
+        vim.fn.termopen(M.config.shell or vim.o.shell)
+      end
+    end)
+
+    -- Set buffer options
+    vim.api.nvim_buf_set_option(state.buf, 'filetype', 'terminal')
+
+    -- Set buffer name for identification
+    local buf_name = command and ("term://" .. command) or "term://default"
+    vim.api.nvim_buf_set_name(state.buf, buf_name)
+  end
+
+  -- Create the split window at bottom
+  vim.cmd('botright ' .. M.config.split_height .. 'split')
+  state.win = vim.api.nvim_get_current_win()
+  vim.api.nvim_win_set_buf(state.win, state.buf)
+
+  -- Set window options to prevent immersion breaking
+  vim.api.nvim_win_set_option(state.win, 'winfixheight', true)
+  vim.api.nvim_win_set_option(state.win, 'number', false)
+  vim.api.nvim_win_set_option(state.win, 'relativenumber', false)
+  vim.api.nvim_win_set_option(state.win, 'signcolumn', 'no')
+
+  state.current_mode = "bottom"
+
+  -- Enter terminal mode
+  vim.cmd('startinsert')
+end
+
+-- Create top split terminal window
+local function create_top_split(command)
+  local state = get_terminal_state(command)
+
+  -- Create buffer if it doesn't exist or is invalid
+  if not state.buf or not vim.api.nvim_buf_is_valid(state.buf) then
+    state.buf = vim.api.nvim_create_buf(false, true)
+
+    -- Start terminal in the buffer
+    vim.api.nvim_buf_call(state.buf, function()
+      if command then
+        vim.fn.termopen(command)
+      else
+        vim.fn.termopen(M.config.shell or vim.o.shell)
+      end
+    end)
+
+    -- Set buffer options
+    vim.api.nvim_buf_set_option(state.buf, 'filetype', 'terminal')
+
+    -- Set buffer name for identification
+    local buf_name = command and ("term://" .. command) or "term://default"
+    vim.api.nvim_buf_set_name(state.buf, buf_name)
+  end
+
+  -- Create the split window at top
+  vim.cmd('topleft ' .. M.config.split_height .. 'split')
+  state.win = vim.api.nvim_get_current_win()
+  vim.api.nvim_win_set_buf(state.win, state.buf)
+
+  -- Set window options
+  vim.api.nvim_win_set_option(state.win, 'winfixheight', true)
+  vim.api.nvim_win_set_option(state.win, 'number', false)
+  vim.api.nvim_win_set_option(state.win, 'relativenumber', false)
+  vim.api.nvim_win_set_option(state.win, 'signcolumn', 'no')
+
+  state.current_mode = "top"
+
+  -- Enter terminal mode
+  vim.cmd('startinsert')
+end
+
+-- Create right split terminal window
+local function create_right_split(command)
+  local state = get_terminal_state(command)
+
+  -- Create buffer if it doesn't exist or is invalid
+  if not state.buf or not vim.api.nvim_buf_is_valid(state.buf) then
+    state.buf = vim.api.nvim_create_buf(false, true)
+
+    -- Start terminal in the buffer
+    vim.api.nvim_buf_call(state.buf, function()
+      if command then
+        vim.fn.termopen(command)
+      else
+        vim.fn.termopen(M.config.shell or vim.o.shell)
+      end
+    end)
+
+    -- Set buffer options
+    vim.api.nvim_buf_set_option(state.buf, 'filetype', 'terminal')
+
+    -- Set buffer name for identification
+    local buf_name = command and ("term://" .. command) or "term://default"
+    vim.api.nvim_buf_set_name(state.buf, buf_name)
+  end
+
+  -- Determine split width
+  local width = M.config.split_width
+  if type(width) == "number" and width > 0 and width < 1 then
+    -- Percentage mode
+    local total_width = vim.api.nvim_get_option_value("columns", {})
+    width = math.ceil(total_width * width)
+  end
+
+  -- Create the split window at right
+  vim.cmd('vertical botright ' .. width .. 'split')
+  state.win = vim.api.nvim_get_current_win()
+  vim.api.nvim_win_set_buf(state.win, state.buf)
+
+  -- Set window options
+  vim.api.nvim_win_set_option(state.win, 'winfixwidth', true)
+  vim.api.nvim_win_set_option(state.win, 'number', false)
+  vim.api.nvim_win_set_option(state.win, 'relativenumber', false)
+  vim.api.nvim_win_set_option(state.win, 'signcolumn', 'no')
+
+  state.current_mode = "right"
+
+  -- Enter terminal mode
+  vim.cmd('startinsert')
+end
+
+-- Create left split terminal window
+local function create_left_split(command)
+  local state = get_terminal_state(command)
+
+  -- Create buffer if it doesn't exist or is invalid
+  if not state.buf or not vim.api.nvim_buf_is_valid(state.buf) then
+    state.buf = vim.api.nvim_create_buf(false, true)
+
+    -- Start terminal in the buffer
+    vim.api.nvim_buf_call(state.buf, function()
+      if command then
+        vim.fn.termopen(command)
+      else
+        vim.fn.termopen(M.config.shell or vim.o.shell)
+      end
+    end)
+
+    -- Set buffer options
+    vim.api.nvim_buf_set_option(state.buf, 'filetype', 'terminal')
+
+    -- Set buffer name for identification
+    local buf_name = command and ("term://" .. command) or "term://default"
+    vim.api.nvim_buf_set_name(state.buf, buf_name)
+  end
+
+  -- Determine split width
+  local width = M.config.split_width
+  if type(width) == "number" and width > 0 and width < 1 then
+    -- Percentage mode
+    local total_width = vim.api.nvim_get_option_value("columns", {})
+    width = math.ceil(total_width * width)
+  end
+
+  -- Create the split window at left
+  vim.cmd('vertical topleft ' .. width .. 'split')
+  state.win = vim.api.nvim_get_current_win()
+  vim.api.nvim_win_set_buf(state.win, state.buf)
+
+  -- Set window options
+  vim.api.nvim_win_set_option(state.win, 'winfixwidth', true)
+  vim.api.nvim_win_set_option(state.win, 'number', false)
+  vim.api.nvim_win_set_option(state.win, 'relativenumber', false)
+  vim.api.nvim_win_set_option(state.win, 'signcolumn', 'no')
+
+  state.current_mode = "left"
+
+  -- Enter terminal mode
+  vim.cmd('startinsert')
+end
+
+-- Create terminal window based on mode
+local function create_window(command, mode)
+  if mode == "float" then
     create_floating_window(command)
+  elseif mode == "bottom" then
+    create_bottom_split(command)
+  elseif mode == "top" then
+    create_top_split(command)
+  elseif mode == "right" then
+    create_right_split(command)
+  elseif mode == "left" then
+    create_left_split(command)
+  else
+    vim.notify("Invalid mode: " .. mode, vim.log.levels.ERROR)
   end
 end
 
--- Close any open terminal (unified close)
-function M.close()
-  close_current_terminal()
+-- Unified toggle function
+function M.toggle(command, mode_override)
+  local mode = mode_override or M.config.mode
+  local state = get_terminal_state(command)
+
+  -- Check if this terminal is currently open anywhere
+  if state.win and vim.api.nvim_win_is_valid(state.win) then
+    -- It's open, close it
+    close_terminal_window(state)
+  else
+    -- It's not open, open it in the specified mode
+    create_window(command, mode)
+  end
+end
+
+-- Close any open terminal (focused or by command)
+function M.close(command)
+  if command then
+    local state = get_terminal_state(command)
+    close_terminal_window(state)
+  else
+    -- Close currently focused window if it's a terminal
+    local current_win = vim.api.nvim_get_current_win()
+    local current_buf = vim.api.nvim_win_get_buf(current_win)
+    local buf_type = vim.api.nvim_buf_get_option(current_buf, 'buftype')
+
+    if buf_type == 'terminal' then
+      vim.api.nvim_win_close(current_win, false)
+    end
+  end
+end
+
+-- Set terminal mode
+function M.set_mode(mode)
+  if not VALID_MODES[mode] then
+    vim.notify("Invalid mode: " .. mode .. ". Valid modes: bottom, top, right, left, float", vim.log.levels.ERROR)
+    return
+  end
+
+  M.config.mode = mode
+  vim.notify("Terminal mode set to: " .. mode, vim.log.levels.INFO)
+end
+
+-- Get current mode
+function M.get_mode()
+  return M.config.mode
+end
+
+-- Toggle between modes (cycles through mode_cycle)
+function M.toggle_mode()
+  local cycle = M.config.mode_cycle
+  local current_mode = M.config.mode
+
+  -- Find current mode in cycle
+  local current_index = 1
+  for i, mode in ipairs(cycle) do
+    if mode == current_mode then
+      current_index = i
+      break
+    end
+  end
+
+  -- Move to next mode in cycle
+  local next_index = (current_index % #cycle) + 1
+  local next_mode = cycle[next_index]
+
+  M.set_mode(next_mode)
 end
 
 -- Execute command in command-specific terminal (create if doesn't exist)
--- This is now just an alias for toggle for consistency
 function M.exec_command(command)
   if not command then
     error("Command is required for exec_command")
@@ -144,10 +398,15 @@ function M.toggle_command(command)
   M.toggle(command)
 end
 
-function M.open(command)
-  -- Close any open terminal first
-  close_current_terminal()
-  create_floating_window(command)
+function M.open(command, mode_override)
+  local mode = mode_override or M.config.mode
+  local state = get_terminal_state(command)
+
+  -- Close if already open
+  close_terminal_window(state)
+
+  -- Open in specified mode
+  create_window(command, mode)
 end
 
 function M.open_command(command)
@@ -163,31 +422,33 @@ function M.close_command(command)
   end
 
   local state = get_terminal_state(command)
-  if state.win and vim.api.nvim_win_is_valid(state.win) then
-    vim.api.nvim_win_close(state.win, false)
-    state.win = nil
-    if current_open_terminal == command then
-      current_open_terminal = nil
-    end
-  end
+  close_terminal_window(state)
 end
 
 -- Close all terminals
 function M.close_all()
-  close_current_terminal()
-  -- Also close any orphaned terminals
+  -- Close default terminal
+  close_terminal_window(default_terminal)
+
+  -- Close all command-specific terminals
   for command, state in pairs(terminals) do
-    if state.win and vim.api.nvim_win_is_valid(state.win) then
-      vim.api.nvim_win_close(state.win, false)
-      state.win = nil
-    end
+    close_terminal_window(state)
   end
 end
 
 -- Check if a terminal is open (any terminal)
 function M.is_open()
-  return current_open_terminal ~= nil or
-         (default_terminal.win and vim.api.nvim_win_is_valid(default_terminal.win))
+  if default_terminal.win and vim.api.nvim_win_is_valid(default_terminal.win) then
+    return true
+  end
+
+  for _, state in pairs(terminals) do
+    if state.win and vim.api.nvim_win_is_valid(state.win) then
+      return true
+    end
+  end
+
+  return false
 end
 
 -- Check if command-specific terminal is open
@@ -200,9 +461,27 @@ function M.is_command_open(command)
   return state.win and vim.api.nvim_win_is_valid(state.win)
 end
 
--- Get which terminal is currently open
-function M.get_current_terminal()
-  return current_open_terminal
+-- Get which terminals are currently open
+function M.get_open_terminals()
+  local open_terminals = {}
+
+  if default_terminal.win and vim.api.nvim_win_is_valid(default_terminal.win) then
+    table.insert(open_terminals, {
+      command = "default",
+      mode = default_terminal.current_mode
+    })
+  end
+
+  for command, state in pairs(terminals) do
+    if state.win and vim.api.nvim_win_is_valid(state.win) then
+      table.insert(open_terminals, {
+        command = command,
+        mode = state.current_mode
+      })
+    end
+  end
+
+  return open_terminals
 end
 
 -- Check if command-specific terminal exists (buffer created)
@@ -244,6 +523,12 @@ end
 function M.setup(opts)
   -- Merge user config with defaults
   M.config = vim.tbl_deep_extend("force", M.config, opts or {})
+
+  -- Validate mode
+  if not VALID_MODES[M.config.mode] then
+    vim.notify("Invalid default mode: " .. M.config.mode .. ". Falling back to 'bottom'", vim.log.levels.WARN)
+    M.config.mode = "bottom"
+  end
 end
 
 return M

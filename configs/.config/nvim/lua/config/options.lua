@@ -2,6 +2,9 @@
 -- Default options that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/options.lua
 -- Add any additional options here
 
+-- Disable animations, it makes scrolling (pgUp/pgDown) super slow
+vim.g.snacks_animate = false
+
 -- Show the title in the terminal header for the current buffer.
 vim.opt.title = true
 vim.opt.titlestring = '%F'

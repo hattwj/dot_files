@@ -3,6 +3,10 @@ alias cls="echo -ne '\033c'"
 # alias tmux="TERM=xterm-256color tmux"
 alias git-is-slow-again='git gc;git repack -a -d --depth=250 --window=250;git prune'
 
+alias gs='git status'
+alias gd='git diff'
+alias gdc='git diff --cached'
+
 ##
 # Force git to reset stuck files that are showing as modified
 function git-is-not-resetting-to() {
