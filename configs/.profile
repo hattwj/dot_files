@@ -26,3 +26,4 @@ export JPATH="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.412.b08-1.amzn2.0.1.x86_64/b
 export JAVA_HOME="$($JPATH -XshowSettings:properties -version 2>&1 | grep "java.home" | sed -e 's/java.home = //;s/ //g;')"
 export PATH="$JAVA_HOME/bin:$PATH"
 # <<< JVM picker <<<
+. "$HOME/.cargo/env"

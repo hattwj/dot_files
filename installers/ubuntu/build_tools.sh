@@ -4,6 +4,7 @@ set -e
 sudo apt install \
 	make \
 	git \
+  git-delta \
 	guake \
 	build-essential \
 	ruby \

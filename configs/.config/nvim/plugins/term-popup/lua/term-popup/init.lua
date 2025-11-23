@@ -8,6 +8,9 @@ local default_terminal = {
   current_mode = nil,
 }
 
+-- Track the last opened terminal
+local last_opened_terminal = nil
+
 -- Default configuration
 M.config = {
   mode = "bottom",  -- Default: "bottom", "top", "right", "left", "float"
@@ -46,6 +49,7 @@ local function get_terminal_state(command)
         win = nil,
         command = command,
         current_mode = nil,
+        preferred_mode = nil,  -- Per-terminal mode preference
       }
     end
     return terminals[command]
@@ -53,6 +57,30 @@ local function get_terminal_state(command)
     return default_terminal
   end
 end
+
+-- Find which terminal state owns a buffer
+local function find_terminal_by_buf(buf)
+  if not buf or not vim.api.nvim_buf_is_valid(buf) then
+    return nil
+  end
+
+  -- Check default terminal
+  if default_terminal.buf == buf then
+    return default_terminal
+  end
+
+  -- Check command-specific terminals
+  for _, state in pairs(terminals) do
+    if state.buf == buf then
+      return state
+    end
+  end
+
+  return nil
+end
+
+-- Track last accessed terminal (updated by autocmd)
+local last_accessed_terminal = nil
 
 -- Close a specific terminal window
 local function close_terminal_window(state)
@@ -318,8 +346,11 @@ end
 
 -- Unified toggle function
 function M.toggle(command, mode_override)
-  local mode = mode_override or M.config.mode
   local state = get_terminal_state(command)
+
+  -- Determine which mode to use:
+  -- 1. Explicit override, 2. Terminal's preferred mode, 3. Global default
+  local mode = mode_override or state.preferred_mode or M.config.mode
 
   -- Check if this terminal is currently open anywhere
   if state.win and vim.api.nvim_win_is_valid(state.win) then
@@ -327,6 +358,9 @@ function M.toggle(command, mode_override)
     close_terminal_window(state)
   else
     -- It's not open, open it in the specified mode
+    -- Track this as the last opened terminal
+    last_opened_terminal = state  -- Still track when opened, but autocmd will update based on access
+
     create_window(command, mode)
   end
 end
@@ -355,8 +389,39 @@ function M.set_mode(mode)
     return
   end
 
-  M.config.mode = mode
-  vim.notify("Terminal mode set to: " .. mode, vim.log.levels.INFO)
+  -- Use last accessed terminal if available, otherwise fall back to last opened
+  local target_terminal = last_accessed_terminal or last_opened_terminal
+  if not target_terminal then
+    vim.notify("No terminal opened yet. Mode change is a no-op.", vim.log.levels.INFO)
+    return
+  end
+
+  -- Check if the last terminal still exists
+  if not last_opened_terminal.buf or not vim.api.nvim_buf_is_valid(last_opened_terminal.buf) then
+    vim.notify("Last opened terminal no longer exists. Mode change is a no-op.", vim.log.levels.WARN)
+    target_terminal = nil
+    return
+  end
+
+  -- Check if the terminal is currently visible
+  local was_open = last_opened_terminal.win and vim.api.nvim_win_is_valid(last_opened_terminal.win)
+
+  if was_open then
+    -- Close the current window
+    close_terminal_window(target_terminal)
+
+    -- Reopen in the new mode
+    create_window(target_terminal.command, mode)
+
+    -- Store this as the terminal's preferred mode
+    target_terminal.preferred_mode = mode
+
+    vim.notify("Terminal mode changed to: " .. mode, vim.log.levels.INFO)
+  else
+    -- Store the preference for when it's opened next
+    target_terminal.preferred_mode = mode
+    vim.notify("Terminal mode will be '" .. mode .. "' when opened next", vim.log.levels.INFO)
+  end
 end
 
 -- Get current mode
@@ -523,6 +588,24 @@ end
 function M.setup(opts)
   -- Merge user config with defaults
   M.config = vim.tbl_deep_extend("force", M.config, opts or {})
+
+  -- Set up autocmd to track last accessed terminal
+  local group = vim.api.nvim_create_augroup("TermPopupTracking", { clear = true })
+  vim.api.nvim_create_autocmd("BufEnter", {
+    group = group,
+    callback = function(ev)
+      local buf = ev.buf
+      local buftype = vim.api.nvim_buf_get_option(buf, 'buftype')
+
+      -- Only track if it's a terminal buffer
+      if buftype == 'terminal' then
+        local state = find_terminal_by_buf(buf)
+        if state then
+          last_accessed_terminal = state
+        end
+      end
+    end,
+  })
 
   -- Validate mode
   if not VALID_MODES[M.config.mode] then

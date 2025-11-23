@@ -13,6 +13,7 @@ return {
   },
   config = function()
     local telescope = require("telescope")
+    local actions = require("telescope.actions")
     telescope.setup({
       pickers = {
         live_grep = {
@@ -50,6 +51,40 @@ return {
             "__snapshots__/"
           },
           hidden = true,
+        },
+      },
+      defaults = {
+        mappings = {
+          i = {
+            -- Open all selected files (or current file if none selected) on Enter
+            ["<CR>"] = function(prompt_bufnr)
+              local picker = require("telescope.actions.state").get_current_picker(prompt_bufnr)
+              local multi = picker:get_multi_selection()
+              if #multi > 0 then
+                actions.close(prompt_bufnr)
+                for _, entry in ipairs(multi) do
+                  vim.cmd(string.format("edit %s", entry.path or entry.filename))
+                end
+              else
+                actions.select_default(prompt_bufnr)
+              end
+            end,
+          },
+          n = {
+            -- Same mapping for normal mode
+            ["<CR>"] = function(prompt_bufnr)
+              local picker = require("telescope.actions.state").get_current_picker(prompt_bufnr)
+              local multi = picker:get_multi_selection()
+              if #multi > 0 then
+                actions.close(prompt_bufnr)
+                for _, entry in ipairs(multi) do
+                  vim.cmd(string.format("edit %s", entry.path or entry.filename))
+                end
+              else
+                actions.select_default(prompt_bufnr)
+              end
+            end,
+          },
         },
       },
     })

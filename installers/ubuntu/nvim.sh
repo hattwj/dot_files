@@ -3,8 +3,9 @@
 # sudo yum groups install -y Development\ tools
 # sudo yum install -y cmake
 # sudo yum install -y python34-{devel,pip}
-# sudo pip-3.4 install neovim --upgrade
+# sudo pip-3.4 install neovim --upgrade:
 (
+  sudo apt install make cmake
   mkdir ~/source || echo ~/source exists
   cd ~/source || exit 1
   [ ! -d "neovim" ] &&  git clone https://github.com/neovim/neovim.git

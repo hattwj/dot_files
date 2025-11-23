@@ -24,12 +24,6 @@ return {
         mode = {"n", "v"}
       },
       {
-        "<leader>aw",
-        function() require("term-popup").toggle("wasabi --no-markdown --auto-accept-edits", "right") end,
-        desc = "Toggle Wasabi",
-        mode = {"n", "v"}
-      },
-      {
         "<leader>t<Esc>",
         function() require("term-popup").toggle(nil, "float") end,
         desc = "Toggle default terminal",

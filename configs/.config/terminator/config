@@ -1,11 +1,7 @@
 [global_config]
   dbus = False
   handle_size = 6
-  title_transmit_bg_color = "#222436"
-  title_receive_bg_color = "#4e537c"
   suppress_multiple_term_dialog = True
-  title_use_system_font = False
-  title_font = DroidSansM Nerd Font 9
   case_sensitive = False
 [keybindings]
   zoom_normal_all = <Primary>parenright
@@ -19,8 +15,7 @@
   [[default]]
     background_darkness = 0.91
     background_type = transparent
-    cursor_color = "#aaaaaa"
-    font = DroidSansM Nerd Font 10
+    font = JetBrainsMono Nerd Font 10
     foreground_color = "#ffffff"
     show_titlebar = False
     scrollback_lines = 25000
@@ -28,8 +23,7 @@
     login_shell = True
     use_system_font = False
   [[Cluster]]
-    cursor_color = "#aaaaaa"
-    font = DroidSansM Nerd Font 10
+    font = JetBrainsMonoNL Nerd Font Propo 10
     use_system_font = False
 [layouts]
   [[default]]
