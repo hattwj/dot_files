@@ -1,0 +1,128 @@
+#!/usr/bin/env python3
+"""
+Bridge between stdio and Unix domain socket for MCP communication.
+Reads from stdin, forwards to socket. Reads from socket, forwards to stdout.
+
+Automatically detects the correct neovim socket based on current TTY.
+
+Usage:
+  nvim-mcp-bridge
+
+Environment Variables:
+  NVIM_SOCKET_PATH: Path to Unix domain socket (overrides auto-detection)
+"""
+
+import socket
+import sys
+import os
+import threading
+import subprocess
+
+
+def get_auto_socket_path():
+    """Automatically determine socket path based on current TTY."""
+    try:
+        # Get the TTY of the current terminal
+        result = subprocess.run(['tty'], capture_output=True, text=True)
+        tty = result.stdout.strip()
+
+        if not tty or tty == 'not a tty':
+            # Fallback: look for any radish-nvim socket
+            import glob
+            sockets = glob.glob('/tmp/radish-nvim-*.sock')
+            if sockets:
+                # Use the most recently modified socket
+                sockets.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+                return sockets[0]
+            return None
+
+        # Convert /dev/pts/5 -> pts-5
+        # Convert /dev/tty1 -> tty1
+        safe_name = tty.replace('/dev/', '').replace('/', '-')
+        return f"/tmp/radish-nvim-{safe_name}.sock"
+    except Exception as e:
+        print(f"Error detecting TTY: {e}", file=sys.stderr)
+        return None
+
+
+def stdio_to_socket(sock):
+    """Read from stdin and write to socket."""
+    try:
+        while True:
+            # Read from stdin
+            line = sys.stdin.buffer.readline()
+            if not line:
+                break
+            sock.sendall(line)
+    except (BrokenPipeError, ConnectionError, OSError):
+        pass
+    finally:
+        try:
+            sock.close()
+        except:
+            pass
+
+
+def socket_to_stdio(sock):
+    """Read from socket and write to stdout."""
+    try:
+        while True:
+            data = sock.recv(4096)
+            if not data:
+                break
+            sys.stdout.buffer.write(data)
+            sys.stdout.buffer.flush()
+    except (BrokenPipeError, ConnectionError, OSError):
+        pass
+
+
+def main():
+    # Try to get socket path from environment first, then auto-detect
+    socket_path = os.environ.get('NVIM_SOCKET_PATH')
+
+    if not socket_path:
+        socket_path = get_auto_socket_path()
+        if not socket_path:
+            print("Error: Could not auto-detect neovim socket", file=sys.stderr)
+            print("Set NVIM_SOCKET_PATH environment variable or run from same TTY as neovim", file=sys.stderr)
+            sys.exit(1)
+
+    # Create Unix domain socket
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+
+    try:
+        sock.connect(socket_path)
+    except FileNotFoundError:
+        print(f"Error: Socket not found at {socket_path}", file=sys.stderr)
+        print(f"Make sure Neovim is running with the radish-mcp-server plugin loaded", file=sys.stderr)
+        sys.exit(1)
+    except ConnectionRefusedError:
+        print(f"Error: Connection refused to {socket_path}", file=sys.stderr)
+        print(f"The socket exists but nothing is listening on it", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error connecting to socket: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    # Print debug info to stderr (won't interfere with stdio communication)
+    print(f"Connected to neovim at: {socket_path}", file=sys.stderr)
+
+    # Start bidirectional forwarding
+    # Use thread for stdin->socket so we can handle both directions
+    stdin_thread = threading.Thread(target=stdio_to_socket, args=(sock,), daemon=True)
+    stdin_thread.start()
+
+    # Run socket->stdout in main thread
+    socket_to_stdio(sock)
+
+    # Wait for stdin thread to finish
+    stdin_thread.join(timeout=1)
+
+    try:
+        sock.close()
+    except:
+        pass
+
+
+if __name__ == '__main__':
+    main()
