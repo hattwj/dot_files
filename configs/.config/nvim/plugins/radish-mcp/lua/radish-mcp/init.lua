@@ -2,6 +2,9 @@
 -- Implements Model Context Protocol over Unix domain socket
 -- Each neovim instance gets its own socket based on TTY
 
+local state = require("radish-mcp.state")
+local tools = require("radish-mcp.tools")
+
 local M = {}
 
 -- Plugin state
@@ -13,13 +16,12 @@ local function get_socket_path()
   local tty = vim.fn.system("tty"):gsub("\n", "")
 
   if tty == "" or tty == "not a tty" then
-    -- Fallback for non-TTY environments (like nvim running in daemon mode)
+    -- Fallback for non-TTY environments
     local pid = vim.fn.getpid()
     return "/tmp/radish-nvim-pid-" .. pid .. ".sock"
   end
 
   -- Convert /dev/pts/5 -> pts-5
-  -- Convert /dev/tty1 -> tty1
   local safe_name = tty:gsub("^/dev/", ""):gsub("/", "-")
   return "/tmp/radish-nvim-" .. safe_name .. ".sock"
 end
@@ -66,174 +68,7 @@ end
 -- List tools handler
 handlers["tools/list"] = function(params)
   return {
-    tools = {
-      {
-        name = "vim_buffer",
-        description = "Get buffer contents with line numbers",
-        inputSchema = {
-          type = "object",
-          properties = {
-            filename = {
-              type = "string",
-              description = "Optional filename to view specific buffer"
-            }
-          }
-        }
-      },
-      {
-        name = "vim_status",
-        description = "Get comprehensive Neovim status",
-        inputSchema = {
-          type = "object",
-          properties = vim.empty_dict()
-        }
-      },
-      {
-        name = "vim_command",
-        description = "Execute vim command",
-        inputSchema = {
-          type = "object",
-          properties = {
-            command = {
-              type = "string",
-              description = "Vim command to execute"
-            }
-          },
-          required = {"command"}
-        }
-      },
-      {
-        name = "vim_preview_change",
-        description = "Preview changes to a file before applying",
-        inputSchema = {
-          type = "object",
-          properties = {
-            file = {
-              type = "string",
-              description = "File path to preview changes for"
-            },
-            changes = {
-              type = "string",
-              description = "Content changes to preview"
-            },
-            mode = {
-              type = "string",
-              enum = {"inline", "split", "float"},
-              description = "How to display the preview"
-            }
-          },
-          required = {"file", "changes"}
-        }
-      }
-    }
-  }
-end
-
--- Tool execution handlers
-local tool_handlers = {}
-
-tool_handlers["vim_buffer"] = function(arguments)
-  local filename = arguments.filename
-  local bufnr = vim.fn.bufnr(filename or "%")
-
-  if bufnr == -1 then
-    return {
-      content = {
-        {
-          type = "text",
-          text = "Buffer not found: " .. (filename or "current")
-        }
-      }
-    }
-  end
-
-  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  local numbered_lines = {}
-
-  for i, line in ipairs(lines) do
-    table.insert(numbered_lines, string.format("%d: %s", i, line))
-  end
-
-  return {
-    content = {
-      {
-        type = "text",
-        text = table.concat(numbered_lines, "\n")
-      }
-    }
-  }
-end
-
-tool_handlers["vim_status"] = function(arguments)
-  local cursor = vim.api.nvim_win_get_cursor(0)
-  local mode = vim.api.nvim_get_mode().mode
-  local filename = vim.api.nvim_buf_get_name(0)
-  local cwd = vim.fn.getcwd()
-
-  local status = {
-    cursorPosition = cursor,
-    mode = mode,
-    fileName = filename,
-    cwd = cwd,
-    buffers = #vim.api.nvim_list_bufs()
-  }
-
-  return {
-    content = {
-      {
-        type = "text",
-        text = vim.json.encode(status)
-      }
-    }
-  }
-end
-
-tool_handlers["vim_command"] = function(arguments)
-  local command = arguments.command
-
-  if not command then
-    return {
-      content = {
-        {
-          type = "text",
-          text = "Error: command parameter required"
-        }
-      }
-    }
-  end
-
-  local success, result = pcall(vim.cmd, command)
-
-  if success then
-    return {
-      content = {
-        {
-          type = "text",
-          text = "Command executed: " .. command
-        }
-      }
-    }
-  else
-    return {
-      content = {
-        {
-          type = "text",
-          text = "Error executing command: " .. tostring(result)
-        }
-      }
-    }
-  end
-end
-
-tool_handlers["vim_preview_change"] = function(arguments)
-  -- TODO: Implement preview window functionality
-  return {
-    content = {
-      {
-        type = "text",
-        text = "Preview functionality coming soon!"
-      }
-    }
+    tools = tools.get_schemas()
   }
 end
 
@@ -242,12 +77,7 @@ handlers["tools/call"] = function(params)
   local tool_name = params.name
   local arguments = params.arguments or {}
 
-  local handler = tool_handlers[tool_name]
-  if not handler then
-    error("Unknown tool: " .. tool_name)
-  end
-
-  return handler(arguments)
+  return tools.execute(tool_name, arguments)
 end
 
 -- Process incoming MCP message
@@ -371,6 +201,27 @@ end
 -- Setup function for plugin configuration
 function M.setup(opts)
   opts = opts or {}
+
+  -- Create :RadishAbort command
+  vim.api.nvim_create_user_command('RadishAbort', function(cmd_opts)
+    local message = cmd_opts.args
+    if message == "" then
+      message = "User requested pause for review"
+    end
+    state.request_abort(message)
+  end, {
+    nargs = '?',
+    desc = "Signal abort to AI - pause and ask for user feedback"
+  })
+
+  -- Create :RadishClearAbort command
+  vim.api.nvim_create_user_command('RadishClearAbort', function()
+    state.clear_abort()
+    vim.notify("Radish: Abort signal cleared", vim.log.levels.INFO)
+  end, {
+    nargs = 0,
+    desc = "Clear the abort signal"
+  })
 
   -- Auto-start server
   if opts.auto_start ~= false then
