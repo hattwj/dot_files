@@ -529,6 +529,23 @@ function M.setup(opts)
     vim.notify("Invalid default mode: " .. M.config.mode .. ". Falling back to 'bottom'", vim.log.levels.WARN)
     M.config.mode = "bottom"
   end
+
+  -- Create user command for mode switching
+  vim.api.nvim_create_user_command('PopupTerminalMode', function(cmd_opts)
+    if cmd_opts.args == "" then
+      -- No args: show current mode
+      print("Global terminal mode: " .. M.get_mode())
+    else
+      -- Set the mode
+      M.set_mode(cmd_opts.args)
+    end
+  end, {
+    nargs = '?',
+    complete = function()
+      return {"bottom", "top", "right", "left", "float"}
+    end,
+    desc = "Get or set global popup terminal mode"
+  })
 end
 
 return M

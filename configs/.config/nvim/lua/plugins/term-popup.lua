@@ -13,7 +13,7 @@ return {
       -- Command-specific terminals with unified toggle behavior
       {
         "<leader>th",
-        function() require("term-popup").toggle("htop") end,
+        function() require("term-popup").toggle("htop", "right") end,
         desc = "Toggle htop terminal",
         mode = {"n", "v"}
       },
@@ -25,13 +25,13 @@ return {
       },
       {
         "<leader>aw",
-        function() require("term-popup").toggle("wasabi --no-markdown --auto-accept-edits") end,
+        function() require("term-popup").toggle("wasabi --no-markdown --auto-accept-edits", "right") end,
         desc = "Toggle Wasabi",
         mode = {"n", "v"}
       },
       {
         "<leader>t<Esc>",
-        function() require("term-popup").toggle() end,
+        function() require("term-popup").toggle(nil, "float") end,
         desc = "Toggle default terminal",
         mode = {"n", "v"}
       },
@@ -93,23 +93,6 @@ return {
         },
         border = "rounded",
         mode_cycle = {"bottom", "right", "float"},  -- Customize your mode cycle
-      })
-
-      -- Create vim command for mode switching
-      vim.api.nvim_create_user_command('PopupTerminalMode', function(opts)
-        if opts.args == "" then
-          -- No args, show current mode
-          print("Current terminal mode: " .. require("term-popup").get_mode())
-        else
-          -- Set the mode
-          require("term-popup").set_mode(opts.args)
-        end
-      end, {
-        nargs = '?',
-        complete = function()
-          return {"bottom", "top", "right", "left", "float"}
-        end,
-        desc = "Get or set popup terminal mode"
       })
     end,
   }
