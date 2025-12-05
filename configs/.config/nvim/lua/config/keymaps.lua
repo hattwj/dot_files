@@ -125,8 +125,6 @@ vim.api.nvim_set_keymap('c', '<Down>', 'pumvisible() ? "\\<C-n>" : "\\<Down>"', 
 vim.api.nvim_set_keymap('c', '<Up>', 'pumvisible() ? "\\<C-p>" : "\\<Up>"', { expr = true, noremap = true })
 ------
 
-
-
 -- Ctrl-a to get to beginning of line in command mode
 vim.api.nvim_set_keymap( "c", "<C-a>", "<Home>", { silent = false, noremap = true })
 
@@ -210,4 +208,33 @@ vim.cmd([[
 ]])
 
 -- Open a file browser in the parent of the current file
---
+
+-- File path yank/paste functionality
+-- Store the file path in a global variable
+_G.stored_file_path = ""
+
+-- Function to yank the current file path
+local function yank_file_path()
+  local path = vim.fn.expand('%:p:~')
+  if path == "" then
+    vim.notify("No file path to yank", vim.log.levels.WARN)
+    return
+  end
+  _G.stored_file_path = path
+  vim.notify("Yanked: " .. path, vim.log.levels.INFO)
+end
+
+-- Function to paste the stored file path
+local function paste_file_path()
+  if _G.stored_file_path == "" then
+    vim.notify("No file path stored", vim.log.levels.WARN)
+    return
+  end
+  vim.api.nvim_put({_G.stored_file_path}, 'c', true, true)
+end
+
+-- Yank file path: <leader>ay (normal and visual mode)
+vim.keymap.set({'n', 'v'}, '<leader>ay', yank_file_path, { desc = "Yank file path", silent = true })
+
+-- Paste file path: <leader>ap (normal, visual, and terminal mode)
+vim.keymap.set({'n', 'v' }, '<leader>ap', paste_file_path, { desc = "Paste file path", silent = true })

@@ -12,5 +12,8 @@ sudo apt install \
 	fd-find \
 	ripgrep \
 	terminator \
+  fzf \
+  fd-find \
+  ripgrep \
 	libncurses-dev \
 	silversearcher-ag

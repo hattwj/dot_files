@@ -23,36 +23,32 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # ./bashrc_$OSName_$ARCH
 # ./bashrc_$hostname_md5
 
-pf1="$DIR/.bashrc_"$(uname)
-pf2="$DIR/.bashrc_"$(uname)'_'$(hostname)
-pf3="$HOME/.bash_custom"
+# Array of rc files to source
+rc_files=(
+  "$DIR/.bashrc_$(uname)"
+  "$DIR/.bashrc_$(uname)_$(hostname)"
+  "$HOME/.bash_custom"
+  "$HOME/.bash_prompt"
+)
+
+# Iterate over rc files and source them if they exist
+for rc_file in "${rc_files[@]}"; do
+  [[ -e "$rc_file" ]] && source "$rc_file"
+done
 
 # Make sure we include .inputrc
 [[ -e "$HOME/.inputrc" ]] && export INPUTRC="$HOME/.inputrc"
 
-# Load the right bashrc for this OS
-[[ -e $pf1 ]] && source $pf1
 
-# Load the right bashrc for this machine
-[[ -e $pf2 ]] && source $pf2
+# Special handling for mise (only if command exists)
+command -v "mise" > /dev/null 2>&1 && [[ -e "$HOME/.bash_activate_mise.sh" ]] && source "$HOME/.bash_activate_mise.sh"
 
-# Load custom bash script
-[[ -e $pf3 ]] && source $pf3
-
-# Not entirely sure, but I dont think this is needed
-#PATH=$PATH:$HOME/.rvm/bin # Add RVM to PATH for scripting
-
-# [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
-
-# if [ -d "$HOME/.rbenv/bin" ]; then 
-#   export PATH=$HOME/.rbenv/bin:$PATH
-#   eval "$(rbenv init -)"
-# fi
-
-command -v "mise" > /dev/null 2>&1 && source "$HOME/.bash_activate_mise.sh"
-
+# Load nvm if available
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                   # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
 
+# Add toolbox to PATH if it exists
 [ -d "$HOME/.toolbox/bin" ] && export PATH=$HOME/.toolbox/bin:$PATH
-. "$HOME/.cargo/env"
+
+# Load cargo environment
+[ -s "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"

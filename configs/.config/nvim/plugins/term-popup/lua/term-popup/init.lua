@@ -131,8 +131,8 @@ local function create_floating_window(command)
     vim.api.nvim_buf_set_option(state.buf, 'filetype', 'terminal')
 
     -- Set buffer name for identification
-    local buf_name = command and ("term://" .. command) or "term://default"
-    vim.api.nvim_buf_set_name(state.buf, buf_name)
+    -- local buf_name = command and ("term://" .. command) or "term://default"
+    -- vim.api.nvim_buf_set_name(state.buf, buf_name)
   end
 
   -- Create the floating window

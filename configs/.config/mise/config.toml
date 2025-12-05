@@ -3,7 +3,7 @@ cargo = "latest"
 delta = "latest"
 java = "17"
 node = "18.17.1"
-python = "3.11"
+python = "3.12"
 ruby = "3.4.4"
 rust = "1.89.0"
 
