@@ -24,6 +24,12 @@ return {
         mode = {"n", "v"}
       },
       {
+        "<leader>tt",
+        function() require("term-popup").toggle() end,
+        desc = "Toggle default terminal (remembers position)",
+        mode = {"n", "v"}
+      },
+      {
         "<leader>t<Esc>",
         function() require("term-popup").toggle(nil, "float") end,
         desc = "Toggle default terminal",

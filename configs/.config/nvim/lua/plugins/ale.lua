@@ -1,5 +1,6 @@
 return {
   "dense-analysis/ale",
+  lazy=false,
   dependencies = {
     "prabirshrestha/vim-lsp",
     "rhysd/vim-lsp-ale",

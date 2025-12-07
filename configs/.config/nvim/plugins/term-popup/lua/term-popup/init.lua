@@ -1,11 +1,15 @@
 local M = {}
 
+-- Load window manager for layout operations
+local wm = require('window-manager')
+
 -- Plugin state - now supports multiple terminals indexed by command
 local terminals = {}
 local default_terminal = {
   buf = nil,
   win = nil,
   current_mode = nil,
+  preferred_mode = nil,
 }
 
 -- Track the last opened terminal
@@ -82,12 +86,70 @@ end
 -- Track last accessed terminal (updated by autocmd)
 local last_accessed_terminal = nil
 
+-- Detect window position type (float, bottom, top, left, right)
+local function detect_window_position(win)
+  if not win or not vim.api.nvim_win_is_valid(win) then
+    return nil
+  end
+
+  -- Check if it's a floating window
+  local config = vim.api.nvim_win_get_config(win)
+  if config.relative and config.relative ~= "" then
+    return "float"
+  end
+
+  -- It's a split window - determine which type
+  local win_height = vim.api.nvim_win_get_height(win)
+  local win_width = vim.api.nvim_win_get_width(win)
+  local screen_height = vim.api.nvim_get_option_value("lines", {})
+  local screen_width = vim.api.nvim_get_option_value("columns", {})
+
+  -- Get window position
+  local win_pos = vim.api.nvim_win_get_position(win)
+  local row = win_pos[1]
+  local col = win_pos[2]
+
+  -- Check if it spans full width (likely top or bottom)
+  local is_full_width = win_width >= (screen_width - 5)  -- Allow some margin
+
+  -- Check if it spans full height (likely left or right)
+  local is_full_height = win_height >= (screen_height - 5)
+
+  if is_full_width then
+    -- It's either top or bottom
+    if row == 0 then
+      return "top"
+    else
+      return "bottom"
+    end
+  elseif is_full_height then
+    -- It's either left or right
+    if col == 0 then
+      return "left"
+    else
+      return "right"
+    end
+  end
+
+  -- Default to current_mode if we can't determine
+  return nil
+end
+
 -- Close a specific terminal window
 local function close_terminal_window(state)
   if state.win and vim.api.nvim_win_is_valid(state.win) then
+    -- Detect and remember the window position before closing
+    local detected_position = detect_window_position(state.win)
+    if detected_position then
+      state.preferred_mode = detected_position
+      state.current_mode = detected_position
+      -- Debug logging
+      print(string.format("Terminal closed. Detected position: %s, will reopen as: %s",
+        detected_position, state.preferred_mode))
+    end
+
     vim.api.nvim_win_close(state.win, false)
     state.win = nil
-    state.current_mode = nil
   end
 end
 
@@ -345,12 +407,19 @@ local function create_window(command, mode)
 end
 
 -- Unified toggle function
-function M.toggle(command, mode_override)
+-- Priority: 1. preferred_mode (user moved), 2. keymap_default (caller suggests), 3. global config
+function M.toggle(command, keymap_default)
   local state = get_terminal_state(command)
 
-  -- Determine which mode to use:
-  -- 1. Explicit override, 2. Terminal's preferred mode, 3. Global default
-  local mode = mode_override or state.preferred_mode or M.config.mode
+  -- Determine which mode to use (priority order):
+  -- 1. Terminal's preferred mode (user moved it)
+  -- 2. Keymap default (suggested by the specific keymap)
+  -- 3. Global config default
+  local mode = state.preferred_mode or keymap_default or M.config.mode
+
+  -- Debug logging
+  print(string.format("Toggle: preferred=%s, keymap_default=%s, config=%s, using: %s",
+    tostring(state.preferred_mode), tostring(keymap_default), M.config.mode, mode))
 
   -- Check if this terminal is currently open anywhere
   if state.win and vim.api.nvim_win_is_valid(state.win) then
@@ -463,8 +532,8 @@ function M.toggle_command(command)
   M.toggle(command)
 end
 
-function M.open(command, mode_override)
-  local mode = mode_override or M.config.mode
+function M.open(command, keymap_default)
+  local mode = keymap_default or M.config.mode
   local state = get_terminal_state(command)
 
   -- Close if already open
@@ -586,6 +655,40 @@ end
 
 -- Setup function for plugin configuration
 function M.setup(opts)
+  -- Register callback with window manager to track position changes
+  wm.on_position_change(function(win, position)
+    print(string.format("Window manager callback: win=%d, position=%s", win, position))
+
+    -- Find terminal by buffer (not by window, since window ID changed!)
+    local buf = vim.api.nvim_win_get_buf(win)
+    local state = find_terminal_by_buf(buf)
+
+    if state then
+      print(string.format("Found terminal! Updating: preferred=%s, win=%d->%d", position, state.win or 0, win))
+      state.preferred_mode = position
+      state.current_mode = position
+      state.win = win  -- Update to new window ID!
+    else
+      print("Window manager callback: terminal not found by buffer")
+    end
+
+    -- Old logic (kept for backwards compat, but shouldn't match since window ID changed)
+    -- Find which terminal owns this window
+    if default_terminal.win == win then
+      print("Matched default_terminal by win ID (shouldn't happen)")
+      default_terminal.preferred_mode = position
+      default_terminal.current_mode = position
+    else
+      for _, state in pairs(terminals) do
+        if state.win == win then
+          print("Matched terminal by win ID (shouldn't happen)")
+          state.preferred_mode = position
+          state.current_mode = position
+        end
+      end
+    end
+  end)
+
   -- Merge user config with defaults
   M.config = vim.tbl_deep_extend("force", M.config, opts or {})
 

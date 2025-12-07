@@ -77,23 +77,23 @@ function! ProjectRoot2(...)
 endfunction
 
 " Search from git root if possible
-command! -nargs=* Ag call Ag(<q-args>)
-function! Ag(cmd='')
-  " Get current git root
-  let l:oldwd = getcwd()
-
-  let l:curfile = GetCurDir()
-
-  exec('cd ' . l:curfile)
-  let l:root = FindGitRoot()
-
-  if l:root != ''
-    exec('cd ' . l:root)
-  endif
-
-  exec('Ack! '. a:cmd)
-  exec('cd ' . l:oldwd)
-endfunction
+"command! -nargs=* Ag call Ag(<q-args>)
+"function! Ag(cmd='')
+"  " Get current git root
+"  let l:oldwd = getcwd()
+"
+"  let l:curfile = GetCurDir()
+"
+"  exec('cd ' . l:curfile)
+"  let l:root = FindGitRoot()
+"
+"  if l:root != ''
+"    exec('cd ' . l:root)
+"  endif
+"
+"  exec('Ack! '. a:cmd)
+"  exec('cd ' . l:oldwd)
+"endfunction
 
 
 function! GotoFileWithLineNumber()

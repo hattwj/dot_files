@@ -52,3 +52,5 @@ command -v "mise" > /dev/null 2>&1 && [[ -e "$HOME/.bash_activate_mise.sh" ]] &&
 
 # Load cargo environment
 [ -s "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
+
+[[ "$TERM_PROGRAM" == "kiro" ]] && . "$(kiro --locate-shell-integration-path bash)"
