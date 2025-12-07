@@ -1,5 +1,6 @@
 -- Preview window for inline diff view with virtual text
 local state = require("radish-mcp.state")
+local window_manager = require("radish-mcp.window-manager")
 local M = {}
 
 -- Namespace for virtual text and highlights
@@ -70,6 +71,9 @@ function M.open(file, changes, mode)
     end
 
     local new_lines = vim.split(changes, "\n", { plain = true })
+
+    -- Use shared window manager to avoid stomping terminal
+    window_manager.get_file_window()
 
     local bufnr
     if exists then

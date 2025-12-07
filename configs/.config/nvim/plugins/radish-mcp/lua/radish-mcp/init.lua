@@ -4,6 +4,7 @@
 
 local state = require("radish-mcp.state")
 local tools = require("radish-mcp.tools")
+local terminal_monitor = require("radish-mcp.terminal-monitor")
 
 local M = {}
 
@@ -228,6 +229,16 @@ function M.setup(opts)
     vim.defer_fn(function()
       M.start_server()
     end, 100)
+  end
+
+  -- Terminal monitor setup
+  local monitor_config = opts.monitor or {}
+  if monitor_config.enabled == nil then
+    monitor_config.enabled = true
+  end
+
+  if monitor_config.enabled then
+    terminal_monitor.setup(monitor_config)
   end
 end
 

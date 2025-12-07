@@ -1,4 +1,5 @@
 -- File operations: open_file
+local window_manager = require("radish-mcp.window-manager")
 local M = {}
 
 M.schema = {
@@ -176,85 +177,8 @@ M.open_single_file = function(file, line, create)
 
   -- Smart window selection: avoid stomping on terminal windows
   local success, result = pcall(function()
-    local current_buf = vim.api.nvim_get_current_buf()
-    local current_buftype = vim.api.nvim_get_option_value("buftype", { buf = current_buf })
-
-    -- If we're in a terminal, don't stomp on it - open in a split or find another window
-    if current_buftype == "terminal" then
-      -- Try to find a non-terminal window
-      local found_window = false
-      local windows = vim.api.nvim_list_wins()
-
-      for _, win in ipairs(windows) do
-        local win_buf = vim.api.nvim_win_get_buf(win)
-        local win_buftype = vim.api.nvim_get_option_value("buftype", { buf = win_buf })
-
-        -- Found a normal window (not terminal, not special)
-        if win_buftype == "" then
-          vim.api.nvim_set_current_win(win)
-          found_window = true
-          break
-        end
-      end
-
-      -- No normal window found, create a split with smart positioning
-      if not found_window then
-        -- Detect terminal position and create split on opposite side
-        local current_win = vim.api.nvim_get_current_win()
-        local current_pos = vim.api.nvim_win_get_position(current_win)
-        local current_width = vim.api.nvim_win_get_width(current_win)
-        local current_height = vim.api.nvim_win_get_height(current_win)
-
-        -- Check if there are other windows to determine position
-        local has_left = false
-        local has_right = false
-        local has_top = false
-        local has_bottom = false
-
-        for _, win in ipairs(windows) do
-          if win ~= current_win then
-            local pos = vim.api.nvim_win_get_position(win)
-
-            -- Check horizontal position
-            if pos[2] < current_pos[2] then
-              has_left = true
-            elseif pos[2] > current_pos[2] then
-              has_right = true
-            end
-
-            -- Check vertical position
-            if pos[1] < current_pos[1] then
-              has_top = true
-            elseif pos[1] > current_pos[1] then
-              has_bottom = true
-            end
-          end
-        end
-
-        -- Decide split direction based on terminal position
-        -- If terminal is on the right, split to the left (and vice versa)
-        -- Prefer vertical splits over horizontal
-        if has_left and not has_right then
-          -- Terminal is on the right, split to the left
-          vim.cmd("leftabove vsplit")
-        elseif has_right and not has_left then
-          -- Terminal is on the left, split to the right
-          vim.cmd("rightbelow vsplit")
-        elseif has_top and not has_bottom then
-          -- Terminal is on the bottom, split above
-          vim.cmd("leftabove split")
-        elseif has_bottom and not has_top then
-          -- Terminal is on the top, split below
-          vim.cmd("rightbelow split")
-        elseif current_pos[2] == 0 then
-          -- Terminal is leftmost, split to the right
-          vim.cmd("rightbelow vsplit")
-        else
-          -- Terminal is rightmost or unknown, split to the left
-          vim.cmd("leftabove vsplit")
-        end
-      end
-    end
+    -- Use shared window manager to avoid stomping terminal
+    window_manager.get_file_window()
 
     -- Now open the file in the selected/created window
     vim.cmd("edit " .. vim.fn.fnameescape(file))
