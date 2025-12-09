@@ -5,6 +5,8 @@
 local state = require("radish-mcp.state")
 local tools = require("radish-mcp.tools")
 local terminal_monitor = require("radish-mcp.terminal-monitor")
+local ghost_window = require("radish-mcp.ghost-window")
+local pattern_registry = require("radish-mcp.pattern-registry")
 
 local M = {}
 
@@ -222,6 +224,52 @@ function M.setup(opts)
   end, {
     nargs = 0,
     desc = "Clear the abort signal"
+  })
+
+  -- Ghost Mode Commands
+
+  -- Start ghost mode monitoring
+  vim.api.nvim_create_user_command('GhostStart', function(cmd_opts)
+    local buf_id = cmd_opts.args ~= "" and tonumber(cmd_opts.args) or nil
+    terminal_monitor.start(buf_id)
+  end, {
+    nargs = '?',
+    desc = "Start ghost mode terminal monitoring (optional: buffer ID)"
+  })
+
+  -- Stop ghost mode monitoring
+  vim.api.nvim_create_user_command('GhostStop', function()
+    terminal_monitor.stop()
+  end, {
+    desc = "Stop ghost mode terminal monitoring"
+  })
+
+  -- Toggle ghost mode monitoring
+  vim.api.nvim_create_user_command('GhostToggle', function()
+    terminal_monitor.toggle()
+  end, {
+    desc = "Toggle ghost mode terminal monitoring"
+  })
+
+  -- Show ghost mode status
+  vim.api.nvim_create_user_command('GhostStatus', function()
+    terminal_monitor.status()
+  end, {
+    desc = "Show ghost mode status"
+  })
+
+  -- Close ghost window
+  vim.api.nvim_create_user_command('GhostClose', function()
+    ghost_window.close()
+  end, {
+    desc = "Close ghost window"
+  })
+
+  -- Show registered patterns
+  vim.api.nvim_create_user_command('GhostPatterns', function()
+    pattern_registry.show_patterns()
+  end, {
+    desc = "Show registered ghost mode patterns"
   })
 
   -- Auto-start server

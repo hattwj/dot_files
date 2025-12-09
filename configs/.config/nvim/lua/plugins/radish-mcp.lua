@@ -5,9 +5,15 @@ return {
     lazy = false,
     config = function()
       require("radish-mcp").setup({
-        auto_start = true  -- Start MCP server on VimEnter
+        auto_start = true,  -- Start MCP server on VimEnter
+        monitor = {
+          enabled = true,
+          poll_interval_ms = 500,
+          auto_show_ghost = true,
+        }
       })
-      -- Register patterns for AI agent file operations
+
+      -- Register patterns for Wasabi file operations
       vim.defer_fn(function()
         local pattern_registry = require('radish-mcp.pattern-registry')
 

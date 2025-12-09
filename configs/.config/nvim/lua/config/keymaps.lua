@@ -112,6 +112,16 @@ vim.api.nvim_set_keymap("n" , "<leader>MC", ':MetalsCompileCascase<CR>',  { sile
 vim.api.nvim_set_keymap("n", "<leader>b<Left>", ":BufferLineMovePrev<CR>", { silent = true, noremap = true })
 vim.api.nvim_set_keymap("n", "<leader>b<Right>", ":BufferLineMoveNext<CR>", { silent = true, noremap = true })
 
+-- Window resizing with arrow keys ctrl-alt-super-arrow (sheesh)
+vim.api.nvim_set_keymap("n", "<D-Up>", ":resize +2<CR>", { silent = true, noremap = true, desc = "Increase window height" })
+vim.api.nvim_set_keymap("n", "<D-Down>", ":resize -2<CR>", { silent = true, noremap = true, desc = "Decrease window height" })
+vim.api.nvim_set_keymap("n", "<D-Right>", ":vertical resize +2<CR>", { silent = true, noremap = true, desc = "Increase window width" })
+vim.api.nvim_set_keymap("n", "<D-Left>", ":vertical resize -2<CR>", { silent = true, noremap = true, desc = "Decrease window width" })
+
+vim.api.nvim_set_keymap("t", "<D-Up>", ":resize +2<CR>", { silent = true, noremap = true, desc = "Increase window height" })
+vim.api.nvim_set_keymap("t", "<D-Down>", ":resize -2<CR>", { silent = true, noremap = true, desc = "Decrease window height" })
+vim.api.nvim_set_keymap("t", "<D-Right>", ":vertical resize +2<CR>", { silent = true, noremap = true, desc = "Increase window width" })
+vim.api.nvim_set_keymap("t", "<D-Left>", ":vertical resize -2<CR>", { silent = true, noremap = true, desc = "Decrease window width" })
 
 
 ------
