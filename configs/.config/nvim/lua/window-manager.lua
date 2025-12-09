@@ -307,12 +307,6 @@ function M.setup_keymaps(opts)
   vim.keymap.set('n', prefix .. 't', function() M.move_to_top() end, { desc = "Move window to top" })
   vim.keymap.set('n', prefix .. 'r', function() M.move_to_right() end, { desc = "Move window to right" })
   vim.keymap.set('n', prefix .. 'l', function() M.move_to_left() end, { desc = "Move window to left" })
-
-  -- Arrow key keymaps (more intuitive)
-  vim.keymap.set('n', prefix .. '<Up>', function() M.move_to_top() end, { desc = "Move window to top" })
-  vim.keymap.set('n', prefix .. '<Down>', function() M.move_to_bottom() end, { desc = "Move window to bottom" })
-  vim.keymap.set('n', prefix .. '<Left>', function() M.move_to_left() end, { desc = "Move window to left" })
-  vim.keymap.set('n', prefix .. '<Right>', function() M.move_to_right() end, { desc = "Move window to right" })
 end
 
 -- Setup function
