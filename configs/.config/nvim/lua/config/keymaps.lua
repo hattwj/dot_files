@@ -118,12 +118,6 @@ vim.api.nvim_set_keymap("n", "<C-M-Down>", ":resize -2<CR>", { silent = true, no
 vim.api.nvim_set_keymap("n", "<C-M-Right>", ":vertical resize +2<CR>", { silent = true, noremap = true, desc = "Increase window width" })
 vim.api.nvim_set_keymap("n", "<C-M-Left>", ":vertical resize -2<CR>", { silent = true, noremap = true, desc = "Decrease window width" })
 
--- vim.api.nvim_set_keymap("t", "<D-Up>", ":resize +2<CR>", { silent = true, noremap = true, desc = "Increase window height" })
--- vim.api.nvim_set_keymap("t", "<D-Down>", ":resize -2<CR>", { silent = true, noremap = true, desc = "Decrease window height" })
--- vim.api.nvim_set_keymap("t", "<D-Right>", ":vertical resize +2<CR>", { silent = true, noremap = true, desc = "Increase window width" })
--- vim.api.nvim_set_keymap("t", "<D-Left>", ":vertical resize -2<CR>", { silent = true, noremap = true, desc = "Decrease window width" })
-
-
 ------
 --- when in command mode, allow using arrows for navigating dropdown options.
 ---
