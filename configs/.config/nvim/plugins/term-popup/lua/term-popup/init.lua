@@ -5,6 +5,11 @@ local wm = require('window-manager')
 
 -- Plugin state - now supports multiple terminals indexed by command
 local terminals = {}
+
+-- Track ALL terminal buffers we create (for deterministic cleanup)
+-- Store globally to survive module reloads
+_G._term_popup_created_buffers = _G._term_popup_created_buffers or {}
+local created_buffers = _G._term_popup_created_buffers
 local default_terminal = {
   buf = nil,
   win = nil,
@@ -135,6 +140,57 @@ local function detect_window_position(win)
   return nil
 end
 
+-- Check if terminal job is still alive
+local function is_terminal_alive(buf)
+  if not buf or not vim.api.nvim_buf_is_valid(buf) then
+    return false
+  end
+
+  -- Get the terminal job ID
+  local ok, chan_id = pcall(vim.api.nvim_buf_get_var, buf, 'terminal_job_id')
+  if not ok or not chan_id then
+    return false
+  end
+
+  -- Check if job is running (jobwait with 0 timeout returns -1 if running)
+  local result = vim.fn.jobwait({chan_id}, 0)[1]
+  return result == -1  -- -1 means still running, >=0 means exited
+end
+
+-- Clean up terminal state when process exits
+local function cleanup_terminal(state)
+  -- Close window if open
+  if state.win and vim.api.nvim_win_is_valid(state.win) then
+    vim.api.nvim_win_close(state.win, false)
+  end
+  -- Delete the buffer to force complete cleanup
+  if state.buf and vim.api.nvim_buf_is_valid(state.buf) then
+    vim.api.nvim_buf_delete(state.buf, { force = true })
+  end
+  -- Remove from tracking
+  created_buffers[state.buf] = nil
+  -- Invalidate references
+  state.buf = nil
+  state.win = nil
+end
+
+-- Clean up orphaned dead terminal buffers not tracked by any state
+local function cleanup_orphaned_terminals()
+  -- Iterate through all buffers we've created
+  for buf, _ in pairs(created_buffers) do
+    if vim.api.nvim_buf_is_valid(buf) then
+      -- Check if terminal is dead
+      if not is_terminal_alive(buf) then
+        vim.api.nvim_buf_delete(buf, { force = true })
+        created_buffers[buf] = nil
+      end
+    else
+      -- Buffer is invalid, remove from tracking
+      created_buffers[buf] = nil
+    end
+  end
+end
+
 -- Close a specific terminal window
 local function close_terminal_window(state)
   if state.win and vim.api.nvim_win_is_valid(state.win) then
@@ -143,14 +199,54 @@ local function close_terminal_window(state)
     if detected_position then
       state.preferred_mode = detected_position
       state.current_mode = detected_position
-      -- Debug logging
-      print(string.format("Terminal closed. Detected position: %s, will reopen as: %s",
-        detected_position, state.preferred_mode))
     end
 
     vim.api.nvim_win_close(state.win, false)
     state.win = nil
   end
+end
+
+-- Helper function to ensure terminal buffer exists and is valid
+-- Creates buffer if needed, starts terminal job, and tracks it
+local function ensure_terminal_buffer(state, command)
+  -- Check if buffer already exists and is alive
+  if state.buf and vim.api.nvim_buf_is_valid(state.buf) and is_terminal_alive(state.buf) then
+    return  -- Buffer already exists and terminal is alive
+  end
+
+  -- Terminal is dead or doesn't exist, clean up completely
+  if state.buf and vim.api.nvim_buf_is_valid(state.buf) then
+    vim.api.nvim_buf_delete(state.buf, { force = true })
+  end
+  state.buf = nil
+
+  -- Create new buffer
+  state.buf = vim.api.nvim_create_buf(false, true)
+
+  -- Track this buffer
+  created_buffers[state.buf] = true
+
+  -- Set buffer options
+  vim.api.nvim_set_option_value('filetype', 'terminal', { buf = state.buf })
+
+  -- Start terminal in the buffer
+  vim.api.nvim_buf_call(state.buf, function()
+    if command then
+      vim.fn.jobstart(command, {
+        term = true,
+        on_exit = function()
+          vim.schedule(function()
+            cleanup_terminal(state)
+          end)
+        end
+      })
+    else
+      vim.fn.jobstart(M.config.shell or vim.o.shell, {
+        term = true,
+        on_exit = function() vim.schedule(function() cleanup_terminal(state) end) end
+      })
+    end
+  end)
 end
 
 -- Create floating terminal window
@@ -176,26 +272,7 @@ local function create_floating_window(command)
 
   local state = get_terminal_state(command)
 
-  -- Create buffer if it doesn't exist or is invalid
-  if not state.buf or not vim.api.nvim_buf_is_valid(state.buf) then
-    state.buf = vim.api.nvim_create_buf(false, true)
-
-    -- Start terminal in the buffer
-    vim.api.nvim_buf_call(state.buf, function()
-      if command then
-        vim.fn.termopen(command)
-      else
-        vim.fn.termopen(M.config.shell or vim.o.shell)
-      end
-    end)
-
-    -- Set buffer options
-    vim.api.nvim_buf_set_option(state.buf, 'filetype', 'terminal')
-
-    -- Set buffer name for identification
-    -- local buf_name = command and ("term://" .. command) or "term://default"
-    -- vim.api.nvim_buf_set_name(state.buf, buf_name)
-  end
+  ensure_terminal_buffer(state, command)
 
   -- Create the floating window
   state.win = vim.api.nvim_open_win(state.buf, true, opts)
@@ -205,115 +282,47 @@ local function create_floating_window(command)
   vim.cmd('startinsert')
 end
 
--- Create bottom split terminal window
-local function create_bottom_split(command)
+-- Generic split terminal creation
+-- @param command: command to run (nil for shell)
+-- @param mode: "bottom", "top", "right", "left"
+-- @param split_cmd: vim command to create split (e.g., "botright 15split")
+-- @param fix_option: "winfixheight" or "winfixwidth"
+local function create_split_terminal(command, mode, split_cmd, fix_option)
   local state = get_terminal_state(command)
 
-  -- Create buffer if it doesn't exist or is invalid
-  if not state.buf or not vim.api.nvim_buf_is_valid(state.buf) then
-    state.buf = vim.api.nvim_create_buf(false, true)
+  ensure_terminal_buffer(state, command)
 
-    -- Start terminal in the buffer
-    vim.api.nvim_buf_call(state.buf, function()
-      if command then
-        vim.fn.termopen(command)
-      else
-        vim.fn.termopen(M.config.shell or vim.o.shell)
-      end
-    end)
-
-    -- Set buffer options
-    vim.api.nvim_buf_set_option(state.buf, 'filetype', 'terminal')
-
-    -- Set buffer name for identification
-    local buf_name = command and ("term://" .. command) or "term://default"
-    vim.api.nvim_buf_set_name(state.buf, buf_name)
-  end
-
-  -- Create the split window at bottom
-  vim.cmd('botright ' .. M.config.split_height .. 'split')
+  -- Create the split window
+  vim.cmd(split_cmd)
   state.win = vim.api.nvim_get_current_win()
   vim.api.nvim_win_set_buf(state.win, state.buf)
 
-  -- Set window options to prevent immersion breaking
-  vim.api.nvim_win_set_option(state.win, 'winfixheight', true)
-  vim.api.nvim_win_set_option(state.win, 'number', false)
-  vim.api.nvim_win_set_option(state.win, 'relativenumber', false)
-  vim.api.nvim_win_set_option(state.win, 'signcolumn', 'no')
+  -- Set window options
+  vim.api.nvim_set_option_value(fix_option, true, {win = state.win})
+  vim.api.nvim_set_option_value('number', false, {win = state.win})
+  vim.api.nvim_set_option_value('relativenumber', false, {win = state.win})
+  vim.api.nvim_set_option_value('signcolumn', 'no', {win = state.win})
 
-  state.current_mode = "bottom"
+  state.current_mode = mode
 
   -- Enter terminal mode
   vim.cmd('startinsert')
+end
+
+-- Create bottom split terminal window
+local function create_bottom_split(command)
+  local split_cmd = 'botright ' .. M.config.split_height .. 'split'
+  create_split_terminal(command, "bottom", split_cmd, 'winfixheight')
 end
 
 -- Create top split terminal window
 local function create_top_split(command)
-  local state = get_terminal_state(command)
-
-  -- Create buffer if it doesn't exist or is invalid
-  if not state.buf or not vim.api.nvim_buf_is_valid(state.buf) then
-    state.buf = vim.api.nvim_create_buf(false, true)
-
-    -- Start terminal in the buffer
-    vim.api.nvim_buf_call(state.buf, function()
-      if command then
-        vim.fn.termopen(command)
-      else
-        vim.fn.termopen(M.config.shell or vim.o.shell)
-      end
-    end)
-
-    -- Set buffer options
-    vim.api.nvim_buf_set_option(state.buf, 'filetype', 'terminal')
-
-    -- Set buffer name for identification
-    local buf_name = command and ("term://" .. command) or "term://default"
-    vim.api.nvim_buf_set_name(state.buf, buf_name)
-  end
-
-  -- Create the split window at top
-  vim.cmd('topleft ' .. M.config.split_height .. 'split')
-  state.win = vim.api.nvim_get_current_win()
-  vim.api.nvim_win_set_buf(state.win, state.buf)
-
-  -- Set window options
-  vim.api.nvim_win_set_option(state.win, 'winfixheight', true)
-  vim.api.nvim_win_set_option(state.win, 'number', false)
-  vim.api.nvim_win_set_option(state.win, 'relativenumber', false)
-  vim.api.nvim_win_set_option(state.win, 'signcolumn', 'no')
-
-  state.current_mode = "top"
-
-  -- Enter terminal mode
-  vim.cmd('startinsert')
+  local split_cmd = 'topleft ' .. M.config.split_height .. 'split'
+  create_split_terminal(command, "top", split_cmd, 'winfixheight')
 end
 
 -- Create right split terminal window
 local function create_right_split(command)
-  local state = get_terminal_state(command)
-
-  -- Create buffer if it doesn't exist or is invalid
-  if not state.buf or not vim.api.nvim_buf_is_valid(state.buf) then
-    state.buf = vim.api.nvim_create_buf(false, true)
-
-    -- Start terminal in the buffer
-    vim.api.nvim_buf_call(state.buf, function()
-      if command then
-        vim.fn.termopen(command)
-      else
-        vim.fn.termopen(M.config.shell or vim.o.shell)
-      end
-    end)
-
-    -- Set buffer options
-    vim.api.nvim_buf_set_option(state.buf, 'filetype', 'terminal')
-
-    -- Set buffer name for identification
-    local buf_name = command and ("term://" .. command) or "term://default"
-    vim.api.nvim_buf_set_name(state.buf, buf_name)
-  end
-
   -- Determine split width
   local width = M.config.split_width
   if type(width) == "number" and width > 0 and width < 1 then
@@ -322,48 +331,12 @@ local function create_right_split(command)
     width = math.ceil(total_width * width)
   end
 
-  -- Create the split window at right
-  vim.cmd('vertical botright ' .. width .. 'split')
-  state.win = vim.api.nvim_get_current_win()
-  vim.api.nvim_win_set_buf(state.win, state.buf)
-
-  -- Set window options
-  vim.api.nvim_win_set_option(state.win, 'winfixwidth', true)
-  vim.api.nvim_win_set_option(state.win, 'number', false)
-  vim.api.nvim_win_set_option(state.win, 'relativenumber', false)
-  vim.api.nvim_win_set_option(state.win, 'signcolumn', 'no')
-
-  state.current_mode = "right"
-
-  -- Enter terminal mode
-  vim.cmd('startinsert')
+  local split_cmd = 'vertical botright ' .. width .. 'split'
+  create_split_terminal(command, "right", split_cmd, 'winfixwidth')
 end
 
 -- Create left split terminal window
 local function create_left_split(command)
-  local state = get_terminal_state(command)
-
-  -- Create buffer if it doesn't exist or is invalid
-  if not state.buf or not vim.api.nvim_buf_is_valid(state.buf) then
-    state.buf = vim.api.nvim_create_buf(false, true)
-
-    -- Start terminal in the buffer
-    vim.api.nvim_buf_call(state.buf, function()
-      if command then
-        vim.fn.termopen(command)
-      else
-        vim.fn.termopen(M.config.shell or vim.o.shell)
-      end
-    end)
-
-    -- Set buffer options
-    vim.api.nvim_buf_set_option(state.buf, 'filetype', 'terminal')
-
-    -- Set buffer name for identification
-    local buf_name = command and ("term://" .. command) or "term://default"
-    vim.api.nvim_buf_set_name(state.buf, buf_name)
-  end
-
   -- Determine split width
   local width = M.config.split_width
   if type(width) == "number" and width > 0 and width < 1 then
@@ -372,21 +345,8 @@ local function create_left_split(command)
     width = math.ceil(total_width * width)
   end
 
-  -- Create the split window at left
-  vim.cmd('vertical topleft ' .. width .. 'split')
-  state.win = vim.api.nvim_get_current_win()
-  vim.api.nvim_win_set_buf(state.win, state.buf)
-
-  -- Set window options
-  vim.api.nvim_win_set_option(state.win, 'winfixwidth', true)
-  vim.api.nvim_win_set_option(state.win, 'number', false)
-  vim.api.nvim_win_set_option(state.win, 'relativenumber', false)
-  vim.api.nvim_win_set_option(state.win, 'signcolumn', 'no')
-
-  state.current_mode = "left"
-
-  -- Enter terminal mode
-  vim.cmd('startinsert')
+  local split_cmd = 'vertical topleft ' .. width .. 'split'
+  create_split_terminal(command, "left", split_cmd, 'winfixwidth')
 end
 
 -- Create terminal window based on mode
@@ -417,9 +377,6 @@ function M.toggle(command, keymap_default)
   -- 3. Global config default
   local mode = state.preferred_mode or keymap_default or M.config.mode
 
-  -- Debug logging
-  print(string.format("Toggle: preferred=%s, keymap_default=%s, config=%s, using: %s",
-    tostring(state.preferred_mode), tostring(keymap_default), M.config.mode, mode))
 
   -- Check if this terminal is currently open anywhere
   if state.win and vim.api.nvim_win_is_valid(state.win) then
@@ -443,7 +400,7 @@ function M.close(command)
     -- Close currently focused window if it's a terminal
     local current_win = vim.api.nvim_get_current_win()
     local current_buf = vim.api.nvim_win_get_buf(current_win)
-    local buf_type = vim.api.nvim_buf_get_option(current_buf, 'buftype')
+    local buf_type = vim.api.nvim_get_option_value('buftype', { buf = current_buf })
 
     if buf_type == 'terminal' then
       vim.api.nvim_win_close(current_win, false)
@@ -657,31 +614,26 @@ end
 function M.setup(opts)
   -- Register callback with window manager to track position changes
   wm.on_position_change(function(win, position)
-    print(string.format("Window manager callback: win=%d, position=%s", win, position))
 
     -- Find terminal by buffer (not by window, since window ID changed!)
     local buf = vim.api.nvim_win_get_buf(win)
     local state = find_terminal_by_buf(buf)
 
     if state then
-      print(string.format("Found terminal! Updating: preferred=%s, win=%d->%d", position, state.win or 0, win))
       state.preferred_mode = position
       state.current_mode = position
       state.win = win  -- Update to new window ID!
     else
-      print("Window manager callback: terminal not found by buffer")
     end
 
     -- Old logic (kept for backwards compat, but shouldn't match since window ID changed)
     -- Find which terminal owns this window
     if default_terminal.win == win then
-      print("Matched default_terminal by win ID (shouldn't happen)")
       default_terminal.preferred_mode = position
       default_terminal.current_mode = position
     else
       for _, state in pairs(terminals) do
         if state.win == win then
-          print("Matched terminal by win ID (shouldn't happen)")
           state.preferred_mode = position
           state.current_mode = position
         end
@@ -692,13 +644,16 @@ function M.setup(opts)
   -- Merge user config with defaults
   M.config = vim.tbl_deep_extend("force", M.config, opts or {})
 
+  -- Clean up any orphaned terminal buffers from previous sessions
+  cleanup_orphaned_terminals()
+
   -- Set up autocmd to track last accessed terminal
   local group = vim.api.nvim_create_augroup("TermPopupTracking", { clear = true })
   vim.api.nvim_create_autocmd("BufEnter", {
     group = group,
     callback = function(ev)
       local buf = ev.buf
-      local buftype = vim.api.nvim_buf_get_option(buf, 'buftype')
+      local buftype = vim.api.nvim_get_option_value('buftype', { buf = buf })
 
       -- Only track if it's a terminal buffer
       if buftype == 'terminal' then
@@ -720,7 +675,6 @@ function M.setup(opts)
   vim.api.nvim_create_user_command('PopupTerminalMode', function(cmd_opts)
     if cmd_opts.args == "" then
       -- No args: show current mode
-      print("Global terminal mode: " .. M.get_mode())
     else
       -- Set the mode
       M.set_mode(cmd_opts.args)
