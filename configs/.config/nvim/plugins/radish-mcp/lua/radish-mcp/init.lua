@@ -7,7 +7,6 @@ local tools = require("radish-mcp.tools")
 local terminal_monitor = require("radish-mcp.terminal-monitor")
 local ghost_window = require("radish-mcp.ghost-window")
 local pattern_registry = require("radish-mcp.pattern-registry")
-local ghost_flash_integration = require("radish-mcp.ghost-flash-integration")
 
 local M = {}
 
@@ -82,9 +81,6 @@ handlers["tools/call"] = function(params)
   local arguments = params.arguments or {}
 
   local result = tools.execute(tool_name, arguments)
-
-  -- Hook: Auto-trigger ghost flash for WriteFile operations
-  print(string.format("🔧 [Radish] Tool called: %s", tool_name))
 
   -- Check if this is a file write/preview operation
   local is_file_write = (arguments.file or arguments.filepath) and (arguments.content or arguments.patch or arguments.changes)
@@ -229,9 +225,6 @@ end
 -- Setup function for plugin configuration
 function M.setup(opts)
   opts = opts or {}
-
-  -- Initialize ghost flash integration
-  ghost_flash_integration.setup(opts.ghost_flash or {})
 
   -- Create :RadishAbort command
   vim.api.nvim_create_user_command('RadishAbort', function(cmd_opts)

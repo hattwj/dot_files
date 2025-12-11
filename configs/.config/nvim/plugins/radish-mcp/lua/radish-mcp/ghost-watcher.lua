@@ -14,6 +14,17 @@ function M.setup(opts)
   M.config = vim.tbl_deep_extend("force", M.config, opts or {})
 end
 
+-- Helper: Safely cleanup timer
+local function cleanup_timer(timer)
+  if not timer then
+    return
+  end
+  if not timer:is_closing() then
+    timer:stop()
+    timer:close()
+  end
+end
+
 -- Wait for file modification and trigger callback
 -- @param filepath: path to file to watch
 -- @param callback: function(detected: boolean) - called on completion or timeout
@@ -56,8 +67,7 @@ function M.wait_for_write(filepath, callback, original_mtime)
         print(string.format("✅ [Watcher] WRITE DETECTED! %s (elapsed: %dms, mtime: %d -> %d)",
           vim.fn.fnamemodify(filepath, ":t"), elapsed, original_mtime, stat.mtime.sec))
       end
-      timer:stop()
-      timer:close()
+      cleanup_timer(timer)
       callback(true)
       return
     end
@@ -68,8 +78,7 @@ function M.wait_for_write(filepath, callback, original_mtime)
         print(string.format("⏱️  [Watcher] TIMEOUT! %s (waited %dms)",
           vim.fn.fnamemodify(filepath, ":t"), elapsed))
       end
-      timer:stop()
-      timer:close()
+      cleanup_timer(timer)
       callback(false)
     end
   end))
@@ -93,8 +102,7 @@ function M.wait_for_creation(filepath, callback)
         print(string.format("✅ [Watcher] FILE CREATED! %s (elapsed: %dms)",
           vim.fn.fnamemodify(filepath, ":t"), elapsed))
       end
-      timer:stop()
-      timer:close()
+      cleanup_timer(timer)
       callback(true)
       return
     end
@@ -105,8 +113,7 @@ function M.wait_for_creation(filepath, callback)
         print(string.format("⏱️  [Watcher] CREATION TIMEOUT! %s (waited %dms)",
           vim.fn.fnamemodify(filepath, ":t"), elapsed))
       end
-      timer:stop()
-      timer:close()
+      cleanup_timer(timer)
       callback(false)
     end
   end))

@@ -63,11 +63,6 @@ function M.flash_lines(bufnr, start_line, end_line, duration_ms)
   end, duration_ms)
 end
 
--- Flash current line (convenience function)
-function M.flash_current_line(duration_ms)
-  local line = vim.fn.line(".")
-  M.flash_lines(0, line, line, duration_ms)
-end
 
 -- Flash a file by path (useful for external edits)
 -- @param filepath: absolute or relative path to file

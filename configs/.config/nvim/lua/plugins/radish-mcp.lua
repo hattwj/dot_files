@@ -23,7 +23,7 @@ return {
           pattern = "Auto%-accepting changes to",  -- Detect the line first
           priority = 100,
           description = "Detects AI agent file write actions",
-          handler = function(matches, context)
+          handler = function(_matches, context)
             -- Get joined line to handle terminal wrapping
             local joined_line = context.get_joined_line(2)
 
@@ -60,7 +60,7 @@ return {
           pattern = "no changes to",
           priority = 100,
           description = "Detects AI agent no-change messages",
-          handler = function(matches, context)
+          handler = function(_matches, context)
             local joined_line = context.get_joined_line(2)
             local filepath = joined_line:match("no changes to ([^,]+)")
             if not filepath then

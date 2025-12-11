@@ -221,32 +221,6 @@ function M.flash_changes(filepath, chunks)
     vim.log.levels.INFO)
 end
 
--- Manual trigger for testing
--- Creates a snapshot, lets you make changes, then diffs and flashes
-function M.test_manual_diff(filepath)
-  filepath = vim.fn.fnamemodify(filepath, ":p")
-
-  local snap = snapshot.create_snapshot(filepath)
-  if not snap then
-    vim.notify("Failed to create snapshot", vim.log.levels.ERROR)
-    return
-  end
-
-  vim.notify("📸 Snapshot created. Make your changes, then press any key...", vim.log.levels.INFO)
-
-  -- Wait for user input
-  vim.fn.getchar()
-
-  -- Diff and flash
-  local chunks = snapshot.diff_since_snapshot(filepath, snap)
-  snapshot.cleanup_snapshot(snap)
-
-  if chunks and #chunks > 0 then
-    M.flash_changes(filepath, chunks)
-  else
-    vim.notify("No changes detected", vim.log.levels.INFO)
-  end
-end
 
 -- Initialize
 M.setup()

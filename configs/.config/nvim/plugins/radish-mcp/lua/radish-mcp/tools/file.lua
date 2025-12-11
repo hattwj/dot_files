@@ -44,13 +44,6 @@ M.schema = {
 }
 
 M.handler = function(arguments)
-  -- Trigger file open hook if it exists
-  if M.on_file_open then
-    vim.schedule(function()
-      M.on_file_open(arguments)
-    end)
-  end
-
   local file = arguments.file
   local files = arguments.files
   local line = arguments.line
