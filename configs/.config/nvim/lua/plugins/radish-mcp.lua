@@ -37,7 +37,19 @@ return {
             if not filepath:match("^/") then
               filepath = vim.fn.getcwd() .. "/" .. filepath
             end
+
+            -- Show in ghost window
             context.show_in_ghost(filepath)
+
+            -- Auto-trigger ghost flash watcher
+            vim.schedule(function()
+              local ok, orchestrator = pcall(require, 'radish-mcp.ghost-flash-orchestrator')
+              if ok and orchestrator and orchestrator.config.enabled then
+                print(string.format("🎯 [Pattern] Auto-starting ghost watch for: %s", vim.fn.fnamemodify(filepath, ":t")))
+                orchestrator.watch_and_flash(filepath)
+              end
+            end)
+
             return false
           end,
         })

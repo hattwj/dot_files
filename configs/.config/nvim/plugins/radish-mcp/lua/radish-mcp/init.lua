@@ -7,6 +7,7 @@ local tools = require("radish-mcp.tools")
 local terminal_monitor = require("radish-mcp.terminal-monitor")
 local ghost_window = require("radish-mcp.ghost-window")
 local pattern_registry = require("radish-mcp.pattern-registry")
+local ghost_flash_integration = require("radish-mcp.ghost-flash-integration")
 
 local M = {}
 
@@ -80,7 +81,31 @@ handlers["tools/call"] = function(params)
   local tool_name = params.name
   local arguments = params.arguments or {}
 
-  return tools.execute(tool_name, arguments)
+  local result = tools.execute(tool_name, arguments)
+
+  -- Hook: Auto-trigger ghost flash for WriteFile operations
+  print(string.format("🔧 [Radish] Tool called: %s", tool_name))
+
+  -- Check if this is a file write/preview operation
+  local is_file_write = (arguments.file or arguments.filepath) and (arguments.content or arguments.patch or arguments.changes)
+
+  if is_file_write and result.success then
+    -- Extract filepath from arguments
+    local filepath = arguments.file or arguments.filepath
+
+    if filepath then
+      -- Trigger ghost flash asynchronously
+      vim.schedule(function()
+        local ok, orchestrator = pcall(require, 'radish-mcp.ghost-flash-orchestrator')
+        if ok and orchestrator and orchestrator.config.enabled then
+          print(string.format("🎯 [Radish] Auto-triggering ghost flash for: %s", filepath))
+          orchestrator.watch_and_flash(filepath)
+        end
+      end)
+    end
+  end
+
+  return result
 end
 
 -- Process incoming MCP message
@@ -205,6 +230,9 @@ end
 function M.setup(opts)
   opts = opts or {}
 
+  -- Initialize ghost flash integration
+  ghost_flash_integration.setup(opts.ghost_flash or {})
+
   -- Create :RadishAbort command
   vim.api.nvim_create_user_command('RadishAbort', function(cmd_opts)
     local message = cmd_opts.args
@@ -270,6 +298,18 @@ function M.setup(opts)
     pattern_registry.show_patterns()
   end, {
     desc = "Show registered ghost mode patterns"
+  })
+
+  -- Ghost Flash Command
+  vim.api.nvim_create_user_command('GhostWatch', function(cmd_opts)
+    local filepath = cmd_opts.args
+    if filepath == "" then
+      filepath = vim.fn.expand('%:p')
+    end
+    require('radish-mcp.ghost-flash-orchestrator').watch_and_flash(filepath)
+  end, {
+    nargs = '?',
+    desc = "Start watching file for ghost flash (defaults to current buffer)"
   })
 
   -- Auto-start server
