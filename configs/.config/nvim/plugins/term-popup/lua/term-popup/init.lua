@@ -229,11 +229,17 @@ local function ensure_terminal_buffer(state, command)
   -- Set buffer options
   vim.api.nvim_set_option_value('filetype', 'terminal', { buf = state.buf })
 
+  -- Inject NVIM_PARENT_PID environment variable to allow child processes to detect Neovim
+  local nvim_pid = vim.fn.getpid()
+  local env = vim.fn.environ()
+  env.NVIM_PARENT_PID = tostring(nvim_pid)
+
   -- Start terminal in the buffer
   vim.api.nvim_buf_call(state.buf, function()
     if command then
       vim.fn.jobstart(command, {
         term = true,
+        env = env,
         on_exit = function()
           vim.schedule(function()
             cleanup_terminal(state)
@@ -243,6 +249,7 @@ local function ensure_terminal_buffer(state, command)
     else
       vim.fn.jobstart(M.config.shell or vim.o.shell, {
         term = true,
+        env = env,
         on_exit = function() vim.schedule(function() cleanup_terminal(state) end) end
       })
     end
@@ -664,6 +671,7 @@ function M.setup(opts)
       end
     end,
   })
+
 
   -- Validate mode
   if not VALID_MODES[M.config.mode] then

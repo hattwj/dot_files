@@ -16,17 +16,12 @@ M.socket_path = nil
 
 -- Get unique socket path based on TTY
 local function get_socket_path()
-  local tty = vim.fn.system("tty"):gsub("\n", "")
+  -- Get Neovim's PID
+  local nvim_pid = vim.fn.getpid()
 
-  if tty == "" or tty == "not a tty" then
-    -- Fallback for non-TTY environments
-    local pid = vim.fn.getpid()
-    return "/tmp/radish-nvim-pid-" .. pid .. ".sock"
-  end
-
-  -- Convert /dev/pts/5 -> pts-5
-  local safe_name = tty:gsub("^/dev/", ""):gsub("/", "-")
-  return "/tmp/radish-nvim-" .. safe_name .. ".sock"
+  -- Always use PID-based socket for deterministic behavior
+  -- Child processes identify the correct Neovim via NVIM_PARENT_PID env var
+  return "/tmp/radish-nvim-pid-" .. nvim_pid .. ".sock"
 end
 
 -- MCP JSON-RPC message handling
@@ -80,22 +75,55 @@ handlers["tools/call"] = function(params)
   local tool_name = params.name
   local arguments = params.arguments or {}
 
-  local result = tools.execute(tool_name, arguments)
-
   -- Check if this is a file write/preview operation
   local is_file_write = (arguments.file or arguments.filepath) and (arguments.content or arguments.patch or arguments.changes)
+  local snapshot_path = nil
 
-  if is_file_write and result.success then
-    -- Extract filepath from arguments
+  -- Take snapshot BEFORE write if this is a file operation
+  if is_file_write then
     local filepath = arguments.file or arguments.filepath
-
     if filepath then
-      -- Trigger ghost flash asynchronously
+      local ok, orchestrator = pcall(require, 'radish-mcp.ghost-flash-orchestrator')
+      if ok and orchestrator and orchestrator.config.enabled then
+        -- Take snapshot synchronously BEFORE write
+        local snapshot_module = require('radish-mcp.ghost-snapshot')
+        local snap = snapshot_module.create_snapshot(filepath)
+        if snap then
+          snapshot_path = snap.path
+          print(string.format("📸 [Radish] Snapshot taken BEFORE write: %s", vim.fn.fnamemodify(filepath, ":t")))
+        end
+      end
+    end
+  end
+
+  -- Execute the actual write
+  local result = tools.execute(tool_name, arguments)
+
+  -- Start watcher AFTER write completes (if snapshot was taken)
+  if is_file_write and result.success and snapshot_path then
+    local filepath = arguments.file or arguments.filepath
+    if filepath then
       vim.schedule(function()
         local ok, orchestrator = pcall(require, 'radish-mcp.ghost-flash-orchestrator')
-        if ok and orchestrator and orchestrator.config.enabled then
-          print(string.format("🎯 [Radish] Auto-triggering ghost flash for: %s", filepath))
-          orchestrator.watch_and_flash(filepath)
+        if ok and orchestrator then
+          print(string.format("🎯 [Radish] Starting watcher AFTER write for: %s", vim.fn.fnamemodify(filepath, ":t")))
+          -- Load the snapshot we just created
+          local snapshot_module = require('radish-mcp.ghost-snapshot')
+          local snap = { path = snapshot_path, filepath = filepath }
+
+          -- Open buffer if configured
+          if orchestrator.config.auto_open_buffer then
+            orchestrator.open_buffer(filepath)
+          end
+
+          -- Start watching for the write we just did
+          local watcher_module = require('radish-mcp.ghost-watcher')
+          watcher_module.watch(filepath, function(detected_path)
+            print(string.format("🔔 [Radish] Write detected for: %s", vim.fn.fnamemodify(detected_path, ":t")))
+            vim.defer_fn(function()
+              orchestrator.on_write_detected(detected_path, snap)
+            end, 50)
+          end)
         end
       end)
     end

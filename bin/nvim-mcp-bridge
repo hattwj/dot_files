@@ -3,46 +3,49 @@
 Bridge between stdio and Unix domain socket for MCP communication.
 Reads from stdin, forwards to socket. Reads from socket, forwards to stdout.
 
-Automatically detects the correct neovim socket based on current TTY.
+Automatically detects the correct neovim socket based on NVIM_PARENT_PID.
 
 Usage:
   nvim-mcp-bridge
 
 Environment Variables:
   NVIM_SOCKET_PATH: Path to Unix domain socket (overrides auto-detection)
+  NVIM_PARENT_PID: Parent Neovim PID (injected by term-popup plugin)
 """
 
 import socket
 import sys
 import os
 import threading
-import subprocess
 
 
 def get_auto_socket_path():
-    """Automatically determine socket path based on current TTY."""
-    try:
-        # Get the TTY of the current terminal
-        result = subprocess.run(['tty'], capture_output=True, text=True)
-        tty = result.stdout.strip()
+    """Automatically determine socket path based on parent Neovim process.
 
-        if not tty or tty == 'not a tty':
-            # Fallback: look for any radish-nvim socket
-            import glob
-            sockets = glob.glob('/tmp/radish-nvim-*.sock')
-            if sockets:
-                # Use the most recently modified socket
-                sockets.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-                return sockets[0]
-            return None
+    Uses NVIM_PARENT_PID environment variable injected by term-popup plugin
+    to identify the correct Neovim instance, avoiding cross-instance issues
+    with nested terminals.
+    """
+    # Get NVIM_PARENT_PID environment variable
+    nvim_pid = os.environ.get('NVIM_PARENT_PID')
 
-        # Convert /dev/pts/5 -> pts-5
-        # Convert /dev/tty1 -> tty1
-        safe_name = tty.replace('/dev/', '').replace('/', '-')
-        return f"/tmp/radish-nvim-{safe_name}.sock"
-    except Exception as e:
-        print(f"Error detecting TTY: {e}", file=sys.stderr)
-        return None
+    if not nvim_pid:
+        raise RuntimeError(
+            "NVIM_PARENT_PID environment variable not found.\n"
+            "This tool must be run from within a Neovim :terminal session.\n"
+            "Make sure the term-popup plugin is loaded."
+        )
+
+    # Always use PID-based socket (deterministic, no fallbacks)
+    socket_path = f"/tmp/radish-nvim-pid-{nvim_pid}.sock"
+    if not os.path.exists(socket_path):
+        raise RuntimeError(
+            f"Neovim socket not found for PID {nvim_pid}.\n"
+            f"Expected: {socket_path}\n"
+            f"Make sure the radish-mcp plugin is loaded in Neovim."
+        )
+
+    return socket_path
 
 
 def stdio_to_socket(sock):
@@ -81,10 +84,10 @@ def main():
     socket_path = os.environ.get('NVIM_SOCKET_PATH')
 
     if not socket_path:
-        socket_path = get_auto_socket_path()
-        if not socket_path:
-            print("Error: Could not auto-detect neovim socket", file=sys.stderr)
-            print("Set NVIM_SOCKET_PATH environment variable or run from same TTY as neovim", file=sys.stderr)
+        try:
+            socket_path = get_auto_socket_path()
+        except RuntimeError as e:
+            print(f"Error: {e}", file=sys.stderr)
             sys.exit(1)
 
     # Create Unix domain socket

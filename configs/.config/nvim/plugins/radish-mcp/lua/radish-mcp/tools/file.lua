@@ -177,20 +177,26 @@ M.open_single_file = function(file, line, create)
 
   -- Smart window selection: avoid stomping on terminal windows
   local success, result = pcall(function()
-    -- Use shared window manager to avoid stomping terminal
-    window_manager.get_file_window()
+    -- Save current window if it's a terminal
+    local current_win = vim.api.nvim_get_current_win()
+    local current_bufnr = vim.api.nvim_win_get_buf(current_win)
+    local is_terminal = vim.bo[current_bufnr].buftype == 'terminal'
 
-    -- Now open the file in the selected/created window
-    vim.cmd("edit " .. vim.fn.fnameescape(file))
+    -- Get target window without switching focus
+    local target_win = window_manager.get_file_window()
 
-    -- Jump to line if specified
-    if line and line > 0 then
-      vim.cmd(":" .. line)
+    -- Open file in target window without stealing focus
+    vim.api.nvim_win_call(target_win, function()
+      vim.cmd("edit " .. vim.fn.fnameescape(file))
+      if line and line > 0 then
+        vim.cmd(":" .. line)
+      end
+    end)
+
+    -- Restore terminal focus if needed
+    if is_terminal and vim.api.nvim_win_is_valid(current_win) then
+      vim.api.nvim_set_current_win(current_win)
     end
-
-    -- Return focus to terminal if we came from one
-    -- Actually, let's keep focus on the opened file so user can see it
-    -- They can switch back to terminal with <C-w>w or similar
   end)
 
   if not success then

@@ -177,7 +177,7 @@ vim.keymap.set({'n', 'i', 'v'}, '<C-S-t>', function() open_float_term() end, {no
 -- Press CTRL-ESC to exit from terminal mode
 vim.keymap.set({'t'},'<C-ESC>', '<C-\\><C-n>', { noremap=true, silent=true })
 -- Two ways are better than one, keymap to Exit terminal mode, and enter normal mode 
-vim.keymap.set('t', '<leader><ESC>', '<C-\\><C-n>', { noremap = true, silent = true })
+vim.keymap.set('t', '<C-Space>', '<C-\\><C-n>', { noremap = true, silent = true })
 
 
 vim.cmd([[
