@@ -63,6 +63,13 @@ handlers["initialize"] = function(params)
   }
 end
 
+-- Handle notifications/initialized (no-op, just acknowledge)
+handlers["notifications/initialized"] = function(params)
+  -- This is a notification from the client indicating initialization is complete
+  -- No response needed per JSON-RPC 2.0 spec for notifications
+  return nil
+end
+
 -- List tools handler
 handlers["tools/list"] = function(params)
   return {
@@ -142,17 +149,35 @@ local function process_message(msg_str)
 
   -- Handle JSON-RPC request
   if msg.method then
+    -- Check if this is a notification (no id field)
+    local is_notification = msg.id == nil
+
     local handler = handlers[msg.method]
 
     if not handler then
+      -- For notifications, silently ignore unknown methods per JSON-RPC 2.0
+      if is_notification then
+        return nil
+      end
       return create_error_response(msg.id, -32601, "Method not found: " .. msg.method)
     end
 
     local ok, result = pcall(handler, msg.params or {})
 
     if ok then
+      -- Don't send response for notifications
+      if is_notification then
+        return nil
+      end
       return create_response(msg.id, result)
     else
+      -- For notifications, log error but don't send response
+      if is_notification then
+        vim.schedule(function()
+          vim.notify("Radish MCP notification handler error: " .. tostring(result), vim.log.levels.WARN)
+        end)
+        return nil
+      end
       return create_error_response(msg.id, -32603, "Internal error: " .. tostring(result))
     end
   end

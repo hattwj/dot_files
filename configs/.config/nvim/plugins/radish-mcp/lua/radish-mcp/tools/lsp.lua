@@ -152,6 +152,7 @@ M.handler = function(arguments)
       }
     end
 
+    local client = clients[1]
     local params = vim.lsp.util.make_position_params(0, client.offset_encoding)
     params.position.line = line - 1  -- LSP is 0-indexed
     params.position.character = col - 1
