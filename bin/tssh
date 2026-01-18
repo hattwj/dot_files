@@ -12,4 +12,4 @@ TNAME="$TE"
 # Fallback to tty of terminal
 [ -z "$TNAME" ] && TNAME="tty-$(basename $(tty))"
 
-ssh -t "$@" 'bash -l -c "tmux new -A -s '"$TNAME"'"'
+ssh -Y -t "$@" 'bash -l -c "tmux new -A -s '"$TNAME"'"'
