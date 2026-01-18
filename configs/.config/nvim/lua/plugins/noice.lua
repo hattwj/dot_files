@@ -11,18 +11,25 @@ return {
   "folke/noice.nvim",
   event = "VeryLazy",
   opts = {
-    views = {
-      mini = { timeout = 8500, },
-    },
     cmdline = cmd_config,
-    -- routes = {
-    --   { -- When a message is more than 40 characters wide, show it as a custom message 
-    --     -- with custom rules.
-    --     -- view = "virtualtext",
-    --     view = "mini",
-    --     filter = { event = "msg_show", min_width = 40 },
-    --   },
-    -- },
+    routes = {
+      { -- Disable mini notifications (lower right corner)
+        filter = {
+          event = "msg_show",
+          any = {
+            { find = "written" },
+            { find = "lines" },
+            { find = "more lines" },
+            { find = "fewer lines" },
+          },
+        },
+        opts = { skip = true },
+      },
+      { -- Route other messages to notify instead of mini
+        view = "notify",
+        filter = { event = "msg_show" },
+      },
+    },
   },
   config = function(_, opts)
     -- HACK: noice shows messages from before it was enabled,

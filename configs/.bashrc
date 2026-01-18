@@ -3,6 +3,8 @@
 # Make paging in postgres much nicer
 export PAGER='less -r'
 export LESS="-iMSx4 -FX"
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8 
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
