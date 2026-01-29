@@ -1,5 +1,4 @@
 alias serve='python3 -m http.server -b 127.0.0.1 8080'
-alias cls="echo -ne '\033c'"
 # alias tmux="TERM=xterm-256color tmux"
 alias git-is-slow-again='git gc;git repack -a -d --depth=250 --window=250;git prune'
 

@@ -1,2 +1,9 @@
 #!/bin/sh
-echo -e \\033c
+
+# Clear the terminal screen
+echo -ne '\033c'
+
+# If we're in a tmux session, also clear the scrollback buffer
+if [ -n "$TMUX" ]; then
+    tmux clear-history
+fi
