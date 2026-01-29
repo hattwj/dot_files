@@ -2,6 +2,8 @@
 return {
   "nvim-treesitter/nvim-treesitter",
   opts = {
+    -- Compile parsers from source (fixes GLIBC_2.33 errors on AL2)
+    prefer_git = true,
     ensure_installed = {
       "bash",
       "embedded_template",

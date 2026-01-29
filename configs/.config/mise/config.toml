@@ -1,7 +1,7 @@
 [tools]
 cargo = "latest"
 delta = "latest"
-java = "17"
+java = "21.0.2"
 node = "18.17.1"
 python = "3.12"
 ruby = "3.4.4"

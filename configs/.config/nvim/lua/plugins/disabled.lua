@@ -19,4 +19,11 @@ return {
     }
   },
   -- { "folke/noice.nvim", enabled = false },
+
+  -- Disable snippets (LuaSnip)
+  { "L3MON4D3/LuaSnip", enabled = false },
+  { "rafamadriz/friendly-snippets", enabled = false },
+
+  -- Disable auto-pairing of quotes, brackets, etc.
+  { "echasnovski/mini.pairs", enabled = false },
 }
