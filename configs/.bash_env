@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+#
+# .bash_env - Environment variables, PATH, and tool initialization.
+#
+# Sourced ONCE from .bash_profile before .bashrc.
+# This file consolidates environment setup that was previously scattered
+# across .bash_profile, .bashrc, and .bashrc_Linux.
+#
+# Extension point: ~/.bash_env_custom is sourced at the end of this file.
+# Use it (e.g. from dddot_files) to add work-specific environment setup.
+
+# Guard against being sourced multiple times in the same shell
+[[ -n "$_BASH_ENV_LOADED" ]] && return
+_BASH_ENV_LOADED=1
+
+# ─── Locale ──────────────────────────────────────────────────────────
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+
+# ─── Pager ───────────────────────────────────────────────────────────
+export PAGER='less -r'
+export LESS="-iMSx4 -FX"
+
+# ─── Editor ──────────────────────────────────────────────────────────
+if command -v nvim > /dev/null 2>&1; then
+  export EDITOR=nvim
+  export VISUAL=nvim
+elif command -v vim > /dev/null 2>&1; then
+  export EDITOR=vim
+  export VISUAL=vim
+fi
+
+# ─── Java (JVM picker) ──────────────────────────────────────────────
+# Try common JVM paths in order of preference
+for _jpath in \
+  "/usr/lib/jvm/jre-17/bin/java" \
+  "/usr/lib/jvm/java-17/bin/java" \
+  "/usr/lib/jvm/java-1.8.0-openjdk/bin/java"; do
+  if [[ -x "$_jpath" ]]; then
+    export JPATH="$_jpath"
+    export JAVA_HOME="$("$_jpath" -XshowSettings:properties -version 2>&1 \
+      | grep "java.home" | sed -e 's/java.home = //;s/ //g;')"
+    export PATH="$JAVA_HOME/bin:$PATH"
+    break
+  fi
+done
+unset _jpath
+
+# ─── Cargo (Rust) ───────────────────────────────────────────────────
+[[ -s "$HOME/.cargo/env" ]] && source "$HOME/.cargo/env"
+
+# ─── NVM (Node) ─────────────────────────────────────────────────────
+export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+[[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
+[[ -s "$NVM_DIR/bash_completion" ]] && source "$NVM_DIR/bash_completion"
+
+# ─── mise (polyglot version manager) ────────────────────────────────
+command -v mise > /dev/null 2>&1 \
+  && [[ -e "$HOME/.bash_activate_mise.sh" ]] \
+  && source "$HOME/.bash_activate_mise.sh"
+
+# ─── PATH additions ─────────────────────────────────────────────────
+# Helper: prepend to PATH if directory exists and isn't already in PATH
+_add_to_path() {
+  [[ -d "$1" ]] && [[ ":$PATH:" != *":$1:"* ]] && export PATH="$1:$PATH"
+}
+
+_add_to_path "$HOME/bin"
+_add_to_path "$HOME/.bin"
+_add_to_path "$HOME/.local/bin"
+_add_to_path "$HOME/.toolbox/bin"
+
+unset -f _add_to_path
+
+# ─── inputrc ─────────────────────────────────────────────────────────
+[[ -e "$HOME/.inputrc" ]] && export INPUTRC="$HOME/.inputrc"
+
+# ─── Extension point for work-specific env (e.g. dddot_files) ───────
+[[ -e "$HOME/.bash_env_custom" ]] && source "$HOME/.bash_env_custom"

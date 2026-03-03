@@ -1,15 +1,7 @@
-pf1="$HOME/.bashrc"
+#!/usr/bin/env bash
 
-# Load the right bashrc for this OS
-[[ -e $pf1 ]] && source $pf1
+# Load environment variables, PATH, and tool initialization (once)
+[[ -e "$HOME/.bash_env" ]] && source "$HOME/.bash_env"
 
-# >>> JVM picker - set java home based on whatever is in path >>>
-
-# export JPATH="/usr/lib/jvm/java-1.8.0-openjdk/bin/java"
-export JPATH="/usr/lib/jvm/jre-17/bin/java"
-[[ -e $JPATH ]] && \
-  export JAVA_HOME="$($JPATH -XshowSettings:properties -version 2>&1 | grep "java.home" | sed -e 's/java.home = //;s/ //g;')" && \
-  export PATH="$JAVA_HOME/bin:$PATH"
-# <<< JVM picker <<<
-
-[ -s "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
+# Load the main bashrc (interactive shell setup)
+[[ -e "$HOME/.bashrc" ]] && source "$HOME/.bashrc"

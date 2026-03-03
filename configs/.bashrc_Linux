@@ -30,7 +30,7 @@ HISTFILESIZE=2000000
 PROMPT_COMMAND="history -a"
 
 # Auto-refresh DISPLAY inside tmux so X11 clipboard survives SSH reconnects.
-# Called from .bash_prompt PROMPT_COMMAND chain (which overwrites PROMPT_COMMAND).
+# Called from .bash_prompt PROMPT_COMMAND chain (which appends to PROMPT_COMMAND).
 if [ -n "$TMUX" ]; then
   _refresh_tmux_env() { local v; v=$(tmux show-environment DISPLAY 2>/dev/null) && eval export "$v"; }
 fi
@@ -116,7 +116,3 @@ if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
 fi
 
 DIR="$(cd "$(dirname "$(readlink -f ${BASH_SOURCE[0]})")" && pwd -P)"
-
-[ -d "$HOME/bin" ] && PATH="$HOME/bin:$PATH"
-[ -d "$HOME/.bin" ] && PATH="$HOME/.bin:$PATH"
-[ -d "$HOME/.local/bin" ] && PATH="$HOME/.local/bin:$PATH"
