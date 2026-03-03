@@ -11,4 +11,5 @@ export JPATH="/usr/lib/jvm/jre-17/bin/java"
   export JAVA_HOME="$($JPATH -XshowSettings:properties -version 2>&1 | grep "java.home" | sed -e 's/java.home = //;s/ //g;')" && \
   export PATH="$JAVA_HOME/bin:$PATH"
 # <<< JVM picker <<<
-. "$HOME/.cargo/env"
+
+[ -s "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"

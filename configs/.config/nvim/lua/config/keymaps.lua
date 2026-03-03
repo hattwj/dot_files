@@ -3,6 +3,11 @@
 -- https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
 -- Add any additional keymaps here
 
+-- Don't copy deleted lines to the clipboard.
+-- Reason: Occasionally this will cause nvim to crash, especially with xclip integration
+vim.keymap.set('n', 'dd', '"_dd')
+
+
 -- Map page up down to use <C-U> <C-D>, that way, when we page up it goes to the first line of the file
 -- - Otherwise it will stop when the 1st line scrolls into view, rather than adjusting the current line.
 vim.api.nvim_set_keymap('n', '<PageUp>', '<C-U>', { noremap = true, silent = true })
@@ -22,7 +27,7 @@ vim.keymap.set({"n"}, "<leader><Right>", ":tabn<CR>", { silent = true, noremap =
 
 -- Simple session management
 vim.api.nvim_set_keymap("n", "<F2>", ":mksession! ~/.vim_session <CR>", { desc = "create session" }) -- Quick write session with F2
-vim.api.nvim_set_keymap("n", "<F3>", ":mksession! ~/.vim_session <CR>", { desc = "load session" }) -- And load session with F3
+vim.api.nvim_set_keymap("n", "<F3>", ":source ~/.vim_session <CR>", { desc = "load session" }) -- And load session with F3
 
 -- Grep search in telescope
 vim.api.nvim_set_keymap("n", "<leader>fa", ":ProjectRoot2<CR>:Telescope live_grep<CR>", { desc = "live_grep" })
@@ -192,7 +197,7 @@ vim.cmd([[
   
   " map CTRL-A to beginning-of-line (insert and normal mode)
   imap <C-a> <esc>0i
-  nmap <C-e> 0
+  nmap <C-a> 0
   
   " Map Shift-A to select all text
   nmap A ggVG
@@ -215,7 +220,7 @@ vim.cmd([[
 
 -- File path yank/paste functionality
 -- Store the file path in a global variable
-_G.stored_file_path = ""
+local stored_file_path = ""
 
 -- Function to yank the current file path
 local function yank_file_path()
@@ -224,17 +229,17 @@ local function yank_file_path()
     vim.notify("No file path to yank", vim.log.levels.WARN)
     return
   end
-  _G.stored_file_path = path
+  stored_file_path = path
   vim.notify("Yanked: " .. path, vim.log.levels.INFO)
 end
 
 -- Function to paste the stored file path
 local function paste_file_path()
-  if _G.stored_file_path == "" then
+  if stored_file_path == "" then
     vim.notify("No file path stored", vim.log.levels.WARN)
     return
   end
-  vim.api.nvim_put({_G.stored_file_path}, 'c', true, true)
+  vim.api.nvim_put({stored_file_path}, 'c', true, true)
 end
 
 -- Yank file path: <leader>ay (normal and visual mode)

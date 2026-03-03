@@ -33,6 +33,14 @@ return {
     on_highlights = function(highlights, colors)
       -- Make comments brighter
       highlights.Comment = { fg = "#7a88df" } -- Adjust this color to your preference
+
+      -- Make unused variables readable by removing the dim/de-emphasized styling
+      -- DiagnosticUnnecessary is the highlight group for unused code
+      --highlights.DiagnosticUnnecessary = { fg = colors.fg_dark, underline = false, sp = nil }
+      -- highlights["@lsp.mod.unused"] = { link = "Normal" }
+      highlights.DiagnosticUnnecessary = { link = "Normal" }
+      -- vim.api.nvim_set_hl(0, "DiagnosticUnnecessary", { link = "Normal" })
+
     end,
   },
 }

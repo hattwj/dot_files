@@ -6,8 +6,8 @@ ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 
-RUN apk add neovim
+RUN apk add --no-cache neovim
 
-
+RUN adduser -D app
 USER app
 WORKDIR /home/app

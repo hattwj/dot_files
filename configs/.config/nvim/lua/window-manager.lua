@@ -45,8 +45,8 @@ local function can_move_buffer(buf)
     return false, "Invalid buffer"
   end
 
-  local buftype = vim.api.nvim_buf_get_option(buf, 'buftype')
-  local filetype = vim.api.nvim_buf_get_option(buf, 'filetype')
+  local buftype = vim.bo[buf].buftype
+  local filetype = vim.bo[buf].filetype
 
   -- Don't move special buffers
   local unmovable_buftypes = {
@@ -147,7 +147,7 @@ function M.move_to_bottom(win)
   vim.api.nvim_win_set_buf(new_win, buf)
 
   -- Set window options
-  vim.api.nvim_win_set_option(new_win, 'winfixheight', true)
+  vim.wo[new_win].winfixheight = true
 
   -- Notify callbacks
   notify_position_change(new_win, "bottom")
@@ -182,7 +182,7 @@ function M.move_to_top(win)
   vim.api.nvim_win_set_buf(new_win, buf)
 
   -- Set window options
-  vim.api.nvim_win_set_option(new_win, 'winfixheight', true)
+  vim.wo[new_win].winfixheight = true
 
   -- Notify callbacks
   notify_position_change(new_win, "top")
@@ -225,7 +225,7 @@ function M.move_to_right(win)
   vim.api.nvim_win_set_buf(new_win, buf)
 
   -- Set window options
-  vim.api.nvim_win_set_option(new_win, 'winfixwidth', true)
+  vim.wo[new_win].winfixwidth = true
 
   -- Notify callbacks
   notify_position_change(new_win, "right")
@@ -268,7 +268,7 @@ function M.move_to_left(win)
   vim.api.nvim_win_set_buf(new_win, buf)
 
   -- Set window options
-  vim.api.nvim_win_set_option(new_win, 'winfixwidth', true)
+  vim.wo[new_win].winfixwidth = true
 
   -- Notify callbacks
   notify_position_change(new_win, "left")

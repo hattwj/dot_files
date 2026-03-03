@@ -35,7 +35,7 @@ local function rsync_file(local_path, remote_host, remote_path, direction)
   vim.notify("sshCopySwap running command: " .. cmd, nil, {})
   -- runs command on a sub-process.
   local handle = io.popen(cmd)
-  if handle ~= nil then
+  if handle == nil then
     error("Rsync operation failed or timed out")
     return 1
   end
