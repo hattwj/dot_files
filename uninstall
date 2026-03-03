@@ -1,28 +1,248 @@
-#!/bin/bash
+#!/usr/bin/env ruby
 
-#get cur dir
-OLD_DIR=$(pwd)
-# Find directory that this script is in 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-LOG_FILE="$SCRIPT_DIR/install.log"
+# Reverses the install script: removes symlinks that point into this git
+# repository and restores any backed-up originals.
 
-# what bash files will this computer use?
-pf1=".bashrc_"`uname`
-pf2=".bashrc_"`uname`'_'`hostname`
+require 'optparse'
+require 'fileutils'
+require 'json'
+require 'logger'
 
-#check install log
-if [ ! -f "$LOG_FILE" ] && [[ "$1x" != "-fx" ]]; then
-    echo "Missing Install log ( -f to force uninstall ):  $LOG_FILE"
-    exit
-fi
+$no_op = false
+$verbose = false
 
-#check backup dir
-if [ ! -d "$SCRIPT_DIR/backups" ]; then
-    echo "Missing Dir:    $SCRIPT_DIR/backups"
-    exit
-fi
+$counts = {
+  unlinked: 0,
+  restored: 0,
+  skipped: 0,
+  orphaned: 0,
+  cleaned: 0
+}
 
-# Todo: parse install.log and uninstall that way
-echo Done with uninstall
+def backups_dir
+  "#{ENV['HOME']}/.config/dot_files/backups/#{File.basename(git_root)}"
+end
 
-cd $OLD_DIR
+def git_root
+  @git_root ||= begin
+    git_dir = `git rev-parse --show-toplevel`.strip
+    raise "Error: not a git repository" if git_dir.empty?
+    git_dir
+  end
+end
+
+def parse_args(args)
+  options = { no_op: false, verbose: false }
+
+  OptionParser.new(args) do |opts|
+    opts.banner = <<-DOC
+  Usage: #{File.basename(__FILE__)} [options]
+  Remove dotfile symlinks and restore backups
+
+  Options:
+DOC
+    opts.on("-n", "--no-op", "Dry run only, do not make any changes") do
+      options[:no_op] = true
+    end
+    opts.on("-v", "--verbose", "Show all actions including skipped files") do
+      options[:verbose] = true
+    end
+    opts.on_tail("-h", "--help", "Show this message") do
+      puts opts
+      exit
+    end
+  end.parse!
+  options
+end
+
+# ─── Colorization ────────────────────────────────────────────────────
+class String
+  def colorize(c) = "\e[#{c}m#{self}\e[0m"
+  def red;    colorize(31); end
+  def green;  colorize(32); end
+  def yellow; colorize(33); end
+  def blue;   colorize(34); end
+  def cyan;   colorize(36); end
+  def dim;    colorize(2);  end
+end
+
+# ─── Logging ─────────────────────────────────────────────────────────
+def logger
+  @logger ||= begin
+    l = Logger.new(STDOUT)
+    l.formatter = proc { |_, _, _, msg| puts msg; nil }
+    l
+  end
+end
+
+def log_info(msg)    = logger.info "[#{'info'.cyan}] #{msg}"
+def log_unlink(msg)  = logger.info "[#{'unlink'.red}] #{msg}"
+def log_restore(msg) = logger.info "[#{'restore'.green}] #{msg}"
+def log_clean(msg)   = logger.info "[#{'clean'.yellow}] #{msg}"
+def log_orphan(msg)  = logger.info "[#{'orphan'.yellow}] #{msg}"
+def log_error(msg)   = logger.error "[#{'error'.red}] #{msg}"
+def log_skip(msg)
+  logger.info "[#{'skip'.dim}] #{msg}" if $verbose
+end
+
+# ─── Core Logic ──────────────────────────────────────────────────────
+
+# Check if a symlink points into our git repository
+def ours?(path)
+  File.symlink?(path) && File.readlink(path).start_with?(git_root)
+end
+
+# Unlink a single symlink and optionally restore backup
+def unlink_path(dest:, src:)
+  backup_path = src.sub(git_root, backups_dir)
+
+  unless File.symlink?(dest)
+    if File.exist?(dest)
+      log_skip "#{dest} (not a symlink)"
+      $counts[:skipped] += 1
+    else
+      # Nothing at dest, but check for orphaned backup
+      if File.exist?(backup_path)
+        log_orphan "backup exists but no symlink: #{backup_path}"
+        $counts[:orphaned] += 1
+      end
+    end
+    return
+  end
+
+  unless ours?(dest)
+    log_skip "#{dest} (points elsewhere)"
+    $counts[:skipped] += 1
+    return
+  end
+
+  # Remove our symlink
+  log_unlink dest
+  $counts[:unlinked] += 1
+  File.delete(dest) unless $no_op
+
+  # Restore backup if one exists
+  if File.exist?(backup_path)
+    log_restore "#{backup_path} → #{dest}"
+    $counts[:restored] += 1
+    unless $no_op
+      FileUtils.mkdir_p(File.dirname(dest))
+      FileUtils.mv(backup_path, dest)
+    end
+  end
+end
+
+# Recursively unlink files that were symlinked by the installer
+def unlink_files(src:, dest:, exclude: [], dir_only: [])
+  return unless File.directory?(src)
+
+  Dir.foreach(src) do |filename|
+    next if filename == '.' || filename == '..'
+
+    source_path = File.join(src, filename)
+    next if exclude.include?(source_path)
+
+    target_path = File.join(dest, filename)
+
+    if File.directory?(source_path)
+      if dir_only.include?(source_path)
+        unlink_path(dest: target_path, src: source_path)
+      else
+        unlink_files(src: source_path, dest: target_path, exclude: exclude, dir_only: dir_only)
+        # Clean up empty directories we created
+        if File.directory?(target_path) && !File.symlink?(target_path)
+          remaining = Dir.entries(target_path) - ['.', '..']
+          if remaining.empty?
+            log_clean target_path
+            $counts[:cleaned] += 1
+            Dir.rmdir(target_path) unless $no_op
+          end
+        end
+      end
+    else
+      unlink_path(dest: target_path, src: source_path)
+    end
+  end
+end
+
+# ─── Hash helper (same as install) ───────────────────────────────────
+class Hash
+  def fetch_slice(*keys)
+    result = {}
+    keys.each { |k| result[k] = self.fetch(k) }
+    result
+  end
+end
+
+# ─── Main ────────────────────────────────────────────────────────────
+def main(args)
+  opts = parse_args(args)
+  $no_op = opts[:no_op]
+  $verbose = opts[:verbose]
+
+  begin
+    git_root
+  rescue => e
+    log_error(e.message)
+    exit 1
+  end
+
+  config_path = "#{git_root}/installer.json"
+  unless File.exist?(config_path)
+    log_error "Config file not found: #{config_path}"
+    exit 1
+  end
+
+  config_data = File
+    .read(config_path)
+    .gsub(/{{\s*git_root\s*}}/i, git_root)
+    .gsub(/{{\s*home\s*}}/i, ENV['HOME'])
+
+  config = JSON.parse(config_data, symbolize_names: true)
+
+  log_info "Uninstalling dotfiles from #{git_root}"
+  log_info "Mode: #{$no_op ? 'dry run' : 'live'}"
+  puts ""
+
+  # Reverse symlink_recursive entries
+  Array(config[:symlink_recursive]).each do |symlink_opts|
+    name = symlink_opts[:name] || symlink_opts[:src]
+    symlink_opts[:exclude] ||= []
+    symlink_opts[:dir_only] ||= []
+    logger.info "\nUnlinking #{name}"
+    unlink_files(**symlink_opts.fetch_slice(:src, :dest, :exclude, :dir_only))
+  end
+
+  # Reverse individual symlinks
+  Array(config[:symlinks]).each do |symlink_opts|
+    name = symlink_opts[:name] || symlink_opts[:src]
+    logger.info "\nUnlinking #{name}"
+    unlink_path(**symlink_opts.fetch_slice(:src, :dest))
+  end
+
+  print_summary
+end
+
+def print_summary
+  puts ""
+  puts "─── Summary ───────────────────────────────────────"
+
+  parts = []
+  parts << "#{'unlinked'.red}: #{$counts[:unlinked]}" if $counts[:unlinked] > 0
+  parts << "#{'restored'.green}: #{$counts[:restored]}" if $counts[:restored] > 0
+  parts << "#{'skipped'.dim}: #{$counts[:skipped]}" if $counts[:skipped] > 0
+  parts << "#{'orphaned'.yellow}: #{$counts[:orphaned]}" if $counts[:orphaned] > 0
+  parts << "#{'cleaned'.yellow}: #{$counts[:cleaned]}" if $counts[:cleaned] > 0
+
+  if parts.empty?
+    puts "  Nothing to do — no symlinks found for this repository."
+  else
+    parts.each { |p| puts "  #{p}" }
+  end
+  puts ""
+end
+
+if $PROGRAM_NAME == __FILE__
+  trap("SIGINT") { puts "\nExiting..."; exit 130 }
+  main(ARGV)
+end
