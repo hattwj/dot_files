@@ -8,11 +8,21 @@
 require 'optparse'
 require 'fileutils'
 require 'json'
-# require 'pry'
 require 'logger'
 
-# Flag to prevent actually symlinking or renaming files
 $no_op = false
+$verbose = false
+
+# Counters for summary
+$counts = {
+  symlinked: 0,
+  skipped: 0,
+  backed_up: 0,
+  created: 0,
+  deleted: 0,
+  excluded: 0,
+  executed: 0
+}
 
 def backups_dir
   "#{ENV['HOME']}/.config/dot_files/backups/#{File.basename(git_root)}"
@@ -20,24 +30,25 @@ end
 
 # Find the git root directory or raise an exception if not a git repository
 def git_root
-  git_dir = `git rev-parse --show-toplevel`.strip
-  raise "Error: not a git repository" if git_dir.empty?
-
-  git_dir
+  @git_root ||= begin
+    git_dir = `git rev-parse --show-toplevel`.strip
+    raise "Error: not a git repository" if git_dir.empty?
+    git_dir
+  end
 end
 
 def parse_args(args)
-  # Define CLI options and parse them
   options = {
     action: :run_installer,
     config_path: "#{git_root rescue File.expand_path('.')}/installer.json",
-    no_op: false
+    no_op: false,
+    verbose: false
   }
 
   OptionParser.new(args) do |opts|
     opts.banner = <<-DOC
   Usage: #{File.basename(__FILE__)} [options]
-  Symlink dotfiles from the current git repository to the home directory"
+  Symlink dotfiles from the current git repository to the home directory
 
   Config file variables: A "{{ variable_name }}" string in the config file that can be replaced at runtime.
     {{ home }}     - Home directory of the current user.
@@ -52,6 +63,10 @@ DOC
 
     opts.on("-n", "--no-op", "Dry run only, do not make any changes") do
       options[:no_op] = true
+    end
+
+    opts.on("-v", "--verbose", "Show all actions including skipped symlinks") do
+      options[:verbose] = true
     end
 
     opts.on("-l", "--ls", "List extra available packages") do
@@ -86,61 +101,25 @@ class String
     "\e[#{color_code}m#{self}\e[0m"
   end
 
-  def red
-    colorize(31)
-  end
-
-  def green
-    colorize(32)
-  end
-
-  def yellow
-    colorize(33)
-  end
-
-  def cyan
-    colorize(36)
-  end
-
-  def blue
-    colorize(34)
-  end
+  def red;    colorize(31); end
+  def green;  colorize(32); end
+  def yellow; colorize(33); end
+  def blue;   colorize(34); end
+  def cyan;   colorize(36); end
+  def dim;    colorize(2);  end
 end
 
-def log_info(msg)
-  logger.info "[#{'info'.cyan}] #{msg}"
-end
-
-def log_no_op(msg)
-  logger.info "[#{'no_op'.cyan}] #{msg}"
-end
-
-def log_create(msg)
-  logger.info "[#{'create'.green}] #{msg}"
-end
-
-def log_exec(msg)
-  logger.info "[#{'exec'.blue}] #{msg}"
-end
-
-def log_delete(msg)
-  logger.info "[#{'delete'.red}] #{msg}"
-end
-
-def log_error(msg)
-  logger.error "[#{'error'.red}] #{msg}"
-end
-
-def log_backup(msg)
-  logger.info "[#{'backup'.yellow}] #{msg}"
-end
-
-def log_symlink(msg)
-  logger.info "[#{'symlink'.blue}] #{msg}"
-end
-
-def log_exclude(msg)
-  logger.info "[#{"exclude".yellow}] #{msg}"
+def log_info(msg)    = logger.info "[#{'info'.cyan}] #{msg}"
+def log_no_op(msg)   = logger.info "[#{'no_op'.cyan}] #{msg}"
+def log_create(msg)  = logger.info "[#{'create'.green}] #{msg}"
+def log_exec(msg)    = logger.info "[#{'exec'.blue}] #{msg}"
+def log_delete(msg)  = logger.info "[#{'delete'.red}] #{msg}"
+def log_error(msg)   = logger.error "[#{'error'.red}] #{msg}"
+def log_backup(msg)  = logger.info "[#{'backup'.yellow}] #{msg}"
+def log_symlink(msg) = logger.info "[#{'symlink'.blue}] #{msg}"
+def log_exclude(msg) = logger.info "[#{"exclude".yellow}] #{msg}"
+def log_skip(msg)
+  logger.info "[#{'skip'.dim}] #{msg}" if $verbose
 end
 
 def logger
@@ -169,9 +148,8 @@ def init_file_logger(log_file_path)
   original_formatter = Logger::Formatter.new
   @logger.formatter = proc do |severity, datetime, progname, msg|
     puts msg
-    msg_without_ascii =  msg.gsub(/\e\[([;\d]+)?m/, '')
-    result = original_formatter.call(severity, datetime, progname, msg_without_ascii.dump)
-    result
+    msg_without_ascii = msg.gsub(/\e\[([;\d]+)?m/, '')
+    original_formatter.call(severity, datetime, progname, msg_without_ascii.dump)
   end
 end
 
@@ -190,6 +168,7 @@ def symlink_files(src:, dest:, exclude: [], dir_only: [])
 
     if exclude.include?(source_path)
       log_exclude source_path
+      $counts[:excluded] += 1
       next
     end
 
@@ -197,6 +176,7 @@ def symlink_files(src:, dest:, exclude: [], dir_only: [])
 
     if File.symlink?(target_path) && File.readlink(target_path) != source_path
       log_delete("unlink #{target_path}")
+      $counts[:deleted] += 1
       File.delete(target_path) unless $no_op
     end
 
@@ -206,9 +186,10 @@ def symlink_files(src:, dest:, exclude: [], dir_only: [])
         next
       end
 
-      # If the filename is a directory, create it if it doesn't exist, in the target directory
+      # If the filename is a directory, create it if it doesn't exist
       unless File.exist?(target_path)
         log_create(target_path)
+        $counts[:created] += 1
         FileUtils.mkdir_p(target_path) unless $no_op
       end
       # Recursively symlink its contents
@@ -216,18 +197,6 @@ def symlink_files(src:, dest:, exclude: [], dir_only: [])
     else
       symlink_path(src: source_path, dest: target_path)
     end
-  end
-  remove_broken_links(dest: dest)
-end
-
-def remove_broken_links(dest:)
-  return unless File.directory?(dest)
-
-  Dir.chdir(dest) do
-    # `find . -type l -exec test ! -e {} \; -print`.lines.to_a.each do |target_path|
-      # log_delete("unlink #{target_path}")
-      # File.delete(target_path) unless $no_op 
-    #end    
   end
 end
 
@@ -238,13 +207,14 @@ def symlink_path(src:, dest:)
 
   # Source file missing?
   if !File.exist?(src)
-    puts "[#{"Missing".red }] #{src}"
+    log_error("Missing: #{src}")
     exit 1
   end
 
   # Broken symlink?
   if !File.exist?(dest) && File.symlink?(dest)
     log_delete("Broken symlink #{dest}")
+    $counts[:deleted] += 1
     File.delete(dest) unless $no_op
   end
 
@@ -252,37 +222,44 @@ def symlink_path(src:, dest:)
   dest_parent = File.expand_path('..', File.absolute_path(dest))
   if !File.exist?(dest_parent)
     log_create(dest_parent)
-    # Create parent directories for target file
+    $counts[:created] += 1
     FileUtils.mkdir_p(dest_parent) unless $no_op
   end
 
   if File.exist?(dest)
     if !File.symlink?(dest)
+      # Target is a real file — back it up
       log_backup "#{dest} to #{backup_path}"
+      $counts[:backed_up] += 1
       FileUtils.mkdir_p(File.dirname(backup_path))
       File.rename(dest, backup_path) unless $no_op
     else
-      if File.readlink(dest) != src
-        # If the target file is a symlink, delete it so it can be replaced
-        log_delete("symlink #{dest}")
-        File.delete(dest) unless $no_op
-      else
-        log_no_op("symlink #{src} to #{dest}")
+      if File.readlink(dest) == src
+        # Already correctly symlinked — skip silently
+        log_skip "#{dest}"
+        $counts[:skipped] += 1
         return
+      else
+        # Points to wrong target — remove and re-link
+        log_delete("symlink #{dest}")
+        $counts[:deleted] += 1
+        File.delete(dest) unless $no_op
       end
     end
   end
+
   # Create a symlink to the source file in the target directory
   log_symlink "#{src} to #{dest}"
+  $counts[:symlinked] += 1
   File.symlink(src, dest) unless $no_op
 end
 
 def main(args)
   opts = parse_args(args)
   $no_op = opts.fetch(:no_op)
+  $verbose = opts.fetch(:verbose)
 
   begin
-    # Check if the current directory is a Git repository
     git_root
   rescue StandardError => e
     log_error(e.message)
@@ -301,6 +278,10 @@ def main(args)
 
   init_logger
 
+  log_info "Installing dotfiles from #{git_root}"
+  log_info "Mode: #{$no_op ? 'dry run' : 'live'}"
+  puts ""
+
   # Case insensitive variables
   config_data = File
     .read(opts[:config_path])
@@ -316,6 +297,7 @@ def main(args)
 
   unless File.exist?(backups_dir)
     log_create(backups_dir)
+    $counts[:created] += 1
     FileUtils.mkdir_p(backups_dir) unless $no_op
   end
 
@@ -325,6 +307,8 @@ def main(args)
   when :list_packages
     list_packages(config)
   end
+
+  print_summary
 end
 
 def generate_init_config
@@ -338,7 +322,6 @@ def run_installer(config)
     symlink_opts[:dir_only] = symlink_opts[:dir_only] || []
     logger.info "\nLinking #{name}"
 
-    # Call the method to symlink all files from the source to target directory
     symlink_files(**symlink_opts.fetch_slice(:src, :dest, :exclude, :dir_only))
   end
 
@@ -346,7 +329,6 @@ def run_installer(config)
     name = symlink_opts[:name] || symlink_opts[:src]
     logger.info "\nLinking #{name}"
 
-    # Call the method to symlink all files from the source to target directory
     symlink_path(**symlink_opts.fetch_slice(:src, :dest))
   end
 
@@ -360,21 +342,34 @@ def run_installer(config)
       log_info command
       log_exec `#{command}`
     end
+    $counts[:executed] += 1
   end
 end
 
-def list_files(config)
-  Dir.foreach(src) do |filename|
-    next if filename == '.' || filename == '..'
+def print_summary
+  puts ""
+  puts "─── Summary ───────────────────────────────────────"
 
-    if File.directory?(filename)
-    end
+  parts = []
+  parts << "#{'symlinked'.blue}: #{$counts[:symlinked]}" if $counts[:symlinked] > 0
+  parts << "#{'skipped'.dim}: #{$counts[:skipped]}" if $counts[:skipped] > 0
+  parts << "#{'backed_up'.yellow}: #{$counts[:backed_up]}" if $counts[:backed_up] > 0
+  parts << "#{'created'.green}: #{$counts[:created]}" if $counts[:created] > 0
+  parts << "#{'deleted'.red}: #{$counts[:deleted]}" if $counts[:deleted] > 0
+  parts << "#{'excluded'.yellow}: #{$counts[:excluded]}" if $counts[:excluded] > 0
+  parts << "#{'executed'.blue}: #{$counts[:executed]}" if $counts[:executed] > 0
+
+  if parts.empty?
+    puts "  Nothing to do — all symlinks are up to date."
+  else
+    parts.each { |p| puts "  #{p}" }
   end
+  puts ""
 end
 
 if $PROGRAM_NAME == __FILE__
   trap "SIGINT" do
-    puts "Exiting..."
+    puts "\nExiting..."
     exit 130
   end
   main(ARGV)
