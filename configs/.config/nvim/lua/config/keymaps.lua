@@ -185,36 +185,25 @@ vim.keymap.set({'t'},'<C-ESC>', '<C-\\><C-n>', { noremap=true, silent=true })
 vim.keymap.set('t', '<C-Space>', '<C-\\><C-n>', { noremap = true, silent = true })
 
 
-vim.cmd([[
-  """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-  " => Copy Paste Settings
-  """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-  
-  " map CTRL-E to end-of-line (insert and normal mode)
-  imap <C-e> <esc>$i<right>
-  nmap <C-e> $
-  vmap <C-e> $
-  
-  " map CTRL-A to beginning-of-line (insert and normal mode)
-  imap <C-a> <esc>0i
-  nmap <C-a> 0
-  
-  " Map Shift-A to select all text
-  nmap A ggVG
-  
-  " CTRL-C to copy (visual mode)
-  " vmap <C-c> "+y
-  "<Ctrl-C> -- copy (goto visual mode and copy)
-  imap <C-C> <C-O>vgG
-  vmap <C-c> "+y
-  
-  " CTRL-X to cut (visual mode)
-  vmap <C-x> xi
-  
-  " CTRL-V to paste (insert and visual mode)
-  imap <C-v> <esc>Pi
-  vmap <C-v> <esc>Pi
-]])
+-- ─── Copy / Paste / Navigation ──────────────────────────────────────
+
+-- Ctrl-E → end of line
+vim.keymap.set('i', '<C-e>', '<Esc>$a',  { desc = "End of line" })
+vim.keymap.set({'n', 'v'}, '<C-e>', '$', { desc = "End of line" })
+
+-- Ctrl-A → beginning of line
+vim.keymap.set('i', '<C-a>', '<Esc>0i',  { desc = "Beginning of line" })
+vim.keymap.set('n', '<C-a>', '0',        { desc = "Beginning of line" })
+
+-- A → select all text
+vim.keymap.set('n', 'A', 'ggVG', { desc = "Select all text" })
+
+-- Ctrl-C/X/V → copy/cut/paste (visual and insert modes)
+vim.keymap.set('i', '<C-c>', '<C-O>vgG',   { desc = "Select to end" })
+vim.keymap.set('v', '<C-c>', '"+y',        { desc = "Copy to clipboard" })
+vim.keymap.set('v', '<C-x>', 'xi',         { desc = "Cut" })
+vim.keymap.set('i', '<C-v>', '<Esc>Pi',    { desc = "Paste" })
+vim.keymap.set('v', '<C-v>', '<Esc>Pi',    { desc = "Paste" })
 
 -- Open a file browser in the parent of the current file
 
