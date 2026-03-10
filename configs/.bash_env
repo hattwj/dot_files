@@ -52,12 +52,16 @@ unset _jpath
 # ─── NVM (Node) ─────────────────────────────────────────────────────
 export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
 [[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
-[[ -s "$NVM_DIR/bash_completion" ]] && source "$NVM_DIR/bash_completion"
+[[ -n "$BASH_VERSION" ]] && [[ -s "$NVM_DIR/bash_completion" ]] && source "$NVM_DIR/bash_completion"
 
 # ─── mise (polyglot version manager) ────────────────────────────────
-command -v mise > /dev/null 2>&1 \
-  && [[ -e "$HOME/.bash_activate_mise.sh" ]] \
-  && source "$HOME/.bash_activate_mise.sh"
+if command -v mise > /dev/null 2>&1; then
+  if [[ -n "$BASH_VERSION" ]] && [[ -e "$HOME/.bash_activate_mise.sh" ]]; then
+    source "$HOME/.bash_activate_mise.sh"
+  elif [[ -n "$ZSH_VERSION" ]]; then
+    eval "$(mise activate zsh 2>/dev/null)"
+  fi
+fi
 
 # ─── PATH additions ─────────────────────────────────────────────────
 # Helper: prepend to PATH if directory exists and isn't already in PATH
@@ -73,7 +77,7 @@ _add_to_path "$HOME/.toolbox/bin"
 unset -f _add_to_path
 
 # ─── inputrc ─────────────────────────────────────────────────────────
-[[ -e "$HOME/.inputrc" ]] && export INPUTRC="$HOME/.inputrc"
+[[ -n "$BASH_VERSION" ]] && [[ -e "$HOME/.inputrc" ]] && export INPUTRC="$HOME/.inputrc"
 
 # ─── Extension point for work-specific env (e.g. dddot_files) ───────
 [[ -e "$HOME/.bash_env_custom" ]] && source "$HOME/.bash_env_custom"
