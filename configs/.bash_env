@@ -55,13 +55,11 @@ export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
 [[ -n "$BASH_VERSION" ]] && [[ -s "$NVM_DIR/bash_completion" ]] && source "$NVM_DIR/bash_completion"
 
 # ─── mise (polyglot version manager) ────────────────────────────────
-if command -v mise > /dev/null 2>&1; then
-  if [[ -n "$BASH_VERSION" ]] && [[ -e "$HOME/.bash_activate_mise.sh" ]]; then
-    source "$HOME/.bash_activate_mise.sh"
-  elif [[ -n "$ZSH_VERSION" ]]; then
-    eval "$(mise activate zsh 2>/dev/null)"
-  fi
-fi
+# Use shims — portable across bash/zsh, no per-machine activation scripts needed.
+# mise activate hooks (precmd/chpwd) are optional; shims handle mise use/install.
+# See: mise help activate, mise doctor
+[[ -d "$HOME/.local/share/mise/shims" ]] && [[ ":$PATH:" != *":$HOME/.local/share/mise/shims:"* ]] \
+  && export PATH="$HOME/.local/share/mise/shims:$PATH"
 
 # ─── PATH additions ─────────────────────────────────────────────────
 # Helper: prepend to PATH if directory exists and isn't already in PATH

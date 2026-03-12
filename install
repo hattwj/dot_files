@@ -320,14 +320,14 @@ def run_installer(config)
     name = symlink_opts[:name] || symlink_opts[:src]
     symlink_opts[:exclude] = symlink_opts[:exclude] || []
     symlink_opts[:dir_only] = symlink_opts[:dir_only] || []
-    logger.info "\n[#{'link-dir'.blue}] #{name}"
+    logger.info "[#{'link-dir'.blue}] #{name}"
 
     symlink_files(**symlink_opts.fetch_slice(:src, :dest, :exclude, :dir_only))
   end
 
   Array(config[:symlinks]).each do |symlink_opts|
     name = symlink_opts[:name] || symlink_opts[:src]
-    logger.info "\n[#{'link'.blue}] #{name}"
+    logger.info "[#{'link'.blue}] #{name}"
 
     symlink_path(**symlink_opts.fetch_slice(:src, :dest))
   end
