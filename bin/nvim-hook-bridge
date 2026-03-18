@@ -1,0 +1,74 @@
+#!/usr/bin/env python3
+"""
+Simple bridge for Wasabi hooks to call Lua functions in Neovim.
+Connects directly to Neovim's native RPC socket.
+
+Usage:
+  nvim-hook-bridge <lua_expression>
+
+Example:
+  nvim-hook-bridge 'require("radish-mcp").get_lsp_diagnostics("/path/to/file.rb")'
+
+Environment Variables:
+  NVIM_PARENT_PID: Parent Neovim PID (required)
+"""
+
+import sys
+import os
+
+def get_native_socket_path():
+    """Get Neovim's native socket path from NVIM_PARENT_PID."""
+    nvim_pid = os.environ.get('NVIM_PARENT_PID')
+    if not nvim_pid:
+        return None
+
+    uid = os.getuid()
+    socket_path = f"/run/user/{uid}/nvim.{nvim_pid}.0"
+    if not os.path.exists(socket_path):
+        return None
+
+    return socket_path
+
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: nvim-hook-bridge '<lua_expression>'", file=sys.stderr)
+        sys.exit(1)
+
+    lua_expr = sys.argv[1]
+
+    socket_path = get_native_socket_path()
+    if not socket_path:
+        # No Neovim connection available, exit silently
+        sys.exit(0)
+
+    try:
+        # Use pynvim for native Neovim RPC
+        import pynvim
+        nvim = pynvim.attach('socket', path=socket_path)
+        result = nvim.exec_lua(f"return {lua_expr}")
+        if result is not None:
+            print(result)
+    except ImportError:
+        # pynvim not installed, try subprocess with nvim --server
+        import subprocess
+        try:
+            result = subprocess.run(
+                ['nvim', '--server', socket_path, '--remote-expr', f'luaeval("{lua_expr}")'],
+                capture_output=True,
+                text=True,
+                timeout=3
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                print(result.stdout.strip())
+        except subprocess.TimeoutExpired:
+            sys.exit(0)
+        except Exception:
+            sys.exit(0)
+    except Exception as e:
+        # Connection failed, exit silently
+        sys.exit(0)
+
+
+if __name__ == '__main__':
+    main()

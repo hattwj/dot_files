@@ -1,0 +1,26 @@
+{
+  "$schema": "./wasabi-config.schema.json",
+  "enableHooks": true,
+  "hooks": [
+    {
+      "name": "lsp-context-before-write",
+      "description": "Provide LSP diagnostics before file writes so Wasabi knows about existing issues",
+      "trigger": "preToolUse",
+      "matcher": "WriteFile",
+      "command": "~/dddot_files/vendor/dot_files/bin/nvim-lsp-context.sh",
+      "timeoutMs": 5000,
+      "maxOutputSize": 20480,
+      "enabled": true
+    },
+    {
+      "name": "lsp-check-after-write",
+      "description": "Show LSP diagnostics after file writes so Wasabi can see if changes introduced errors",
+      "trigger": "postToolUse",
+      "matcher": "WriteFile",
+      "command": "~/dddot_files/vendor/dot_files/bin/nvim-lsp-post-write.sh",
+      "timeoutMs": 5000,
+      "maxOutputSize": 20480,
+      "enabled": true
+    }
+  ]
+}

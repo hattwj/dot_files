@@ -30,27 +30,49 @@ M.handler = function(arguments)
     }
   end
 
-  local success, result = pcall(vim.cmd, command)
+  -- Snapshot :messages before execution to detect new print() output
+  local msgs_before = vim.fn.execute("messages")
 
-  if success then
+  -- Use vim.fn.execute() which captures via :redir (catches :echo, :ls, etc.)
+  local success, redir_output = pcall(vim.fn.execute, command)
+
+  if not success then
     return {
       content = {
         {
           type = "text",
-          text = "Command executed: " .. command
-        }
-      }
-    }
-  else
-    return {
-      content = {
-        {
-          type = "text",
-          text = "Error executing command: " .. tostring(result)
+          text = "Error executing command: " .. tostring(redir_output)
         }
       }
     }
   end
+
+  -- Check :messages for anything new (e.g. from lua print())
+  local msgs_after = vim.fn.execute("messages")
+  local new_msgs = ""
+  if #msgs_after > #msgs_before then
+    new_msgs = vim.trim(msgs_after:sub(#msgs_before + 1))
+  end
+
+  -- Combine: redir output first, then any new messages
+  local output = vim.trim(redir_output or "")
+  if new_msgs ~= "" then
+    if output ~= "" then
+      output = output .. "\n" .. new_msgs
+    else
+      output = new_msgs
+    end
+  end
+
+  local text = output ~= "" and output or ("Command executed: " .. command)
+  return {
+    content = {
+      {
+        type = "text",
+        text = text
+      }
+    }
+  }
 end
 
 return M

@@ -2,9 +2,9 @@
 cargo = "latest"
 delta = "latest"
 java = "21.0.2"
-node = "18.17.1"
-python = "3.12"
-ruby = "3.4.4"
+node = "24.11.1"
+python = "3.11.14"
+ruby = "3.4.7"
 rust = "1.89.0"
 
 [settings]

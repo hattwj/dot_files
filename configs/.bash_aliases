@@ -70,6 +70,8 @@ if [ -x /usr/bin/dircolors ]; then
 	alias egrep='egrep --color=auto'
 fi
 
+alias ll='ls -alF'
+
 function rspec-grouped-failures() {
 	# Call rspec and forward parameters to rspec
 	# get report on failures

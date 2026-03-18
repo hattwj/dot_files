@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# Usage: ./stagger_jitter.sh <number_of_commits>
+N=${1:-1}
+
+# 1. Start rebase, automatically marking all 'pick' as 'edit'
+GIT_SEQUENCE_EDITOR="sed -i 's/pick/edit/g'" git rebase -i HEAD~$N
+
+# 2. Iterate through commits with staggered time + 20% jitter
+for i in $(seq 0 $((N-1))); do
+    # Base offset: N hours ago + (i) hours
+    BASE_OFFSET=$((N - i))
+    
+    # 20% Jitter of 1 hour = 12 minutes (720 seconds)
+    # Generate random seconds between -720 and +720
+    JITTER_SEC=$(shuf -i 0-1440 -n 1)
+    JITTER_SEC=$((JITTER_SEC - 720))
+
+    # Calculate final date: Base time +/- Jitter
+    STAGGERED_DATE=$(date -d "$BASE_OFFSET hours ago $JITTER_SEC seconds" +"%Y-%m-%d %H:%M:%S")
+
+    # Set both Author and Committer dates
+    export GIT_COMMITTER_DATE="$STAGGERED_DATE"
+    git commit --amend --no-edit --date="$STAGGERED_DATE"
+    
+    # Continue to the next commit
+    git rebase --continue
+done
+
+echo "Successfully updated $N commits with 1-hour intervals and 20% jitter."

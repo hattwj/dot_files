@@ -6,7 +6,13 @@ Reads from stdin, forwards to socket. Reads from socket, forwards to stdout.
 Automatically detects the correct neovim socket based on NVIM_PARENT_PID.
 
 Usage:
-  nvim-mcp-bridge
+  nvim-mcp-bridge                    # Normal MCP bridge mode
+  nvim-mcp-bridge --hook <name> ...  # Hook mode for Wasabi hooks
+
+Hook Mode:
+  --hook lsp_diagnostics --file <path>   Get LSP diagnostics for file
+  --hook lsp_context --file <path>       Get LSP context (summary) for file
+  --hook lsp_error_count --file <path>   Get count of LSP errors for file
 
 Environment Variables:
   NVIM_SOCKET_PATH: Path to Unix domain socket (overrides auto-detection)
@@ -17,35 +23,213 @@ import socket
 import sys
 import os
 import threading
+import json
+import argparse
 
 
 def get_auto_socket_path():
-    """Automatically determine socket path based on parent Neovim process.
+    """Automatically determine socket path for Neovim communication.
 
-    Uses NVIM_PARENT_PID environment variable injected by term-popup plugin
-    to identify the correct Neovim instance, avoiding cross-instance issues
-    with nested terminals.
+    Discovery order:
+      1. NVIM_SOCKET_PATH env var (explicit override)
+      2. NVIM_PARENT_PID env var (set by term-popup plugin inside :terminal)
+      3. CWD matching — find neovim in same/parent/child directory
     """
-    # Get NVIM_PARENT_PID environment variable
+    import glob
+
+    # 1. Explicit socket path override
+    explicit = os.environ.get('NVIM_SOCKET_PATH')
+    if explicit:
+        if not os.path.exists(explicit):
+            raise RuntimeError(f"NVIM_SOCKET_PATH set but socket not found: {explicit}")
+        return explicit
+
+    # 2. PID-based (inside neovim :terminal)
     nvim_pid = os.environ.get('NVIM_PARENT_PID')
+    if nvim_pid:
+        socket_path = f"/tmp/radish-nvim-pid-{nvim_pid}.sock"
+        if not os.path.exists(socket_path):
+            raise RuntimeError(
+                f"Neovim socket not found for PID {nvim_pid}.\n"
+                f"Expected: {socket_path}\n"
+                f"Make sure the radish-mcp plugin is loaded in Neovim."
+            )
+        return socket_path
 
-    if not nvim_pid:
+    # 3. Auto-discover via CWD matching (standalone wasabi)
+    sockets = [s for s in glob.glob("/tmp/radish-nvim-pid-*.sock") if os.path.exists(s)]
+
+    if not sockets:
         raise RuntimeError(
-            "NVIM_PARENT_PID environment variable not found.\n"
-            "This tool must be run from within a Neovim :terminal session.\n"
-            "Make sure the term-popup plugin is loaded."
+            "No Neovim instance found.\n"
+            "  - No NVIM_PARENT_PID set (not inside :terminal)\n"
+            "  - No radish sockets found in /tmp/\n"
+            "Start Neovim with the radish-mcp plugin loaded."
         )
 
-    # Always use PID-based socket (deterministic, no fallbacks)
-    socket_path = f"/tmp/radish-nvim-pid-{nvim_pid}.sock"
-    if not os.path.exists(socket_path):
+    wasabi_cwd = os.path.realpath(os.getcwd())
+
+    def get_nvim_cwd(sock_path):
+        """Extract PID from socket name, read CWD from /proc."""
+        basename = os.path.basename(sock_path)
+        # radish-nvim-pid-12345.sock
+        try:
+            pid = basename.split("-")[3].split(".")[0]
+            return os.path.realpath(os.readlink(f"/proc/{pid}/cwd"))
+        except (IndexError, OSError):
+            return None
+
+    def path_distance(a, b):
+        """Number of directory levels between two paths, or None if unrelated."""
+        a = a.rstrip("/") + "/"
+        b = b.rstrip("/") + "/"
+        if a == b:
+            return 0
+        if b.startswith(a):
+            return b[len(a):].rstrip("/").count("/") + 1
+        if a.startswith(b):
+            return a[len(b):].rstrip("/").count("/") + 1
+        return None
+
+    # Score each socket: (priority_tier, distance, socket_path)
+    # Tier 0 = exact match, Tier 1 = ancestor/descendant, Tier 99 = no match
+    candidates = []
+    for sock in sockets:
+        nvim_cwd = get_nvim_cwd(sock)
+        if nvim_cwd is None:
+            continue
+        dist = path_distance(wasabi_cwd, nvim_cwd)
+        if dist is None:
+            continue
+        tier = 0 if dist == 0 else 1
+        candidates.append((tier, dist, sock, nvim_cwd))
+
+    if not candidates:
+        socket_cwds = []
+        for sock in sockets:
+            nvim_cwd = get_nvim_cwd(sock)
+            socket_cwds.append(f"  - {sock} -> {nvim_cwd or '(unknown)'}")
         raise RuntimeError(
-            f"Neovim socket not found for PID {nvim_pid}.\n"
-            f"Expected: {socket_path}\n"
-            f"Make sure the radish-mcp plugin is loaded in Neovim."
+            f"No Neovim instance matches CWD: {wasabi_cwd}\n"
+            f"Running instances:\n" + "\n".join(socket_cwds) + "\n"
+            "Start Neovim in this directory or a parent/child of it."
         )
 
-    return socket_path
+    # Sort by tier (exact first), then distance (closest first)
+    candidates.sort(key=lambda c: (c[0], c[1]))
+    return candidates[0][2]
+
+
+import time
+
+
+def query_lsp(socket_path, args):
+    """Query LSP diagnostics via MCP. Returns (text, success)."""
+    if not socket_path:
+        try:
+            socket_path = get_auto_socket_path()
+        except RuntimeError:
+            # No Neovim available, exit silently (hooks should not block)
+            sys.exit(0)
+
+    # Build MCP tools/call request
+    tool_args = {}
+    if args.file:
+        tool_args['file'] = args.file
+    tool_args['request_type'] = 'diagnostics'
+
+    mcp_request = {
+        "jsonrpc": "2.0",
+        "method": "tools/call",
+        "params": {
+            "name": "vim_lsp_request",
+            "arguments": tool_args
+        },
+        "id": 1
+    }
+
+    try:
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        sock.settimeout(4.0)
+        sock.connect(socket_path)
+
+        # Send request
+        request_str = json.dumps(mcp_request) + "\n"  # Must be newline-delimited!
+        sock.sendall(request_str.encode())
+
+        # Read response (may come in chunks)
+        response_data = b""
+        while True:
+            chunk = sock.recv(4096)
+            if not chunk:
+                break
+            response_data += chunk
+            # Check if we have a complete JSON response
+            try:
+                json.loads(response_data.decode())
+                break  # Valid JSON, we're done
+            except json.JSONDecodeError:
+                continue  # Keep reading
+
+        sock.close()
+
+        if response_data:
+            response = json.loads(response_data.decode())
+            if "result" in response and "content" in response["result"]:
+                content = response["result"]["content"]
+                if isinstance(content, list) and len(content) > 0:
+                    return content[0].get("text", ""), True
+    except Exception as e:
+        if os.environ.get("WASABI_HOOK_DEBUG") == "1":
+            print(f"Query error: {e}", file=sys.stderr)
+    return "", False
+
+
+def hook_mode(args):
+    """Execute a hook call with retry logic for LSP timing issues."""
+    socket_path = os.environ.get('NVIM_SOCKET_PATH')
+    if not socket_path:
+        try:
+            socket_path = get_auto_socket_path()
+        except RuntimeError:
+            sys.exit(0)
+
+    # Retry logic for lsp_diagnostics - LSP may need time to attach
+    max_retries = 4
+    retry_delay = 0.5  # 500ms between retries
+    text = ""
+
+    for attempt in range(max_retries):
+        text, success = query_lsp(socket_path, args)
+        if not success:
+            break
+        # Check if we got real diagnostics (not "No diagnostics found")
+        if text and "No diagnostics found" not in text:
+            break
+        # Wait before retry
+        if attempt < max_retries - 1:
+            time.sleep(retry_delay)
+
+    # Format output based on hook type
+    if args.hook == "lsp_error_count":
+        print(text.count("[ERROR]"))
+    elif args.hook == "lsp_context":
+        error_count = text.count("[ERROR]")
+        warn_count = text.count("[WARN]")
+        if error_count > 0 or warn_count > 0:
+            print(f"## LSP Diagnostics\n**{error_count} errors, {warn_count} warnings**")
+            if error_count > 0:
+                print("\n### Errors:")
+                for line in text.split("\n"):
+                    if "[ERROR]" in line:
+                        print(f"- {line}")
+    else:  # lsp_diagnostics
+        if text and "No diagnostics found" not in text:
+            print(f"## LSP Diagnostics\n```\n{text}\n```")
+        elif "DEBUG:" in text:
+            print(f"## LSP Diagnostics\n```\n{text}\n```")
+
+    sys.exit(0)
 
 
 def stdio_to_socket(sock):
@@ -80,6 +264,18 @@ def socket_to_stdio(sock):
 
 
 def main():
+    # Check for hook mode
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument('--hook', type=str, help='Hook name for one-shot mode')
+    parser.add_argument('--file', type=str, help='File path for hook')
+
+    args, remaining = parser.parse_known_args()
+
+    if args.hook:
+        hook_mode(args)
+        return
+
+    # Normal MCP bridge mode
     # Try to get socket path from environment first, then auto-detect
     socket_path = os.environ.get('NVIM_SOCKET_PATH')
 

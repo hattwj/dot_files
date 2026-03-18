@@ -376,4 +376,122 @@ function M.setup(opts)
   end
 end
 
+-- =============================================================================
+-- LSP Export Functions (for Wasabi hooks integration)
+-- These functions can be called via luaeval() from shell scripts
+-- =============================================================================
+
+-- Helper: Get or create buffer for filepath
+local function get_or_load_buffer(filepath)
+  if not filepath or filepath == "" then
+    return nil, "No filepath provided"
+  end
+
+  -- Normalize path
+  filepath = vim.fn.fnamemodify(filepath, ":p")
+
+  -- Check if file exists
+  if vim.fn.filereadable(filepath) ~= 1 then
+    return nil, "File not found: " .. filepath
+  end
+
+  -- Check if already loaded in a buffer
+  local bufnr = vim.fn.bufnr(filepath)
+  if bufnr ~= -1 then
+    return bufnr, nil
+  end
+
+  -- Load the file into a hidden buffer to get diagnostics
+  bufnr = vim.fn.bufadd(filepath)
+  if bufnr == 0 then
+    return nil, "Failed to add buffer for: " .. filepath
+  end
+
+  -- Load the buffer (needed for LSP to attach)
+  vim.fn.bufload(bufnr)
+
+  return bufnr, nil
+end
+
+-- Get LSP diagnostics for a file as JSON string
+-- Usage: luaeval('require("radish-mcp").get_lsp_diagnostics(_A)', filepath)
+function M.get_lsp_diagnostics(filepath)
+  local bufnr, err = get_or_load_buffer(filepath)
+  if not bufnr then
+    return vim.json.encode({ error = err })
+  end
+
+  -- Get diagnostics
+  local diagnostics = vim.diagnostic.get(bufnr)
+
+  -- Format for JSON output
+  local formatted = {}
+  for _, diag in ipairs(diagnostics) do
+    local severity_name = vim.diagnostic.severity[diag.severity] or "UNKNOWN"
+    table.insert(formatted, {
+      severity = severity_name,
+      line = diag.lnum + 1,  -- Convert to 1-indexed
+      col = diag.col + 1,
+      message = diag.message,
+      source = diag.source or "unknown",
+      code = diag.code,
+    })
+  end
+
+  return vim.json.encode(formatted)
+end
+
+-- Get count of Error-level diagnostics
+-- Usage: luaeval('require("radish-mcp").get_lsp_error_count(_A)', filepath)
+function M.get_lsp_error_count(filepath)
+  local bufnr, err = get_or_load_buffer(filepath)
+  if not bufnr then
+    return 0  -- Return 0 on error to avoid blocking writes for non-existent files
+  end
+
+  -- Get diagnostics filtered by severity
+  local diagnostics = vim.diagnostic.get(bufnr, { severity = vim.diagnostic.severity.ERROR })
+
+  return #diagnostics
+end
+
+-- Get comprehensive LSP context for a file
+-- Returns: diagnostics, attached LSP clients, file info
+-- Usage: luaeval('require("radish-mcp").get_lsp_context(_A)', filepath)
+function M.get_lsp_context(filepath)
+  local bufnr, err = get_or_load_buffer(filepath)
+  if not bufnr then
+    return vim.json.encode({ error = err })
+  end
+
+  -- Get diagnostics by severity
+  local all_diagnostics = vim.diagnostic.get(bufnr)
+  local error_count = #vim.diagnostic.get(bufnr, { severity = vim.diagnostic.severity.ERROR })
+  local warn_count = #vim.diagnostic.get(bufnr, { severity = vim.diagnostic.severity.WARN })
+  local info_count = #vim.diagnostic.get(bufnr, { severity = vim.diagnostic.severity.INFO })
+  local hint_count = #vim.diagnostic.get(bufnr, { severity = vim.diagnostic.severity.HINT })
+
+  -- Get attached LSP clients
+  local clients = vim.lsp.get_clients({ bufnr = bufnr })
+  local client_names = {}
+  for _, client in ipairs(clients) do
+    table.insert(client_names, client.name)
+  end
+
+  local context = {
+    filepath = filepath,
+    diagnostics_summary = {
+      total = #all_diagnostics,
+      errors = error_count,
+      warnings = warn_count,
+      info = info_count,
+      hints = hint_count,
+    },
+    lsp_clients = client_names,
+    has_errors = error_count > 0,
+  }
+
+  return vim.json.encode(context)
+end
+
 return M
