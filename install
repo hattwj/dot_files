@@ -109,15 +109,15 @@ class String
   def dim;    colorize(2);  end
 end
 
-def log_info(msg)    = logger.info "[#{'info'.cyan}] #{msg}"
-def log_no_op(msg)   = logger.info "[#{'no_op'.cyan}] #{msg}"
-def log_create(msg)  = logger.info "[#{'create'.green}] #{msg}"
-def log_exec(msg)    = logger.info "[#{'exec'.blue}] #{msg}"
-def log_delete(msg)  = logger.info "[#{'delete'.red}] #{msg}"
-def log_error(msg)   = logger.error "[#{'error'.red}] #{msg}"
-def log_backup(msg)  = logger.info "[#{'backup'.yellow}] #{msg}"
-def log_symlink(msg) = logger.info "[#{'symlink'.blue}] #{msg}"
-def log_exclude(msg) = logger.info "[#{"exclude".yellow}] #{msg}"
+def log_info(msg);    logger.info "[#{'info'.cyan}] #{msg}"; end
+def log_no_op(msg);   logger.info "[#{'no_op'.cyan}] #{msg}"; end
+def log_create(msg);  logger.info "[#{'create'.green}] #{msg}"; end
+def log_exec(msg);    logger.info "[#{'exec'.blue}] #{msg}"; end
+def log_delete(msg);  logger.info "[#{'delete'.red}] #{msg}"; end
+def log_error(msg);   logger.error "[#{'error'.red}] #{msg}"; end
+def log_backup(msg);  logger.info "[#{'backup'.yellow}] #{msg}"; end
+def log_symlink(msg); logger.info "[#{'symlink'.blue}] #{msg}"; end
+def log_exclude(msg); logger.info "[#{'exclude'.yellow}] #{msg}"; end
 def log_skip(msg)
   logger.info "[#{'skip'.dim}] #{msg}" if $verbose
 end
@@ -154,7 +154,11 @@ def init_file_logger(log_file_path)
 end
 
 # Define a method to recursively symlink files from the source to target directory
-def symlink_files(src:, dest:, exclude: [], dir_only: [])
+def symlink_files(opts = {})
+  src = opts.fetch(:src)
+  dest = opts.fetch(:dest)
+  exclude = opts.fetch(:exclude, [])
+  dir_only = opts.fetch(:dir_only, [])
   raise "Not a directory: #{src}" unless File.directory?(src)
 
   unless $no_op
@@ -182,7 +186,7 @@ def symlink_files(src:, dest:, exclude: [], dir_only: [])
 
     if File.directory?(source_path)
       if dir_only.include?(source_path)
-        symlink_path(src: source_path, dest: target_path)
+        symlink_path(:src => source_path, :dest => target_path)
         next
       end
 
@@ -193,14 +197,16 @@ def symlink_files(src:, dest:, exclude: [], dir_only: [])
         FileUtils.mkdir_p(target_path) unless $no_op
       end
       # Recursively symlink its contents
-      symlink_files(src: source_path, dest: target_path, exclude: exclude, dir_only: dir_only)
+      symlink_files(:src => source_path, :dest => target_path, :exclude => exclude, :dir_only => dir_only)
     else
-      symlink_path(src: source_path, dest: target_path)
+      symlink_path(:src => source_path, :dest => target_path)
     end
   end
 end
 
-def symlink_path(src:, dest:)
+def symlink_path(opts = {})
+  src = opts.fetch(:src)
+  dest = opts.fetch(:dest)
   raise "Invalid src: #{src.inspect} does not contain #{git_root.inspect}" unless src.include?(git_root)
 
   backup_path = src.sub(git_root, backups_dir)
@@ -322,14 +328,14 @@ def run_installer(config)
     symlink_opts[:dir_only] = symlink_opts[:dir_only] || []
     logger.info "[#{'link-dir'.blue}] #{name}"
 
-    symlink_files(**symlink_opts.fetch_slice(:src, :dest, :exclude, :dir_only))
+    symlink_files(symlink_opts.fetch_slice(:src, :dest, :exclude, :dir_only))
   end
 
   Array(config[:symlinks]).each do |symlink_opts|
     name = symlink_opts[:name] || symlink_opts[:src]
     logger.info "[#{'link'.blue}] #{name}"
 
-    symlink_path(**symlink_opts.fetch_slice(:src, :dest))
+    symlink_path(symlink_opts.fetch_slice(:src, :dest))
   end
 
   if !Array(config[:exec]).empty?

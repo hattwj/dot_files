@@ -12,6 +12,7 @@ local tools = {
   lsp = require("radish-mcp.tools.lsp"),
   messages = require("radish-mcp.tools.messages"),
   buffers_list = require("radish-mcp.tools.buffers_list"),
+  ast = require("radish-mcp.tools.ast"),
 }
 
 -- Get all tool schemas for tools/list

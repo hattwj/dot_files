@@ -25,5 +25,5 @@ return {
   { "rafamadriz/friendly-snippets", enabled = false },
 
   -- Disable auto-pairing of quotes, brackets, etc.
-  { "echasnovski/mini.pairs", enabled = false },
+  { "nvim-mini/mini.pairs", enabled = false },
 }

@@ -208,7 +208,7 @@ function M.start_server()
 
   server:listen(128, function(listen_err)
     if listen_err then
-      vim.notify("Radish MCP: Listen error: " .. tostring(listen_err), vim.log.levels.ERROR)
+      vim.schedule(function() vim.notify("Radish MCP: Listen error: " .. tostring(listen_err), vim.log.levels.ERROR) end)
       return
     end
 
@@ -216,7 +216,7 @@ function M.start_server()
     local client = vim.loop.new_pipe(false)
     server:accept(client)
 
-    vim.notify("Radish MCP: Client connected!", vim.log.levels.INFO)
+    vim.schedule(function() vim.notify("Radish MCP: Client connected!", vim.log.levels.INFO) end)
 
     -- Buffer for incomplete messages
     local buffer = ""
@@ -225,7 +225,7 @@ function M.start_server()
     client:read_start(function(read_err, chunk)
       if read_err then
         vim.schedule(function()
-          vim.notify("Radish MCP: Client read error: " .. tostring(read_err), vim.log.levels.ERROR)
+          vim.schedule(function() vim.notify("Radish MCP: Client read error: " .. tostring(read_err), vim.log.levels.ERROR) end)
         end)
         client:close()
         return
@@ -251,7 +251,7 @@ function M.start_server()
       else
         -- Client disconnected
         vim.schedule(function()
-          vim.notify("Radish MCP: Client disconnected", vim.log.levels.INFO)
+          vim.schedule(function() vim.notify("Radish MCP: Client disconnected", vim.log.levels.INFO) end)
         end)
         client:close()
       end
