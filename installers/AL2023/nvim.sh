@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build and install Neovim from source on AL2
+# Build and install Neovim from source on AL2023
 set -euo pipefail
 
 NVIM_BRANCH="${NVIM_BRANCH:-release-0.12}"
@@ -19,8 +19,7 @@ if command -v nvim &>/dev/null; then
 fi
 
 # Prereqs
-sudo yum groups install -y "Development tools" || true
-sudo yum install -y cmake cmake3 gcc gcc-c++ make python3-pip gettext
+sudo dnf install -y gcc gcc-c++ cmake cmake3 make gettext ninja-build python3-pip
 pip3 install --user neovim --upgrade 2>/dev/null || true
 
 # Clone or update source
@@ -35,7 +34,7 @@ git fetch --all --tags --force
 git checkout "${NVIM_BRANCH}" || { echo "Branch ${NVIM_BRANCH} not found"; exit 1; }
 git pull
 
-# Clean build
+# Clean build (rm -rf, not distclean — 0.12 changed build system)
 rm -rf build .deps
 make -j"${JOBS}" CMAKE_BUILD_TYPE=RelWithDebInfo
 
