@@ -5,9 +5,13 @@
 -- Disable animations, it makes scrolling (pgUp/pgDown) super slow
 vim.g.snacks_animate = false
 
--- Show the title in the terminal header for the current buffer.
+-- Terminal title: just the cwd (matches bash/zsh prompt title format).
+-- titleold='' prevents nvim from restoring a stale "bash" or "/bin/bash"
+-- title on exit; the shell prompt will set the correct cwd title immediately.
 vim.opt.title = true
-vim.opt.titlestring = '%F'
+vim.opt.titlestring = "%{fnamemodify(getcwd(),':~')}"
+vim.opt.titleold = ''
+
 
 -- Set the default shell to bash
 vim.api.nvim_set_option_value("shell", "/usr/bin/bash", {})
