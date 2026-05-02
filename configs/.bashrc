@@ -9,6 +9,7 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 rc_files=(
   "$DIR/.bashrc_$(uname)"
   "$DIR/.bashrc_$(uname)_$(hostname)"
+  "$HOME/.bash_env"
   "$HOME/.bash_custom"
   "$HOME/.bash_prompt"
 )
