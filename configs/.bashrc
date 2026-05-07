@@ -21,3 +21,9 @@ done
 
 # Kiro shell integration
 [[ "$TERM_PROGRAM" == "kiro" ]] && . "$(kiro --locate-shell-integration-path bash)"
+
+# Added by AIM CLI
+export PATH="$HOME/.aim/mcp-servers:$PATH"
+
+# MeshClaw
+export PATH="/home/ANT.AMAZON.COM/hatt/workplace/MeshClaw/src/MeshClaw/bin:$PATH"

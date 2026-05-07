@@ -6,8 +6,14 @@ Reads from stdin, forwards to socket. Reads from socket, forwards to stdout.
 Automatically detects the correct neovim socket based on NVIM_PARENT_PID.
 
 Usage:
-  nvim-mcp-bridge                    # Normal MCP bridge mode
+  nvim-mcp-bridge                    # Normal MCP bridge mode (attach to existing nvim)
+  nvim-mcp-bridge --headless         # Spawn a headless nvim and bridge to it
   nvim-mcp-bridge --hook <name> ...  # Hook mode for Wasabi hooks
+
+Headless Mode:
+  Spawns a headless Neovim process with the radish-mcp plugin loaded,
+  waits for its socket, then bridges MCP over stdio. The headless nvim
+  runs in the same CWD so file paths resolve identically. Cleaned up on exit.
 
 Hook Mode:
   --hook lsp_diagnostics --file <path>   Get LSP diagnostics for file
@@ -25,6 +31,11 @@ import os
 import threading
 import json
 import argparse
+import signal
+import subprocess
+import time
+import atexit
+import glob
 
 
 def get_auto_socket_path():
@@ -35,7 +46,6 @@ def get_auto_socket_path():
       2. NVIM_PARENT_PID env var (set by term-popup plugin inside :terminal)
       3. CWD matching — find neovim in same/parent/child directory
     """
-    import glob
 
     # 1. Explicit socket path override
     explicit = os.environ.get('NVIM_SOCKET_PATH')
@@ -118,9 +128,6 @@ def get_auto_socket_path():
     # Sort by tier (exact first), then distance (closest first)
     candidates.sort(key=lambda c: (c[0], c[1]))
     return candidates[0][2]
-
-
-import time
 
 
 def query_lsp(socket_path, args):
@@ -246,7 +253,7 @@ def stdio_to_socket(sock):
     finally:
         try:
             sock.close()
-        except:
+        except OSError:
             pass
 
 
@@ -263,63 +270,121 @@ def socket_to_stdio(sock):
         pass
 
 
+def spawn_headless_nvim():
+    """Spawn a headless Neovim with radish-mcp plugin and return (process, socket_path).
+
+    The headless nvim inherits CWD so file paths resolve identically.
+    Registers cleanup to kill the process and remove the socket on exit.
+    """
+    # Spawn nvim --headless. It loads the user's config (which includes radish-mcp).
+    # Redirect stderr to /dev/null to avoid noise; stdout unused in headless mode.
+    nvim_proc = subprocess.Popen(
+        ["nvim", "--headless"],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+    nvim_pid = nvim_proc.pid
+    socket_path = f"/tmp/radish-nvim-pid-{nvim_pid}.sock"
+
+    print(f"Spawned headless nvim (PID {nvim_pid}), waiting for socket...", file=sys.stderr)
+
+    def cleanup():
+        """Kill the headless nvim and remove its socket."""
+        try:
+            nvim_proc.terminate()
+            nvim_proc.wait(timeout=3)
+        except (ProcessLookupError, subprocess.TimeoutExpired):
+            try:
+                nvim_proc.kill()
+            except ProcessLookupError:
+                pass
+        try:
+            os.unlink(socket_path)
+        except OSError:
+            pass
+
+    atexit.register(cleanup)
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
+
+    # Wait for the radish socket to appear (up to 10s)
+    deadline = time.time() + 10.0
+    while time.time() < deadline:
+        if os.path.exists(socket_path):
+            print(f"Headless nvim ready at: {socket_path}", file=sys.stderr)
+            return nvim_proc, socket_path
+        # Check nvim hasn't died
+        if nvim_proc.poll() is not None:
+            print(
+                f"Error: headless nvim exited with code {nvim_proc.returncode}",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        time.sleep(0.05)
+
+    print("Error: timed out waiting for radish socket from headless nvim", file=sys.stderr)
+    cleanup()
+    sys.exit(1)
+
+
 def main():
-    # Check for hook mode
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument('--hook', type=str, help='Hook name for one-shot mode')
     parser.add_argument('--file', type=str, help='File path for hook')
+    parser.add_argument('--headless', action='store_true',
+                        help='Spawn a private headless nvim instead of attaching to an existing one')
 
-    args, remaining = parser.parse_known_args()
+    args, _remaining = parser.parse_known_args()
 
     if args.hook:
         hook_mode(args)
         return
 
-    # Normal MCP bridge mode
-    # Try to get socket path from environment first, then auto-detect
-    socket_path = os.environ.get('NVIM_SOCKET_PATH')
+    # Determine socket path
+    nvim_proc = None
 
-    if not socket_path:
-        try:
-            socket_path = get_auto_socket_path()
-        except RuntimeError as e:
-            print(f"Error: {e}", file=sys.stderr)
-            sys.exit(1)
+    if args.headless:
+        nvim_proc, socket_path = spawn_headless_nvim()
+    else:
+        socket_path = os.environ.get('NVIM_SOCKET_PATH')
+        if not socket_path:
+            try:
+                socket_path = get_auto_socket_path()
+            except RuntimeError as e:
+                print(f"Error: {e}", file=sys.stderr)
+                sys.exit(1)
 
-    # Create Unix domain socket
+    # Connect to the radish socket
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 
     try:
         sock.connect(socket_path)
     except FileNotFoundError:
         print(f"Error: Socket not found at {socket_path}", file=sys.stderr)
-        print(f"Make sure Neovim is running with the radish-mcp-server plugin loaded", file=sys.stderr)
+        print("Make sure Neovim is running with the radish-mcp plugin loaded", file=sys.stderr)
         sys.exit(1)
     except ConnectionRefusedError:
         print(f"Error: Connection refused to {socket_path}", file=sys.stderr)
-        print(f"The socket exists but nothing is listening on it", file=sys.stderr)
+        print("The socket exists but nothing is listening on it", file=sys.stderr)
         sys.exit(1)
     except Exception as e:
         print(f"Error connecting to socket: {e}", file=sys.stderr)
         sys.exit(1)
 
-    # Print debug info to stderr (won't interfere with stdio communication)
     print(f"Connected to neovim at: {socket_path}", file=sys.stderr)
 
-    # Start bidirectional forwarding
-    # Use thread for stdin->socket so we can handle both directions
+    # Bidirectional stdio <-> socket forwarding
     stdin_thread = threading.Thread(target=stdio_to_socket, args=(sock,), daemon=True)
     stdin_thread.start()
 
-    # Run socket->stdout in main thread
     socket_to_stdio(sock)
 
-    # Wait for stdin thread to finish
     stdin_thread.join(timeout=1)
 
     try:
         sock.close()
-    except:
+    except OSError:
         pass
 
 
