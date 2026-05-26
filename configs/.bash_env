@@ -73,6 +73,9 @@ _add_to_path "$HOME/.toolbox/bin"
 
 unset -f _add_to_path
 
+# --- python cache
+export PYTHONPYCACHEPREFIX=/tmp/pycache
+
 # ─── inputrc ─────────────────────────────────────────────────────────
 [[ -n "$BASH_VERSION" ]] && [[ -e "$HOME/.inputrc" ]] && export INPUTRC="$HOME/.inputrc"
 
