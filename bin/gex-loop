@@ -68,8 +68,8 @@ class Colors:
 class GexLoop:
     """File watcher with interactive sync controls"""
 
-    def __init__(self, remote_spec: str, exclude_patterns: List[str], skip_push: bool = False, verbose: bool = False):
-        self.remote_spec = remote_spec
+    def __init__(self, remote_specs: List[str], exclude_patterns: List[str], skip_push: bool = False, verbose: bool = False):
+        self.remote_specs = remote_specs
         self.exclude_patterns = exclude_patterns
         self.skip_push = skip_push
         self.verbose = verbose
@@ -102,25 +102,30 @@ class GexLoop:
 
     def parse_remote_spec(self) -> bool:
         """Validate remote specification format"""
-        pattern = r'^[^@]+@[^:]+:.+'
-        if not re.match(pattern, self.remote_spec):
-            self.error("Invalid remote specification format")
-            self.error("Expected format: username@hostname:./path")
-            self.error(f"Got: {self.remote_spec}")
-            return False
+        pattern = r'^([^@]+@)?[^:]+:.+'
+        for spec in self.remote_specs:
+            if not re.match(pattern, spec):
+                self.error("Invalid remote specification format")
+                self.error("Expected format: [username@]hostname:./path")
+                self.error(f"Got: {spec}")
+                return False
 
-        # Extract components for debugging
-        username_hostname, path = self.remote_spec.split(':', 1)
-        username, hostname = username_hostname.split('@', 1)
+            # Extract components for debugging
+            host_part, path = spec.split(':', 1)
+            if '@' in host_part:
+                username, hostname = host_part.split('@', 1)
+            else:
+                username = None
+                hostname = host_part
 
-        if not username or not hostname or not path:
-            self.error("Remote specification is missing required components")
-            return False
+            if not hostname or not path:
+                self.error("Remote specification is missing required components")
+                return False
 
-        self.debug("Parsed remote specification:")
-        self.debug(f"  Username: {username}")
-        self.debug(f"  Hostname: {hostname}")
-        self.debug(f"  Path: {path}")
+            self.debug("Parsed remote specification:")
+            self.debug(f"  Username: {username or '(ssh default)'}")
+            self.debug(f"  Hostname: {hostname}")
+            self.debug(f"  Path: {path}")
 
         return True
 
@@ -166,31 +171,39 @@ class GexLoop:
 
     def rsync_push(self, delete: bool = False) -> bool:
         """Push local changes to remote"""
-        args = self.build_rsync_args(delete=delete)
-        args.extend(['./', self.remote_spec])
+        all_ok = True
+        for spec in self.remote_specs:
+            args = self.build_rsync_args(delete=delete)
+            args.extend(['./', spec])
 
-        self.debug(f"Running: {' '.join(args)}")
+            self.debug(f"Running: {' '.join(args)}")
 
-        try:
-            result = subprocess.run(args, check=False)
-            return result.returncode == 0
-        except Exception as e:
-            self.error(f"Push sync failed: {e}")
-            return False
+            try:
+                result = subprocess.run(args, check=False)
+                if result.returncode != 0:
+                    all_ok = False
+            except Exception as e:
+                self.error(f"Push sync failed to {spec}: {e}")
+                all_ok = False
+        return all_ok
 
     def rsync_pull(self) -> bool:
         """Pull remote changes to local"""
-        args = self.build_rsync_args(delete=False)
-        args.extend([self.remote_spec, './'])
+        all_ok = True
+        for spec in self.remote_specs:
+            args = self.build_rsync_args(delete=False)
+            args.extend([spec, './'])
 
-        self.debug(f"Running: {' '.join(args)}")
+            self.debug(f"Running: {' '.join(args)}")
 
-        try:
-            result = subprocess.run(args, check=False)
-            return result.returncode == 0
-        except Exception as e:
-            self.error(f"Pull sync failed: {e}")
-            return False
+            try:
+                result = subprocess.run(args, check=False)
+                if result.returncode != 0:
+                    all_ok = False
+            except Exception as e:
+                self.error(f"Pull sync failed from {spec}: {e}")
+                all_ok = False
+        return all_ok
 
     def initial_sync(self) -> None:
         """Perform initial push sync if not skipped"""
@@ -388,7 +401,8 @@ class GexLoop:
         # Show configuration
         self.info("Starting gex-loop file watcher")
         self.info(f"Local directory: {self.local_dir}")
-        self.info(f"Remote destination: {self.remote_spec}")
+        for spec in self.remote_specs:
+            self.info(f"Remote destination: {spec}")
 
         if self.skip_push:
             self.info(f"{Colors.YELLOW}Skip-push mode enabled{Colors.NC} - no automatic push syncs")
@@ -427,7 +441,8 @@ Examples:
 
     parser.add_argument(
         'remote_spec',
-        help='Remote destination in format username@hostname:./path'
+        nargs='+',
+        help='Remote destination(s) in format username@hostname:./path'
     )
 
     parser.add_argument(
@@ -453,9 +468,10 @@ Examples:
     args = parser.parse_args()
 
     # Validate remote spec ends with /
-    if not args.remote_spec.endswith('/'):
-        print(f"{Colors.RED}[error]{Colors.NC} Remote destination must end with '/' (important for rsync)", file=sys.stderr)
-        return 1
+    for spec in args.remote_spec:
+        if not spec.endswith('/'):
+            print(f"{Colors.RED}[error]{Colors.NC} Remote destination must end with '/' (important for rsync): {spec}", file=sys.stderr)
+            return 1
 
     # Add default .git/ exclusion if no exclusions specified
     if not args.exclude_patterns:
@@ -463,7 +479,7 @@ Examples:
 
     # Create and run
     gex = GexLoop(
-        remote_spec=args.remote_spec,
+        remote_specs=args.remote_spec,
         exclude_patterns=args.exclude_patterns,
         skip_push=args.skip_push,
         verbose=args.verbose

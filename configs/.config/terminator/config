@@ -25,9 +25,6 @@
     palette = "#000000:#cc0000:#4e9a06:#c4a000:#3465a4:#75507b:#06989a:#d3d7cf:#555753:#ef2929:#8ae234:#fce94f:#729fcf:#ad7fa8:#34e2e2:#eeeeec"
     login_shell = True
     use_system_font = False
-  [[Cluster]]
-    font = JetBrainsMonoNL Nerd Font Propo 10
-    use_system_font = False
 [layouts]
   [[default]]
     [[[child0]]]
@@ -60,7 +57,7 @@
       group = Conductor
       profile = default
       uuid = 4fe2e7f7-620d-4a0b-8ffd-5250a5bea37d
-      command = ""
+      command = TE=UL bash
     [[[child4]]]
       type = HPaned
       parent = child2
@@ -74,6 +71,7 @@
       group = Conductor
       profile = Cluster
       uuid = 79705371-4378-4f6a-93d3-37cdf7e20888
+      command = TE=ULL bash
     [[[terminal6]]]
       type = Terminal
       parent = child4
@@ -81,6 +79,7 @@
       group = Conductor
       profile = Cluster
       uuid = b270ee6b-9f24-4810-9e85-9e96c971ced7
+      command = TE=ULR bash
     [[[child7]]]
       type = VPaned
       parent = child1
@@ -100,6 +99,7 @@
       group = Conductor
       profile = default
       uuid = 11315fa1-32ea-4e80-8cda-340136d87f10
+      command = TE=URL bash
     [[[terminal10]]]
       type = Terminal
       parent = child8
@@ -107,123 +107,15 @@
       group = Conductor
       profile = default
       uuid = 592df2a7-1589-445d-8815-646714c4eb41
+      command = TE=URR bash
     [[[terminal11]]]
       type = Terminal
       parent = child7
       order = 1
       group = Conductor
-      profile = default
+      profile = Cluster
       uuid = 2b461bf2-2563-4ff8-b18f-2b8b41d2476f
-  [[Cluster]]
-    [[[child0]]]
-      fullscreen = False
-      last_active_term = 9cfa0fd7-4053-43ac-8edc-6a43846a0ffa
-      last_active_window = True
-      maximised = True
-      order = 0
-      parent = ""
-      position = 1985:24
-      size = 1855, 1056
-      title = elemental@hattb_conductor: ~
-      type = Window
-    [[[child1]]]
-      order = 0
-      parent = child0
-      position = 924
-      ratio = 0.498921832884
-      type = HPaned
-    [[[child11]]]
-      order = 1
-      parent = child1
-      position = 383
-      ratio = 0.364109848485
-      type = VPaned
-    [[[child13]]]
-      order = 1
-      parent = child11
-      position = 335
-      ratio = 0.50223880597
-      type = VPaned
-    [[[child2]]]
-      order = 0
-      parent = child1
-      position = 322
-      ratio = 0.30634469697
-      type = VPaned
-    [[[child3]]]
-      order = 0
-      parent = child2
-      position = 160
-      ratio = 0.501552795031
-      type = VPaned
-    [[[child6]]]
-      order = 1
-      parent = child2
-      position = 381
-      ratio = 0.523255813953
-      type = VPaned
-    [[[child7]]]
-      order = 0
-      parent = child6
-      position = 170
-      ratio = 0.450131233596
-      type = VPaned
-    [[[terminal10]]]
-      group = Statmux
-      order = 1
-      parent = child6
-      profile = default
-      type = Terminal
-      uuid = c9413598-2386-4377-b395-1822b2d992bd
-    [[[terminal12]]]
-      group = Live
-      order = 0
-      parent = child11
-      profile = default
-      type = Terminal
-      uuid = 592df2a7-1589-445d-8815-646714c4eb41
-    [[[terminal14]]]
-      group = Live
-      order = 0
-      parent = child13
-      profile = default
-      type = Terminal
-      uuid = 9cfa0fd7-4053-43ac-8edc-6a43846a0ffa
-    [[[terminal15]]]
-      group = Live
-      order = 1
-      parent = child13
-      profile = default
-      type = Terminal
-      uuid = 11315fa1-32ea-4e80-8cda-340136d87f10
-    [[[terminal4]]]
-      group = Conductor
-      order = 0
-      parent = child3
-      profile = default
-      type = Terminal
-      uuid = 4fe2e7f7-620d-4a0b-8ffd-5250a5bea37d
-    [[[terminal5]]]
-      group = Conductor
-      order = 1
-      parent = child3
-      profile = default
-      type = Terminal
-      uuid = 6501165d-dbc6-4d38-b535-58c28e1ceef3
-    [[[terminal8]]]
-      group = Statmux
-      order = 0
-      parent = child7
-      profile = default
-      type = Terminal
-      uuid = 865999f4-bc0e-478b-9df8-732d57caa468
-    [[[terminal9]]]
-      group = Statmux
-      order = 1
-      parent = child7
-      profile = default
-      type = Terminal
-      uuid = 51704296-4ea6-4ce3-b5ca-00aa2215a5f8
+      command = TE=LR bash
 [plugins]
   [[ExtendedURLHandler]]
     enabled = True
