@@ -14,20 +14,27 @@ Arguments:
 Options:
   -h, --help                  Show this help message
   -e, --exclude PATTERN       Exclude pattern for rsync (can be used multiple times)
+  -g, --git-staged            Only sync git-staged files (toggleable at runtime with 'g')
   -s, --skip-push             Skip push syncs (initial push and post-pull push)
   -v, --verbose               Verbose output
+  --no-default-excludes       Do not add .git/ to exclude patterns automatically
+  --exec CMD                  Command to run on remote(s) via SSH after push (debounced)
+  --debounce SECONDS          Seconds to wait after last push before running --exec (default: 5)
 
 Interactive Controls:
   p - Manual PUSH sync to remote
   y - Manual PULL sync from remote
+  g - Toggle git-staged filter mode (sync only staged files)
   q - Quit the program
   ? - Show help
 
 Examples:
-  gex-loop foo@bar.com:./baz
-  gex-loop myuser@dev-server.com:/var/www/app
-  gex-loop -e '.git/' -e '*.swp' user@host:./project
-  gex-loop -s user@host:./project  # Skip initial push sync
+  gex-loop foo@bar.com:./baz/
+  gex-loop myuser@dev-server.com:/var/www/app/
+  gex-loop -e '.git/' -e '*.swp' user@host:./project/
+  gex-loop -s user@host:./project/  # Skip initial push sync
+  gex-loop -g user@host:./project/  # Only sync git-staged files
+  gex-loop --exec 'make build' user@host:./project/  # Run make on remote after push
 
 Description:
   Watches the current directory for file changes (modify, create, delete, move)
@@ -39,15 +46,22 @@ Description:
   The --skip-push flag prevents:
     1. Initial push sync at startup
     2. Automatic push sync after manual pull operations
+
+  The --git-staged / -g flag (or 'g' key at runtime) restricts syncs to only
+  files that have staged changes in git (via `git diff --cached --name-only`).
+  When enabled, rsync uses --files-from to transfer only those files.
 """
 
 import argparse
+import fnmatch
 import os
 import re
 import select
 import subprocess
 import sys
+import tempfile
 import termios
+import time
 import tty
 from datetime import datetime
 from pathlib import Path
@@ -68,13 +82,22 @@ class Colors:
 class GexLoop:
     """File watcher with interactive sync controls"""
 
-    def __init__(self, remote_specs: List[str], exclude_patterns: List[str], skip_push: bool = False, verbose: bool = False):
+    def __init__(self, remote_specs: List[str], exclude_patterns: List[str], skip_push: bool = False, verbose: bool = False, exec_cmd: Optional[str] = None, debounce_seconds: float = 5.0, git_staged: bool = False):
         self.remote_specs = remote_specs
         self.exclude_patterns = exclude_patterns
         self.skip_push = skip_push
         self.verbose = verbose
         self.local_dir = os.getcwd()
         self.running = True
+
+        # Git-staged filter mode: when True, only sync files with staged changes
+        self.git_staged = git_staged
+
+        # Exec-after-push state
+        self.exec_cmd = exec_cmd
+        self.debounce_seconds = debounce_seconds
+        self.last_push_time = 0.0
+        self.exec_pending = False
 
         # Flag to prevent inotifywait handling during manual syncs
         self.sync_in_progress = False
@@ -154,6 +177,26 @@ class GexLoop:
             stderr=subprocess.DEVNULL
         ).returncode == 0
 
+    def get_git_staged_files(self) -> Optional[List[str]]:
+        """Get list of git-staged files relative to the working directory.
+
+        Returns None if git command fails, empty list if no staged files.
+        """
+        try:
+            result = subprocess.run(
+                ['git', 'diff', '--cached', '--name-only'],
+                capture_output=True, text=True, check=False
+            )
+            if result.returncode != 0:
+                self.error(f"git diff --cached failed: {result.stderr.strip()}")
+                return None
+            # Filter out empty lines
+            files = [f for f in result.stdout.strip().split('\n') if f]
+            return files
+        except FileNotFoundError:
+            self.error("git command not found; cannot use git-staged mode")
+            return None
+
     def build_rsync_args(self, delete: bool = False) -> List[str]:
         """Build rsync command arguments"""
         args = ['rsync', '-avze', 'ssh']
@@ -171,6 +214,10 @@ class GexLoop:
 
     def rsync_push(self, delete: bool = False) -> bool:
         """Push local changes to remote"""
+        # When git-staged mode is active, sync only staged files
+        if self.git_staged:
+            return self._rsync_push_staged(delete=delete)
+
         all_ok = True
         for spec in self.remote_specs:
             args = self.build_rsync_args(delete=delete)
@@ -187,8 +234,54 @@ class GexLoop:
                 all_ok = False
         return all_ok
 
+    def _rsync_push_staged(self, delete: bool = False) -> bool:
+        """Push only git-staged files to remote using --files-from."""
+        staged_files = self.get_git_staged_files()
+        if staged_files is None:
+            self.error("Cannot determine staged files; skipping push")
+            return False
+        if not staged_files:
+            self.info("Git-staged mode: no staged files to sync")
+            return True
+
+        self.debug(f"Git-staged push: {len(staged_files)} file(s)")
+
+        all_ok = True
+        # Write file list to a temporary file for --files-from
+        try:
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as tf:
+                tf.write('\n'.join(staged_files) + '\n')
+                files_from_path = tf.name
+
+            for spec in self.remote_specs:
+                # --files-from mode: don't use --delete (it would delete files not in the list)
+                args = ['rsync', '-avze', 'ssh', '--files-from', files_from_path]
+                for pattern in self.exclude_patterns:
+                    args.extend(['--exclude', pattern])
+                if self.verbose:
+                    args.append('--progress')
+                args.extend(['./', spec])
+
+                self.debug(f"Running: {' '.join(args)}")
+
+                try:
+                    result = subprocess.run(args, check=False)
+                    if result.returncode != 0:
+                        all_ok = False
+                except Exception as e:
+                    self.error(f"Push sync (staged) failed to {spec}: {e}")
+                    all_ok = False
+        finally:
+            os.unlink(files_from_path)
+
+        return all_ok
+
     def rsync_pull(self) -> bool:
         """Pull remote changes to local"""
+        # When git-staged mode is active, pull only staged files
+        if self.git_staged:
+            return self._rsync_pull_staged()
+
         all_ok = True
         for spec in self.remote_specs:
             args = self.build_rsync_args(delete=False)
@@ -205,6 +298,46 @@ class GexLoop:
                 all_ok = False
         return all_ok
 
+    def _rsync_pull_staged(self) -> bool:
+        """Pull only git-staged files from remote using --files-from."""
+        staged_files = self.get_git_staged_files()
+        if staged_files is None:
+            self.error("Cannot determine staged files; skipping pull")
+            return False
+        if not staged_files:
+            self.info("Git-staged mode: no staged files to sync")
+            return True
+
+        self.debug(f"Git-staged pull: {len(staged_files)} file(s)")
+
+        all_ok = True
+        try:
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as tf:
+                tf.write('\n'.join(staged_files) + '\n')
+                files_from_path = tf.name
+
+            for spec in self.remote_specs:
+                args = ['rsync', '-avze', 'ssh', '--files-from', files_from_path]
+                for pattern in self.exclude_patterns:
+                    args.extend(['--exclude', pattern])
+                if self.verbose:
+                    args.append('--progress')
+                args.extend([spec, './'])
+
+                self.debug(f"Running: {' '.join(args)}")
+
+                try:
+                    result = subprocess.run(args, check=False)
+                    if result.returncode != 0:
+                        all_ok = False
+                except Exception as e:
+                    self.error(f"Pull sync (staged) failed from {spec}: {e}")
+                    all_ok = False
+        finally:
+            os.unlink(files_from_path)
+
+        return all_ok
+
     def initial_sync(self) -> None:
         """Perform initial push sync if not skipped"""
         if self.skip_push:
@@ -214,6 +347,7 @@ class GexLoop:
         self.info("Performing initial push sync...")
         if self.rsync_push():
             self.success("Initial sync completed")
+            self.schedule_exec()
         else:
             self.error("Initial push sync failed")
             self.error("Continuing anyway - use manual push (p) if needed")
@@ -224,6 +358,9 @@ class GexLoop:
         print(f"{Colors.BOLD}Interactive Controls:{Colors.NC}")
         print(f"  {Colors.GREEN}p{Colors.NC} - Manual PUSH sync to remote")
         print(f"  {Colors.GREEN}y{Colors.NC} - Manual PULL sync from remote")
+        # Show git-staged toggle with current state
+        git_state = f"{Colors.GREEN}ON{Colors.NC}" if self.git_staged else f"{Colors.RED}OFF{Colors.NC}"
+        print(f"  {Colors.GREEN}g{Colors.NC} - Toggle git-staged filter [{git_state}]")
         print(f"  {Colors.GREEN}q{Colors.NC} - Quit the program")
         print(f"  {Colors.GREEN}?{Colors.NC} - Show this help")
         print(f"{Colors.CYAN}{'='*60}{Colors.NC}\n")
@@ -267,6 +404,32 @@ class GexLoop:
                 break
             self.debug(f"Drained inotify event: {line.strip()}")
 
+    def should_exclude_event(self, line: str) -> bool:
+        """Check whether an inotify event line matches an exclude pattern.
+
+        Uses path-component aware matching: a pattern like '.git/' will only
+        match if it appears as a directory component (preceded by start-of-string
+        or '/'), not as an arbitrary substring. Glob-style patterns (e.g. '*.swp')
+        are checked with fnmatch against the filename portion of the event.
+        """
+        for pattern in self.exclude_patterns:
+            if '/' in pattern:
+                # Directory-style pattern: check as a path component boundary.
+                # Match if pattern appears at start or after '/' in the event line.
+                # e.g. '.git/' matches './.git/COMMIT_EDITMSG' but not './legit/foo'
+                if re.search(r'(?:^|/)' + re.escape(pattern), line):
+                    return True
+            else:
+                # Glob-style pattern (e.g. '*.swp'): match against the last
+                # path component (the filename) in the event line.
+                # inotifywait output format: "<dir> <events> <filename>"
+                parts = line.strip().split()
+                if parts:
+                    filename = parts[-1] if len(parts) >= 3 else ''
+                    if fnmatch.fnmatch(filename, pattern):
+                        return True
+        return False
+
     def handle_keypress(self, key: str) -> None:
         """Handle user keypress"""
         if key == 'p':
@@ -274,6 +437,7 @@ class GexLoop:
             print(f"\n{Colors.YELLOW}[manual]{Colors.NC} Triggering manual PUSH sync...")
             if self.rsync_push(delete=True):
                 self.success(f"Manual push completed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+                self.schedule_exec()
             else:
                 self.error("Manual push failed")
             self.sync_in_progress = False
@@ -289,6 +453,7 @@ class GexLoop:
                     print(f"{Colors.YELLOW}[auto]{Colors.NC} Pushing local changes after pull...")
                     if self.rsync_push(delete=True):
                         self.success("Post-pull push completed")
+                        self.schedule_exec()
                     else:
                         self.error("Post-pull push failed")
                 else:
@@ -297,6 +462,17 @@ class GexLoop:
                 self.error("Manual pull failed")
             self.sync_in_progress = False
 
+        elif key == 'g':
+            # Toggle git-staged filter mode
+            self.git_staged = not self.git_staged
+            state = "ENABLED" if self.git_staged else "DISABLED"
+            self.info(f"Git-staged filter mode: {state}")
+            if self.git_staged:
+                # Show how many files are currently staged
+                staged = self.get_git_staged_files()
+                if staged is not None:
+                    self.info(f"  Currently staged: {len(staged)} file(s)")
+
         elif key == 'q':
             print(f"\n{Colors.YELLOW}[info]{Colors.NC} Quitting...")
             self.running = False
@@ -304,7 +480,34 @@ class GexLoop:
         elif key == '?':
             self.show_menu()
 
-    def watch_and_sync(self, inotify_process=None) -> None:
+    def schedule_exec(self) -> None:
+        """Schedule exec command after a successful push (resets debounce timer)"""
+        if not self.exec_cmd:
+            return
+        self.exec_pending = True
+        self.last_push_time = time.time()
+        self.debug(f"Exec scheduled (debounce {self.debounce_seconds}s)")
+
+    def maybe_run_exec(self) -> None:
+        """Run exec if pending and debounce window has elapsed"""
+        if not self.exec_pending:
+            return
+        if time.time() - self.last_push_time >= self.debounce_seconds:
+            self.run_exec()
+            self.exec_pending = False
+
+    def run_exec(self) -> None:
+        """SSH into each remote and run the exec command"""
+        for spec in self.remote_specs:
+            host_part, path = spec.split(':', 1)
+            # Strip trailing slash from path for cd
+            path = path.rstrip('/')
+            cmd = f"ssh {host_part} 'cd {path} && {self.exec_cmd}'"
+            self.info(f"Exec on {host_part}: {self.exec_cmd}")
+            self.debug(f"Running: {cmd}")
+            subprocess.run(cmd, shell=True)
+
+    def watch_and_sync(self) -> None:
         """Main watch loop with inotifywait"""
         # Start inotifywait process
         inotify_cmd = [
@@ -315,7 +518,7 @@ class GexLoop:
             '.'
         ]
 
-        self.info("Watching for changes... (Press 'p' to push, 'y' to pull, 'q' to quit, '?' for help)")
+        self.info("Watching for changes... (Press 'p' to push, 'y' to pull, 'g' to toggle git-staged, 'q' to quit, '?' for help)")
         self.show_menu()
 
         try:
@@ -341,7 +544,10 @@ class GexLoop:
                     if old_sync_state != self.sync_in_progress and not self.sync_in_progress:
                         self.drain_inotify_output(process)
 
-                # Check for inotify events
+                # Check if debounced exec is ready to fire
+                self.maybe_run_exec()
+
+                # Check if inotify events
                 if process.poll() is not None:
                     self.error("inotifywait process died unexpectedly")
                     break
@@ -356,20 +562,17 @@ class GexLoop:
                     line = process.stdout.readline()
                     if line and len(line) > 0 and 'Setting up watches' not in line and 'Watches established.' not in line:
                         # File change detected
-                        skip_event = False
-                        for pattern in self.exclude_patterns:
-                            if pattern in line: 
-                                self.debug(f"Skipping change in excluded pattern {line}")
-                                skip_event = True 
-                                break
-                        if skip_event:
-                            continue 
+                        # Use path-aware exclusion check instead of naive substring match
+                        if self.should_exclude_event(line):
+                            self.debug(f"Skipping change in excluded pattern: {line.strip()}")
+                            continue
                         # Add blank line to break up log and signal that an event has occurred
                         print()
                         self.sync_in_progress = True
                         self.info("Changes detected, auto-syncing...")
                         if self.rsync_push(delete=True):
                             self.success(f"Auto-sync completed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+                            self.schedule_exec()
                         else:
                             self.error("Auto-sync failed")
                         self.sync_in_progress = False
@@ -398,11 +601,14 @@ class GexLoop:
         if not self.check_dependencies():
             return 1
 
-        # Show configuration
+        # Show configuration with clear source/destination paths (Change 1)
         self.info("Starting gex-loop file watcher")
         self.info(f"Local directory: {self.local_dir}")
         for spec in self.remote_specs:
-            self.info(f"Remote destination: {spec}")
+            print(f"  {Colors.BOLD}Syncing:{Colors.NC} {self.local_dir}/ {Colors.CYAN}->{Colors.NC} {spec}")
+
+        if self.git_staged:
+            self.info(f"{Colors.GREEN}Git-staged filter mode enabled{Colors.NC} - syncing only staged files")
 
         if self.skip_push:
             self.info(f"{Colors.YELLOW}Skip-push mode enabled{Colors.NC} - no automatic push syncs")
@@ -428,14 +634,16 @@ def main():
 Interactive Controls:
   p - Manual PUSH sync to remote
   y - Manual PULL sync from remote
+  g - Toggle git-staged filter mode
   q - Quit the program
   ? - Show help
 
 Examples:
-  gex-loop foo@bar.com:./baz
-  gex-loop myuser@dev-server.com:/var/www/app
-  gex-loop -e '.git/' -e '*.swp' user@host:./project
-  gex-loop -s user@host:./project  # Skip initial and post-pull push syncs
+  gex-loop foo@bar.com:./baz/
+  gex-loop myuser@dev-server.com:/var/www/app/
+  gex-loop -e '*.swp' user@host:./project/
+  gex-loop -g user@host:./project/  # Only sync git-staged files
+  gex-loop -s user@host:./project/  # Skip initial and post-pull push syncs
         """
     )
 
@@ -454,6 +662,13 @@ Examples:
     )
 
     parser.add_argument(
+        '-g', '--git-staged',
+        action='store_true',
+        dest='git_staged',
+        help='Only sync git-staged files (toggleable at runtime with g key)'
+    )
+
+    parser.add_argument(
         '-s', '--skip-push',
         action='store_true',
         help='Skip push syncs (initial push at startup and post-pull push)'
@@ -465,6 +680,26 @@ Examples:
         help='Verbose output'
     )
 
+    parser.add_argument(
+        '--no-default-excludes',
+        action='store_true',
+        help='Do not automatically add .git/ to exclude patterns'
+    )
+
+    parser.add_argument(
+        '--exec',
+        dest='exec_cmd',
+        default=None,
+        help='Command to run on remote(s) via SSH after each push (debounced)'
+    )
+
+    parser.add_argument(
+        '--debounce',
+        type=float,
+        default=5.0,
+        help='Seconds to wait after last push before running --exec (default: 5.0)'
+    )
+
     args = parser.parse_args()
 
     # Validate remote spec ends with /
@@ -473,16 +708,22 @@ Examples:
             print(f"{Colors.RED}[error]{Colors.NC} Remote destination must end with '/' (important for rsync): {spec}", file=sys.stderr)
             return 1
 
-    # Add default .git/ exclusion if no exclusions specified
-    if not args.exclude_patterns:
-        args.exclude_patterns = ['.git/']
+    # Always include .git/ exclusion unless --no-default-excludes is passed (Change 3 fix)
+    # Previously .git/ was only added when NO exclusions were specified, so
+    # passing -e '*.swp' would lose the .git/ default. Now .git/ is always prepended.
+    if not args.no_default_excludes:
+        if '.git/' not in args.exclude_patterns:
+            args.exclude_patterns.insert(0, '.git/')
 
     # Create and run
     gex = GexLoop(
         remote_specs=args.remote_spec,
         exclude_patterns=args.exclude_patterns,
         skip_push=args.skip_push,
-        verbose=args.verbose
+        verbose=args.verbose,
+        exec_cmd=args.exec_cmd,
+        debounce_seconds=args.debounce,
+        git_staged=args.git_staged
     )
 
     return gex.run()

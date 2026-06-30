@@ -1,6 +1,7 @@
 [tools]
 cargo = "latest"
 delta = "latest"
+go = "latest"
 java = "21.0.2"
 node = "24.11.1"
 python = "3.11.14"
