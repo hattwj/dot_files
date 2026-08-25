@@ -1,4 +1,4 @@
-#!/usr/bin/env bash 
+#!/usr/bin/env ruby
 
 [false, true].each do |rsupb| 
   [207_000, 250_000, 300_000, 325_000, 350_000, 400_000, 450_000, 500_000].each do |aa| 
