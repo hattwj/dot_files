@@ -6,6 +6,8 @@ alias gs='git status'
 alias gd='git diff'
 alias gdc='git diff --cached'
 
+alias dateu='date -u +"%Y-%m-%d %H:%M:%S"'
+
 ##
 # Force git to reset stuck files that are showing as modified
 function git-is-not-resetting-to() {

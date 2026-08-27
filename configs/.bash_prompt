@@ -1,30 +1,86 @@
 #!/bin/bash -
 
-RESET="\[\033[0m\]"
-RED="\[\033[0;31m\]"
-C_RED=`echo -e "\e[38;5;1m"`
-C_GREEN=`echo -e "\e[38;5;2m"`
-C_WHITE=`echo -e "\e[38;5;15m"`
+# ─── Shell-detection branching ───────────────────────────────────────
+# When sourced under zsh (e.g. via ~/.zshrc -> ~/.bash_prompt), use zsh
+# prompt conventions. Under bash, keep existing behavior unchanged.
 
-C_USER=`echo -e "\e[38;5;120m\u"`
-C_AT="`echo -e "\e[38;5;121m"`@"
-C_HOSTNAME=`echo -e "\e[38;5;122m\h"`
-C_CWD=`echo -e "\e[38;5;152m\w"`
+if [[ -n "$ZSH_VERSION" ]]; then
+  # ─── ZSH branch ─────────────────────────────────────────────────────
 
-PS_LINE=`printf -- '  %.0s' {1..200}`
-function parse_git_branch {
-  PS_BRANCH=''
-  PS_COLOR=''
-  PS_FILL=${PS_LINE:0:$COLUMNS}
-  ref=$(git symbolic-ref HEAD 2> /dev/null) || return
-  color=$(git diff --exit-code --quiet && (git diff --cached --exit-code --quiet && echo -e $C_WHITE || echo -e $C_GREEN) || echo -e $C_RED)
-  PS_BRANCH="${color}(${ref#refs/heads/}) "
-}
+  # Raw ANSI codes (for command-substitution output embedded in prompt)
+  _CLR_RED=$'\033[38;5;1m'
+  _CLR_GREEN=$'\033[38;5;2m'
+  _CLR_WHITE=$'\033[38;5;15m'
+  _CLR_RESET=$'\033[0m'
 
-_set_terminal_title() { printf '\033]0;%s\007' "${PWD/#$HOME/\~}"; }
-PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND; }parse_git_branch; _set_terminal_title; _refresh_tmux_env 2>/dev/null"
-PS_INFO="${C_USER}${C_AT}$C_HOSTNAME$RESET:${C_CWD}"
-#PS_TIME="\[\033[\$((COLUMNS-10))G\] $RED[\t]"
-PS_TIME="\[\033[\$((COLUMNS-10))G\]"
-PS_GIT="\$PS_COLOR\$PS_BRANCH"
-export PS1="\${PS_FILL}\[\033[0G\]${PS_INFO} ${PS_GIT}${PS_TIME}\n${RESET}\$ "
+  # Prompt-wrapped colors (zsh uses %{...%} for non-printing sequences)
+  _P_USER="%{"$'\033[38;5;120m'"%}%n"
+  _P_AT="%{"$'\033[38;5;121m'"%}@"
+  _P_HOSTNAME="%{"$'\033[38;5;122m'"%}%m"
+  _P_CWD="%{"$'\033[38;5;152m'"%}%~"
+  _P_RESET="%{"$'\033[0m'"%}"
+
+  function _vendor_parse_git_branch_zsh {
+    _VENDOR_PS_BRANCH=''
+    local ref color
+    ref=$(git symbolic-ref HEAD 2>/dev/null) || return
+    if git diff --exit-code --quiet 2>/dev/null; then
+      if git diff --cached --exit-code --quiet 2>/dev/null; then
+        color="${_CLR_WHITE}"
+      else
+        color="${_CLR_GREEN}"
+      fi
+    else
+      color="${_CLR_RED}"
+    fi
+    _VENDOR_PS_BRANCH="%{${color}%}(${ref#refs/heads/}) %{${_CLR_RESET}%}"
+  }
+
+  _vendor_set_terminal_title_zsh() { printf '\033]0;%s\007' "${PWD/#$HOME/~}"; }
+
+  _vendor_build_prompt_zsh() {
+    _vendor_parse_git_branch_zsh
+    _vendor_set_terminal_title_zsh
+    local ps_info="${_P_USER}${_P_AT}${_P_HOSTNAME}${_P_RESET}:${_P_CWD}"
+    PROMPT="${ps_info} ${_VENDOR_PS_BRANCH}
+${_P_RESET}%# "
+  }
+
+  setopt PROMPT_SUBST
+  # Append to precmd_functions without clobbering existing hooks (mise/nvm/etc.)
+  precmd_functions=( ${precmd_functions[@]:#_vendor_build_prompt_zsh} )
+  precmd_functions+=( _vendor_build_prompt_zsh )
+
+else
+  # ─── BASH branch (existing logic, unchanged) ────────────────────────
+
+  RESET="\[\033[0m\]"
+  RED="\[\033[0;31m\]"
+  C_RED=`echo -e "\e[38;5;1m"`
+  C_GREEN=`echo -e "\e[38;5;2m"`
+  C_WHITE=`echo -e "\e[38;5;15m"`
+
+  C_USER=`echo -e "\e[38;5;120m\u"`
+  C_AT="`echo -e "\e[38;5;121m"`@"
+  C_HOSTNAME=`echo -e "\e[38;5;122m\h"`
+  C_CWD=`echo -e "\e[38;5;152m\w"`
+
+  PS_LINE=`printf -- '  %.0s' {1..200}`
+  function parse_git_branch {
+    PS_BRANCH=''
+    PS_COLOR=''
+    PS_FILL=${PS_LINE:0:$COLUMNS}
+    ref=$(git symbolic-ref HEAD 2> /dev/null) || return
+    color=$(git diff --exit-code --quiet && (git diff --cached --exit-code --quiet && echo -e $C_WHITE || echo -e $C_GREEN) || echo -e $C_RED)
+    PS_BRANCH="${color}(${ref#refs/heads/}) "
+  }
+
+  _set_terminal_title() { printf '\033]0;%s\007' "${PWD/#$HOME/\~}"; }
+  PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND; }parse_git_branch; _set_terminal_title; _refresh_tmux_env 2>/dev/null"
+  PS_INFO="${C_USER}${C_AT}$C_HOSTNAME$RESET:${C_CWD}"
+  #PS_TIME="\[\033[\$((COLUMNS-10))G\] $RED[\t]"
+  PS_TIME="\[\033[\$((COLUMNS-10))G\]"
+  PS_GIT="\$PS_COLOR\$PS_BRANCH"
+  export PS1="\${PS_FILL}\[\033[0G\]${PS_INFO} ${PS_GIT}${PS_TIME}\n${RESET}\$ "
+
+fi
